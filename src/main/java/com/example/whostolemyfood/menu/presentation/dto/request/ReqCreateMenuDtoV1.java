@@ -1,0 +1,4 @@
+package com.example.whostolemyfood.menu.presentation.dto.request;
+
+public class ReqCreateMenuDtoV1 {
+}
