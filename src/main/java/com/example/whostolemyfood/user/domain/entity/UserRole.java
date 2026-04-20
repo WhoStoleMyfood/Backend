@@ -12,4 +12,5 @@ public enum UserRole {
     MASTER("최종 관리자");
 
     private final String description;
+
 }
