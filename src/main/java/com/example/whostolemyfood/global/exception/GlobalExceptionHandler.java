@@ -48,22 +48,21 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
 
-    /**
-     * 권한 오류 처리
+        /**
+     * 존재하지 않는 데이터 요청이나 잘못된 인자 값 처리
      */
-    @ExceptionHandler(SecurityException.class)
-    protected ResponseEntity<ErrorResponse> handleSecurityException(SecurityException ex) {
+    @ExceptionHandler(IllegalArgumentException.class)
+    protected ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException ex) {
         ErrorResponse response = ErrorResponse.builder()
-            .status(403)
-            .code("FORBIDDEN")
-            .message(ex.getMessage())
-            .build();
-
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+                .status(400)
+                .code("BUSINESS_ERROR")
+                .message(ex.getMessage())
+                .build();
+        return ResponseEntity.badRequest().body(response);
     }
 
     /**
-     * 그 외 비즈니스 로직 오류 처리 (추후 CustomException 연동 예정)
+     * 그 외 비즈니스 로직 오류 처리 (주문 상태 위반 등)
      */
     @ExceptionHandler(IllegalStateException.class)
     protected ResponseEntity<ErrorResponse> handleIllegalStateException(IllegalStateException ex) {
