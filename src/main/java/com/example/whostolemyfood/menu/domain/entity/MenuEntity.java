@@ -21,9 +21,8 @@ import java.util.UUID;
 @Table(name = "p_menus")
 public class MenuEntity extends BaseSoftDeleteEntity {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "menu_id", nullable = false, updatable = false)
-    @UuidGenerator
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -32,9 +31,9 @@ public class MenuEntity extends BaseSoftDeleteEntity {
 
     // ai_log_id
 
-    @Column(name = "menuName")
+    @Column(nullable = false, name = "menuName")
     private String name;
-    @Column(name = "menuPrice")
+    @Column(nullable = false, name = "menuPrice")
     private Integer price;
     @Column(name = "description")
     private String description;
