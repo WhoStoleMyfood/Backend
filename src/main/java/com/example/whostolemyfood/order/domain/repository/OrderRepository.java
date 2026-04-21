@@ -1,9 +1,12 @@
 package com.example.whostolemyfood.order.domain.repository;
 
 import com.example.whostolemyfood.order.domain.entity.OrderEntity;
+import jakarta.validation.constraints.NotBlank;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -25,4 +28,9 @@ public interface OrderRepository extends JpaRepository<OrderEntity, UUID> {
      * 전체 주문 중 숨김 여부에 따른 필터링 조회
      */
     Page<OrderEntity> findAllByIsHidden(Boolean isHidden, Pageable pageable);
+
+    /**
+     * 결제를 위한 주문 존재 여부 조회
+     */
+    Optional<OrderEntity> findByOrderIdAndUserId(UUID orderId, UUID userId);
 }
