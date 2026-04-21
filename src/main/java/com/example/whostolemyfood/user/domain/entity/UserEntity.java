@@ -1,33 +1,55 @@
 package com.example.whostolemyfood.user.domain.entity;
 
-import com.example.whostolemyfood.global.entity.BaseAuditEntity;
-import jakarta.persistence.*;
-import lombok.*;
-
+import java.time.LocalDateTime;
 import java.util.UUID;
+import jakarta.persistence.*;
+
+import org.hibernate.annotations.GenericGenerator;
+
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "p_users")
 @Getter
+@Table(name = "p_users")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
-@Builder
-public class UserEntity extends BaseAuditEntity {
+public class UserEntity {
 
-	@Id
-	@Column(name = "user_id", nullable = false, updatable = false)
-	private UUID userId;
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "user_id", updatable = false, nullable = false)
+    private UUID id;
 
-	@Column(name = "user_name", nullable = false)
-	private String userName;
+    @Column(name = "user_name", nullable = false, length = 255)
+    private String userName;
 
-	@Column(name = "user_email", nullable = false)
-	private String userEmail;
+    @Column(name = "user_email", nullable = false, length = 255)
+    private String userEmail;
 
-	@Column(name = "user_password", nullable = false)
-	private String userPassword;
+    @Column(name = "user_password" , nullable = false, length = 255)
+    private String userPassword;
 
-	@Enumerated(EnumType.STRING)
-	@Column(name = "role", nullable = false)
-	private UserRole role;
+    @Column(length = 255)
+    private String address;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private UserRole role;
+
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "created_by")
+    private UUID createdBy;
+
+    @Column(name = "update_at")
+    private LocalDateTime updateAt;
+
+    @Column(name = "update_by")
+    private UUID updateBy;
+
+    @Column(name = "is_deleted", nullable = false)
+    private boolean isDeleted = false;
+
 }

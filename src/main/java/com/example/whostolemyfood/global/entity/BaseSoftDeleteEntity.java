@@ -5,24 +5,18 @@ import jakarta.persistence.MappedSuperclass;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Getter
 @MappedSuperclass
-public abstract class BaseSoftDeleteEntity extends BaseTimeEntity {
+public abstract class BaseSoftDeleteEntity extends BaseAuditEntity {
+    @Column(columnDefinition = "TIMESTAMP")
+    private LocalDateTime deletedAt;
 
-	@Column(name = "deleted_at")
-	private LocalDateTime deletedAt;
+    private UUID deletedBy;
 
-	@Column(name = "is_deleted", nullable = false)
-	private Boolean isDeleted = false;
-
-	public void softDelete() {
-		this.isDeleted = true;
-		this.deletedAt = LocalDateTime.now();
-	}
-
-	public void restore() {
-		this.isDeleted = false;
-		this.deletedAt = null;
-	}
+    public void delete(UUID deletedBy) {
+        this.deletedAt = LocalDateTime.now();
+        this.deletedBy = deletedBy;
+    }
 }
