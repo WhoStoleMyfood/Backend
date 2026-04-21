@@ -1,11 +1,13 @@
 package com.example.whostolemyfood.store.application.service;
 
 import com.example.whostolemyfood.store.domain.entity.StoreEntity;
+import com.example.whostolemyfood.store.domain.entity.StoreStatus;
 import com.example.whostolemyfood.store.domain.repository.StoreRepository;
 import com.example.whostolemyfood.store.presentation.dto.request.ReqCreateStoreDtoV1;
 import com.example.whostolemyfood.store.presentation.dto.request.ReqUpdateStoreDtoV1;
 import com.example.whostolemyfood.store.presentation.dto.response.ResCreateStoreDtoV1;
 import com.example.whostolemyfood.store.presentation.dto.response.ResGetStoreDtoV1;
+import com.example.whostolemyfood.store.presentation.dto.response.ResGetStoreListDtoV1;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -39,14 +41,17 @@ public class StoreServiceV1 {
                 .phone(request.getPhone())
                 .content(request.getContent())
                 .minOrderPrice(request.getMinOrderPrice())
+                .status(StoreStatus.OPEN)
+                .openTime(request.getOpenTime())
+                .closeTime(request.getCloseTime())
                 .build();
 
-        storeRepository.save(store);
-        return ResCreateStoreDtoV1.from(store);
+        StoreEntity savedStore = storeRepository.save(store);
+        return ResCreateStoreDtoV1.from(savedStore);
     }
 
     // All
-    // 스토어 조회
+    // 스토어 단건 조회
     @Transactional(readOnly = true)
     public ResGetStoreDtoV1 getStore(UUID id) {
         StoreEntity store = storeRepository.findById(id)
@@ -55,11 +60,12 @@ public class StoreServiceV1 {
         return ResGetStoreDtoV1.from(store);
     }
 
+    // 스토어 목록 조회
     @Transactional(readOnly = true)
-    public Page<ResGetStoreDtoV1> getStores(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+    public Page<ResGetStoreListDtoV1> getStores(Pageable pageable) {
         Page<StoreEntity> stores = storeRepository.findAll(pageable);
-        return stores.map(ResGetStoreDtoV1::from);
+
+        return stores.map(ResGetStoreListDtoV1::from);
     }
 
     // owner, manager, master

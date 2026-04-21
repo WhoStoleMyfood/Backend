@@ -10,7 +10,6 @@ import com.example.whostolemyfood.order.presentation.dto.response.ResGetOrderLis
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -18,9 +17,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -58,7 +54,7 @@ public class OrderControllerV1 {
         
         int size = pageable.getPageSize();
         if (size != 10 && size != 30 && size != 50) {
-            pageable = PageRequest.of(pageable.getPageNumber(), 10, pageable.getSort());
+            pageable = org.springframework.data.domain.PageRequest.of(pageable.getPageNumber(), 10, pageable.getSort());
         }
         
         return ResponseEntity.ok(orderService.getOrders(storeId, isHidden, pageable));
@@ -99,30 +95,5 @@ public class OrderControllerV1 {
     public ResponseEntity<Void> deleteOrder(@PathVariable("orderId") UUID orderId) {
         orderService.deleteOrder(orderId);
         return ResponseEntity.noContent().build();
-    }
-
-    /**
-     * [Exception Handler] 유효성 검사 에러 처리
-     */
-    @ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, Object>> handleValidationExceptions(
-            org.springframework.web.bind.MethodArgumentNotValidException ex) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("status", 400);
-        body.put("message", "VALIDATION_ERROR");
-        
-        List<Map<String, String>> errors = ex.getBindingResult()
-                .getFieldErrors()
-                .stream()
-                .map(error -> {
-                    Map<String, String> err = new HashMap<>();
-                    err.put("field", error.getField());
-                    err.put("message", error.getDefaultMessage());
-                    return err;
-                })
-                .toList();
-        
-        body.put("errors", errors);
-        return ResponseEntity.badRequest().body(body);
     }
 }

@@ -9,14 +9,26 @@ import java.util.UUID;
 
 @Getter
 @MappedSuperclass
-public abstract class BaseSoftDeleteEntity extends BaseAuditEntity {
-    @Column(columnDefinition = "TIMESTAMP")
+public abstract class BaseSoftDeleteEntity extends BaseTimeEntity {
+
+    @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-    private UUID deletedBy;
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean isDeleted = false;
 
-    public void delete(UUID deletedBy) {
+    public void softDelete() {
+        this.isDeleted = true;
         this.deletedAt = LocalDateTime.now();
-        this.deletedBy = deletedBy;
+    }
+
+    public void restore() {
+        this.isDeleted = false;
+        this.deletedAt = null;
+    }
+
+    //주원님 코드 충돌 안나게끔 추가
+    protected void delete(UUID deletedBy) {
+        this.deletedAt = LocalDateTime.now();
     }
 }

@@ -58,6 +58,4 @@ gradle-app.setting
 # JDT-specific (Eclipse Java Development Tools)
 .classpath
 
-# Local environment settings
-application.yaml
-WhoStoleMyFoodApplication.java
+application-local.yaml
