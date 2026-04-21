@@ -60,6 +60,9 @@ gradle-app.setting
 .project
 # JDT-specific (Eclipse Java Development Tools)
 .classpath
+
+WhostolemyfoodApplicatoin.java
+application.yaml
 /resources/application.yml
 
 .env
