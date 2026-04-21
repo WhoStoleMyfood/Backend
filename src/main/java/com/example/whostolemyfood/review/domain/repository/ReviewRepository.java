@@ -11,4 +11,7 @@ public interface ReviewRepository extends JpaRepository<ReviewEntity, UUID> {
 	Optional<ReviewEntity> findByReviewIdAndIsDeletedFalse(UUID reviewId);
 
 	boolean existsByOrder_OrderIdAndIsDeletedFalse(UUID orderId);
+
+	//is_deleted 확인(재작성 로직)
+	Optional<ReviewEntity> findByOrder_OrderIdAndIsDeletedTrue(UUID orderId);
 }

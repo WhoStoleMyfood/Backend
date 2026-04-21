@@ -4,13 +4,20 @@ import com.example.whostolemyfood.order.domain.entity.OrderEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Optional;
 import java.util.UUID;
 
 /**
  * [Repository] 주문(Order) 도메인 전용 리포지토리 인터페이스
  */
 public interface OrderRepository extends JpaRepository<OrderEntity, UUID> {
-    
+
+    /**
+     * 주문 단건 조회 (삭제되지 않은 주문만) - 필요해서 추가했어요
+     */
+    Optional<OrderEntity> findByOrderIdAndIsDeletedFalse(UUID orderId);
+
     /**
      * 특정 가게의 주문 목록을 페이징하여 조회
      */

@@ -1,7 +1,6 @@
 package com.example.whostolemyfood.payment.domain;
 
 import com.example.whostolemyfood.order.domain.entity.OrderEntity;
-import com.example.whostolemyfood.payment.base.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 
@@ -10,14 +9,13 @@ import java.time.LocalDateTime;
 @Table(name = "p_payments")
 @Entity
 @Getter
-public class PaymentEntity extends BaseTimeEntity {
+public class PaymentEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    @Column(nullable = false)
-    @ManyToOne(FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id")
     private OrderEntity order;
 
@@ -28,6 +26,7 @@ public class PaymentEntity extends BaseTimeEntity {
     @Column(nullable = false)
     private PaymentType payType;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private PaymentStatus payStatus;
 

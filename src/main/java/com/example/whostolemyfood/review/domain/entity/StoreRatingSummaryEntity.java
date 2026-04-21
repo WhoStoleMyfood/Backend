@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -49,6 +50,15 @@ public class StoreRatingSummaryEntity {
 	@Column(name = "rating_5_count", nullable = false)
 	@Builder.Default
 	private Integer rating5Count = 0;
+
+	@Column(name = "created_at")
+	private LocalDateTime createdAt;
+
+	@Column(name = "updated_at")
+	private LocalDateTime updatedAt;
+
+	@Column(name = "deleted_at")
+	private LocalDateTime deletedAt;
 
 	@Column(name = "is_deleted", nullable = false)
 	@Builder.Default

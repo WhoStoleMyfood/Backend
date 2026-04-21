@@ -23,15 +23,17 @@ public class ReviewControllerV1 {
 	private final ReviewServiceV1 reviewServiceV1;
 
 	@PostMapping("/orders/{orderId}/reviews")
-	@PreAuthorize("hasRole('CUSTOMER')")
+	//@PreAuthorize("hasRole('CUSTOMER')") - 인증인가 끝나면 주석해제
 	public ResponseEntity<ResCreateReviewDtoV1> createReview(
 		@PathVariable UUID orderId,
-		@Valid @RequestBody ReqCreateReviewDtoV1 request,
-		@AuthenticationPrincipal UserEntity loginUser
+		@Valid @RequestBody ReqCreateReviewDtoV1 request
+		// @AuthenticationPrincipal UserEntity loginUser
 	) {
+		 UUID testUserId = UUID.fromString("11111111-1111-1111-1111-111111111111"); //테스트용
 		ResCreateReviewDtoV1 response = reviewServiceV1.createReview(
 			orderId,
-			loginUser.getUserId(),
+			testUserId, //테스트용
+			//loginUser.getId(),
 			request
 		);
 		return ResponseEntity.ok(response);
@@ -46,31 +48,38 @@ public class ReviewControllerV1 {
 	}
 
 	@PutMapping("/reviews/{reviewId}")
-	@PreAuthorize("hasRole('CUSTOMER')")
+	//@PreAuthorize("hasRole('CUSTOMER')") - 인증인가 끝나면 주석해제
 	public ResponseEntity<ResGetReviewDtoV1> updateReview(
 		@PathVariable UUID reviewId,
-		@Valid @RequestBody ReqUpdateReviewDtoV1 request,
-		@AuthenticationPrincipal UserEntity loginUser
+		@Valid @RequestBody ReqUpdateReviewDtoV1 request
+		//@AuthenticationPrincipal UserEntity loginUser
 	) {
+		UUID testUserId = UUID.fromString("11111111-1111-1111-1111-111111111111");//테스트용
 		ResGetReviewDtoV1 response = reviewServiceV1.updateReview(
 			reviewId,
-			loginUser.getUserId(),
+			testUserId,
+			//loginUser.getId(),
 			request
 		);
 		return ResponseEntity.ok(response);
 	}
 
 	@DeleteMapping("/reviews/{reviewId}")
-	@PreAuthorize("hasAnyRole('CUSTOMER','MANAGER','MASTER')")
-	public ResponseEntity<Void> deleteReview(
-		@PathVariable UUID reviewId,
-		@AuthenticationPrincipal UserEntity loginUser
+	//@PreAuthorize("hasAnyRole('CUSTOMER','MANAGER','MASTER')") - 인증인가 끝나면 주석해제
+	public ResponseEntity<String> deleteReview(
+		@PathVariable UUID reviewId
+		//@AuthenticationPrincipal UserEntity loginUser
 	) {
+		UUID testUserId = UUID.fromString("11111111-1111-1111-1111-111111111111"); //테스트용
+		String testRole = "CUSTOMER"; //테스트용
+
 		reviewServiceV1.deleteReview(
 			reviewId,
-			loginUser.getUserId(),
-			loginUser.getRole().name()
+			testUserId,
+			testRole
+			//loginUser.getId(),
+			//loginUser.getRole().name()
 		);
-		return ResponseEntity.noContent().build();
+		return ResponseEntity.ok("리뷰 삭제가 완료되었습니다.");
 	}
 }

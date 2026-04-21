@@ -9,6 +9,8 @@ import com.example.whostolemyfood.review.presentation.dto.request.ReqCreateRevie
 import com.example.whostolemyfood.review.presentation.dto.request.ReqUpdateReviewDtoV1;
 import com.example.whostolemyfood.review.presentation.dto.response.ResCreateReviewDtoV1;
 import com.example.whostolemyfood.review.presentation.dto.response.ResGetReviewDtoV1;
+import com.example.whostolemyfood.store.domain.entity.StoreEntity;
+import com.example.whostolemyfood.store.domain.repository.StoreRepository;
 import com.example.whostolemyfood.user.domain.entity.UserEntity;
 import com.example.whostolemyfood.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +27,7 @@ public class ReviewServiceV1 {
 	private final ReviewRepository reviewRepository;
 	private final OrderRepository orderRepository;
 	private final UserRepository userRepository;
+	private final StoreRepository storeRepository;
 
 	@Transactional
 	public ResCreateReviewDtoV1 createReview(UUID orderId, UUID loginUserId, ReqCreateReviewDtoV1 request) {
@@ -36,14 +39,37 @@ public class ReviewServiceV1 {
 
 		validateCreatePermission(order, loginUserId);
 
+
+
+		// softdelete 처리 분기점 1. 활성 리뷰 있으면 중복 생성 불가
 		if (reviewRepository.existsByOrder_OrderIdAndIsDeletedFalse(orderId)) {
 			throw new IllegalStateException("이미 해당 주문에 대한 리뷰가 존재합니다.");
 		}
 
+		// 2. 삭제된 리뷰가 있으면 복구해서 재사용
+		ReviewEntity deletedReview = reviewRepository.findByOrder_OrderIdAndIsDeletedTrue(orderId)
+			.orElse(null);
+
+		if (deletedReview != null) {
+			deletedReview.restoreReview(request.getRating(), request.getContent(), loginUserId);
+			return ResCreateReviewDtoV1.builder()
+				.reviewId(deletedReview.getReviewId())
+				.orderId(deletedReview.getOrder().getOrderId())
+				.storeId(deletedReview.getStore().getStoreId())
+				.rating(deletedReview.getRating())
+				.content(deletedReview.getContent())
+				.createdAt(deletedReview.getCreatedAt())
+				.build();
+		}
+
+		// 3. 아예 없으면 새로 생성
+		StoreEntity store = storeRepository.findById(order.getStoreId())
+			.orElseThrow(() -> new IllegalArgumentException("가게를 찾을 수 없습니다."));
+
 		ReviewEntity review = ReviewEntity.builder()
 			.order(order)
 			.user(loginUser)
-			.store(order.getStore())
+			.store(store)
 			.rating(request.getRating())
 			.content(request.getContent())
 			.build();
@@ -74,7 +100,7 @@ public class ReviewServiceV1 {
 		ReviewEntity review = reviewRepository.findByReviewIdAndIsDeletedFalse(reviewId)
 			.orElseThrow(() -> new IllegalArgumentException("리뷰를 찾을 수 없습니다."));
 
-		if (!review.getUser().getUserId().equals(loginUserId)) {
+		if (!review.getUser().getId().equals(loginUserId)) {
 			throw new SecurityException("본인이 작성한 리뷰만 수정할 수 있습니다.");
 		}
 
@@ -88,7 +114,7 @@ public class ReviewServiceV1 {
 		ReviewEntity review = reviewRepository.findByReviewIdAndIsDeletedFalse(reviewId)
 			.orElseThrow(() -> new IllegalArgumentException("리뷰를 찾을 수 없습니다."));
 
-		boolean isWriter = review.getUser().getUserId().equals(loginUserId);
+		boolean isWriter = review.getUser().getId().equals(loginUserId);
 		boolean isAdmin = "MANAGER".equals(authority) || "MASTER".equals(authority);
 
 		if (!isWriter && !isAdmin) {
@@ -99,7 +125,7 @@ public class ReviewServiceV1 {
 	}
 
 	private void validateCreatePermission(OrderEntity order, UUID loginUserId) {
-		if (!order.getUser().getUserId().equals(loginUserId)) {
+		if (!order.getUserId().equals(loginUserId)) {
 			throw new SecurityException("본인 주문에만 리뷰를 작성할 수 있습니다.");
 		}
 
@@ -113,7 +139,7 @@ public class ReviewServiceV1 {
 			.reviewId(review.getReviewId())
 			.orderId(review.getOrder().getOrderId())
 			.storeId(review.getStore().getStoreId())
-			.userId(review.getUser().getUserId())
+			.userId(review.getUser().getId())
 			.userName(review.getUser().getUserName())
 			.rating(review.getRating())
 			.content(review.getContent())

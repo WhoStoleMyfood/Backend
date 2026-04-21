@@ -52,6 +52,14 @@ public class ReviewEntity extends BaseAuditEntity {
 	}
 
 	public void deleteReview(UUID deletedBy) {
-		super.softDelete(deletedBy);
+		super.softDelete();
+		this.markUpdatedBy(deletedBy);
+	}
+
+	public void restoreReview(Integer rating, String content, UUID updatedBy) {
+		this.rating = rating;
+		this.content = content;
+		super.restore();
+		this.markUpdatedBy(updatedBy);
 	}
 }
