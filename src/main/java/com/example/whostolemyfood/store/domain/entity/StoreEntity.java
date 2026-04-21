@@ -8,7 +8,6 @@ import lombok.*;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.UUID;
 
@@ -52,10 +51,10 @@ public class StoreEntity extends BaseSoftDeleteEntity {
     private StoreStatus status = StoreStatus.OPEN;
 
     @JsonFormat(pattern = "HH:mm")
-    @Column(name = "open_time")
+    @Column(name = "open_time", nullable = false)
     private LocalTime openTime;
     @JsonFormat(pattern = "HH:mm")
-    @Column(name = "close_time")
+    @Column(name = "close_time", nullable = false)
     private LocalTime closeTime;
 
     @Column(name = "is_hidden")
@@ -73,9 +72,12 @@ public class StoreEntity extends BaseSoftDeleteEntity {
         this.phone = request.getPhone();
         this.content = request.getContent();
         this.minOrderPrice = request.getMinOrderPrice();
-        this.status = request.getStatus();
         this.openTime = request.getOpenTime();
         this.closeTime = request.getCloseTime();
+
+        if (request.getStatus() != null) {
+            this.status = request.getStatus();
+        }
         // 상태, 숨김
     }
 

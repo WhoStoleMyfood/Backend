@@ -9,6 +9,7 @@ import com.example.whostolemyfood.store.presentation.dto.response.ResCreateStore
 import com.example.whostolemyfood.store.presentation.dto.response.ResGetStoreDtoV1;
 import com.example.whostolemyfood.store.presentation.dto.response.ResGetStoreListDtoV1;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,7 +31,7 @@ public class StoreControllerV1 {
     // Owner Only
     @Operation(summary = "스토어 생성")
     @PostMapping
-    public ResponseEntity<ResCreateStoreDtoV1> createStore(@RequestBody ReqCreateStoreDtoV1 request) {
+    public ResponseEntity<ResCreateStoreDtoV1> createStore(@Valid @RequestBody ReqCreateStoreDtoV1 request) {
         ResCreateStoreDtoV1 response = storeServiceV1.createStore(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -57,14 +58,14 @@ public class StoreControllerV1 {
     // Owner, manager, master
     @Operation(summary = "스토어 수정")
     @PutMapping("/{id}")
-    public ResponseEntity<ResGetStoreDtoV1> updateStore(@PathVariable UUID id, @RequestBody ReqUpdateStoreDtoV1 request) {
+    public ResponseEntity<ResGetStoreDtoV1> updateStore(@Valid @PathVariable UUID id, @RequestBody ReqUpdateStoreDtoV1 request) {
         ResGetStoreDtoV1 response = storeServiceV1.updateStore(id, request);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @Operation(summary = "스토어 삭제")
     @DeleteMapping("/{id}")
-    public void deleteStore(@PathVariable UUID id) {
+    public void deleteStore(@Valid@PathVariable UUID id) {
         storeServiceV1.deleteStore(id);
     }
 }
