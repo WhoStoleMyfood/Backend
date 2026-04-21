@@ -1,5 +1,6 @@
 package com.example.whostolemyfood.global.exception;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -34,7 +35,34 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 그 외 비즈니스 로직 오류 처리 (추후 CustomException 연동 예정)
+     * 조회 대상 없음 등 잘못된 요청 리소스 처리
+     */
+    @ExceptionHandler(IllegalArgumentException.class)
+    protected ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException ex) {
+        ErrorResponse response = ErrorResponse.builder()
+            .status(404)
+            .code("NOT_FOUND")
+            .message(ex.getMessage())
+            .build();
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    }
+
+        /**
+     * 존재하지 않는 데이터 요청이나 잘못된 인자 값 처리
+     */
+    @ExceptionHandler(IllegalArgumentException.class)
+    protected ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException ex) {
+        ErrorResponse response = ErrorResponse.builder()
+                .status(400)
+                .code("BUSINESS_ERROR")
+                .message(ex.getMessage())
+                .build();
+        return ResponseEntity.badRequest().body(response);
+    }
+
+    /**
+     * 그 외 비즈니스 로직 오류 처리 (주문 상태 위반 등)
      */
     @ExceptionHandler(IllegalStateException.class)
     protected ResponseEntity<ErrorResponse> handleIllegalStateException(IllegalStateException ex) {
