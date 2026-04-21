@@ -1,4 +1,4 @@
-package com.example.whostolemyfood.store.presentation.dto.response;
+package com.example.whostolemyfood.global.response;
 
 import lombok.Getter;
 import org.springframework.data.domain.Page;
@@ -20,4 +20,5 @@ public class PageResponse<T> {
         this.size = page.getSize();
         this.number = page.getNumber();
     }
+
 }

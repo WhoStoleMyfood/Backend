@@ -1,15 +1,19 @@
 package com.example.whostolemyfood.store.presentation.controller;
 
+import com.example.whostolemyfood.global.util.PageUtil;
 import com.example.whostolemyfood.store.application.service.StoreServiceV1;
 import com.example.whostolemyfood.store.presentation.dto.request.ReqCreateStoreDtoV1;
 import com.example.whostolemyfood.store.presentation.dto.request.ReqUpdateStoreDtoV1;
-import com.example.whostolemyfood.store.presentation.dto.response.PageResponse;
+import com.example.whostolemyfood.global.response.PageResponse;
 import com.example.whostolemyfood.store.presentation.dto.response.ResCreateStoreDtoV1;
 import com.example.whostolemyfood.store.presentation.dto.response.ResGetStoreDtoV1;
+import com.example.whostolemyfood.store.presentation.dto.response.ResGetStoreListDtoV1;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.web.PagedModel;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -41,10 +45,12 @@ public class StoreControllerV1 {
 
     @Operation(summary = "스토어 목록조회")
     @GetMapping
-    public ResponseEntity<PageResponse<ResGetStoreDtoV1>> getStores(
-            @RequestParam Integer page,
-            @RequestParam Integer size) {
-        Page<ResGetStoreDtoV1> stores = storeServiceV1.getStores(page, size);
+    public ResponseEntity<PageResponse<ResGetStoreListDtoV1>> getStores(
+            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC)Pageable pageable) {
+
+        Pageable validatePageable = PageUtil.validatePageSize(pageable);
+
+        Page<ResGetStoreListDtoV1> stores = storeServiceV1.getStores(validatePageable);
         return ResponseEntity.status(HttpStatus.OK).body(new PageResponse<>(stores));
     }
 

@@ -2,28 +2,28 @@ package com.example.whostolemyfood.store.domain.entity;
 
 import com.example.whostolemyfood.global.entity.BaseSoftDeleteEntity;
 import com.example.whostolemyfood.store.presentation.dto.request.ReqUpdateStoreDtoV1;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
-import org.hibernate.annotations.UuidGenerator;
 
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.UUID;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
+@Builder
 @SQLRestriction("is_deleted = false")
-@SQLDelete(sql = "UPDATE store_entity SET is_deleted = true WHERE store_id = ?")
+@SQLDelete(sql = "UPDATE p_stores SET is_deleted = true WHERE store_id = ?")
 @Table(name = "p_stores")
 public class StoreEntity extends BaseSoftDeleteEntity {
     @Id
     @Column(name = "store_id")
-    @GeneratedValue
-    @UuidGenerator
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     // store_rating_id
@@ -36,10 +36,13 @@ public class StoreEntity extends BaseSoftDeleteEntity {
 //    @Column(name = "area_id")
 //    private Area area;
     // store_status_id
-
+    @Column(nullable = false, unique = true)
     private String name;
+    @Column(nullable = false)
     private String address;
+    @Column(nullable = false)
     private String phone;
+    @Column(nullable = false)
     private String content;
 
     @Column(name = "min_order_price")
@@ -48,19 +51,20 @@ public class StoreEntity extends BaseSoftDeleteEntity {
     @Enumerated(EnumType.STRING)
     private StoreStatus status = StoreStatus.OPEN;
 
+    @JsonFormat(pattern = "HH:mm")
+    @Column(name = "open_time")
+    private LocalTime openTime;
+    @JsonFormat(pattern = "HH:mm")
+    @Column(name = "close_time")
+    private LocalTime closeTime;
+
     @Column(name = "is_hidden")
+    @Builder.Default
     private Boolean isHidden = false;
     @Column(name = "is_deleted")
+    @Builder.Default
     private Boolean isDeleted = false;
 
-    @Builder
-    public StoreEntity(String name, String address, String phone, String content, Integer minOrderPrice) {
-        this.name = name;
-        this.address = address;
-        this.phone = phone;
-        this.content = content;
-        this.minOrderPrice = minOrderPrice;
-    }
 
     // owner용 업데이트
     public void updateAllFields(ReqUpdateStoreDtoV1 request) {
@@ -70,6 +74,8 @@ public class StoreEntity extends BaseSoftDeleteEntity {
         this.content = request.getContent();
         this.minOrderPrice = request.getMinOrderPrice();
         this.status = request.getStatus();
+        this.openTime = request.getOpenTime();
+        this.closeTime = request.getCloseTime();
         // 상태, 숨김
     }
 
@@ -79,8 +85,9 @@ public class StoreEntity extends BaseSoftDeleteEntity {
 //        this.isHidden = request.getIsHidden();
 //    }
 
-    public void deleteByOwnerAndMaster(UUID storeId) {
+    public void deleteByOwnerAndMaster(UUID deletedBy) {
         this.isDeleted = true;
-        this.delete(storeId);
+        super.delete(deletedBy);
+        this.status = StoreStatus.SHUTDOWN;
     }
 }
