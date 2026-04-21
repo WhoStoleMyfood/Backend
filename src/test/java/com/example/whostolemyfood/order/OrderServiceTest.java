@@ -50,8 +50,8 @@ public class OrderServiceTest {
 
         ResCreateOrderDtoV1 response = orderService.createOrder(request);
 
-        // 20000*1 + 5000*2 = 30000
-        assertThat(response.getTotalPrice()).isEqualTo(30000);
+        // 20000*1 + 5000*2 + 3000(배달비) = 33000
+        assertThat(response.getTotalPrice()).isEqualTo(33000);
     }
 
     @Test

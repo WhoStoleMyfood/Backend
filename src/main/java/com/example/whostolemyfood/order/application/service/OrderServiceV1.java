@@ -35,17 +35,20 @@ public class OrderServiceV1 {
         // TODO: [인증/인가] SecurityContext 기반 CUSTOMER ID 추출
         UUID mockUserId = UUID.randomUUID(); 
 
-        int totalPrice = request.getOrderItems().stream()
+        int itemTotalPrice = request.getOrderItems().stream()
                 .mapToInt(item -> item.getPriceAtOrder() * item.getQuantity())
                 .sum();
+
+        int deliveryFee = 3000; // 기본 배달비
+        int finalTotalPrice = itemTotalPrice + deliveryFee; // 최종 합산 금액
 
         OrderEntity order = OrderEntity.builder()
                 .userId(mockUserId)
                 .storeId(request.getStoreId())
                 .addressId(request.getAddressId())
                 .request(request.getRequest())
-                .totalPrice(totalPrice)
-                .deliveryFee(3000) 
+                .totalPrice(finalTotalPrice) // 결제 시 이 필드만 쓸 수 있도록 수정
+                .deliveryFee(deliveryFee)
                 .status(OrderStatus.PENDING)
                 .build();
 
