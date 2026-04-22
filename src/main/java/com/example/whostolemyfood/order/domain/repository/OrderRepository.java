@@ -1,14 +1,9 @@
 package com.example.whostolemyfood.order.domain.repository;
 
 import com.example.whostolemyfood.order.domain.entity.OrderEntity;
-import jakarta.validation.constraints.NotBlank;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-
-import java.util.Optional;
-
-import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -43,5 +38,11 @@ public interface OrderRepository extends JpaRepository<OrderEntity, UUID> {
     Optional<OrderEntity> findByOrderIdAndUserId(UUID orderId, UUID userId);
 
     Page<OrderEntity> findAllByIsHiddenAndIsDeletedFalse(Boolean isHidden, Pageable pageable);
+
+    /**
+     * Soft Delete가 false인지 검사
+     */
+    Optional<OrderEntity> findByOrderIdAndIsDeletedFalse(UUID orderId);
+}
 
 
