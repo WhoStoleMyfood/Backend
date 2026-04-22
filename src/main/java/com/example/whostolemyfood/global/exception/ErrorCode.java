@@ -12,6 +12,9 @@ public enum ErrorCode {
     USER_DUPLICATION_EMAIL(HttpStatus.BAD_REQUEST, "U002", "이미 존재하는 이메일입니다."),
     USER_WRONG_PW(HttpStatus.UNAUTHORIZED, "U003", "비밀번호가 일치하지 않습니다."),
 
+    //Auth
+    ACCESS_DENIED(HttpStatus.NOT_FOUND, "A001", "잘못된 권한입니다."),
+
     // Global
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "G001", "서버 내부 오류입니다.");
 

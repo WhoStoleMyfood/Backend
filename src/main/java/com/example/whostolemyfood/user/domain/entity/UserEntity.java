@@ -57,4 +57,17 @@ public class UserEntity extends BaseAuditEntity {
         // AddressEntity 측에도 유저 정보를 세팅해줘야 양방향 정합성이 맞습니다.
         // 때문에 AddressEntity에 setUser(this) 같은 메서드가 필요합니다.
     }
+
+    /**
+     회원 정보 수정을 위한 메서드
+    */
+    public void updateUserInfo(String name, String password) {
+        if (name != null && !name.isBlank()) {
+            this.userName = name;
+        }
+        // 비밀번호는 수정용 데이터가 들어왔을 때만 변경하도록 방어 로직 추가
+        if (password != null && !password.isBlank()) {
+            this.userPassword = password;
+        }
+    }
 }

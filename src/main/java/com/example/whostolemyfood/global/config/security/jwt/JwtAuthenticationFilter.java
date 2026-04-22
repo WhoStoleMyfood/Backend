@@ -1,12 +1,17 @@
 package com.example.whostolemyfood.global.config.security.jwt;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
@@ -27,60 +32,39 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
+        // 1. 요청 헤더에서 Bearer 토큰 추출
         String token = resolveToken(request);
 
-        // 1. 토큰이 없는 경우: 그냥 다음 필터로 넘김
-        if (!StringUtils.hasText(token)) {
-            filterChain.doFilter(request, response);
-            return;
-        }
+        // 2. 토큰이 유효한지 검증
+        if (StringUtils.hasText(token) && jwtUtil.validateToken(token)) {
+            try {
+                // 3. 토큰에서 사용자 정보 추출 (UUID와 Role)
+                String userIdString = jwtUtil.extractSubject(token);
+                String role = jwtUtil.extractRole(token); // JwtUtil에 해당 메서드가 있어야 함
+                UUID userId = UUID.fromString(userIdString);
 
-        // 2. 토큰이 유효하지 않은 경우: 로그 남기고 다음 필터로 넘김
-        if (!jwtUtil.validateToken(token)) {
-            log.warn("유효하지 않은 토큰입니다.");
-            filterChain.doFilter(request, response);
-            return;
-        }
+                log.info("인증 성공: userId={}, role={}", userId, role);
 
-        // 3. 토큰이 유효한 경우: 인증 정보 설정
-        try {
-            String subject = jwtUtil.extractSubject(token);
-            String role = jwtUtil.extractRole(token);
+                // 4. 시큐리티 전용 권한 객체 생성 (ROLE_ 접두사 관례 준수)
+                List<SimpleGrantedAuthority> authorities =
+                        Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role));
 
-            // subject(userId)가 숫자인지 확인 후 처리
-            Long userId = Long.parseLong(subject);
+                // 5. 인증 객체 생성 (Principal에 userId를 직접 넣거나 전용 DTO를 생성해서 넣음)
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(userId, null, authorities);
 
-            // 미니 토큰 구간 (클로버 정보가 없는 경우)
-            if (!jwtUtil.hasCloverInfo(token)) {
-                // MiniAuthUser 클래스가 적절히 정의되어 있어야 합니다.
-                // 여기서는 예시로 일반적인 처리를 따릅니다.
-                log.info("미니 토큰 인증 진행 중: userId={}", userId);
-                setAuthentication(request, new MiniAuthUser(userId, role));
+                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                // 풀 토큰 구간 (클로버 정보가 있는 경우)
-            } else {
-                Long cloverId = jwtUtil.extractCloverId(token);
-                String cloverName = jwtUtil.extractCloverName(token);
+                // 6. SecurityContextHolder에 인증 정보 저장 (이후 컨트롤러에서 꺼내 쓸 수 있음)
+                SecurityContextHolder.getContext().setAuthentication(authentication);
 
-                log.info("풀 토큰 인증 진행 중: userId={}, cloverId={}", userId, cloverId);
-                setAuthentication(request, new AuthUser(userId, role, cloverId, cloverName));
+            } catch (Exception e) {
+                log.error("Security Context 인증 설정 실패: {}", e.getMessage());
             }
-        } catch (Exception e) {
-            log.error("Security Context에 인증 정보를 설정할 수 없습니다: {}", e.getMessage());
         }
 
+        // 7. 다음 필터로 진행
         filterChain.doFilter(request, response);
-    }
-
-    // 인증 객체를 생성하여 SecurityContext에 저장하는 공통 메서드
-    private void setAuthentication(HttpServletRequest request, Object authUser) {
-        // authUser가 Authorities를 가지고 있다고 가정 (UserDetails 구현체 등)
-        // 실제 프로젝트의 MiniAuthUser, AuthUser 구조에 맞게 캐스팅이 필요할 수 있습니다.
-        UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(authUser, null, null); // 세 번째 인자는 권한 목록
-
-        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-        SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 
     private String resolveToken(HttpServletRequest request) {

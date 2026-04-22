@@ -16,7 +16,6 @@ public interface AuthService {
 
     //유저 로그인 및 로그아웃
     ResLoginDtoV1 login(@Valid ReqLoginDtoV1 requestDto);
-
     void logout(@Valid UUID userId);
 
 //    TokenResponse reissue();

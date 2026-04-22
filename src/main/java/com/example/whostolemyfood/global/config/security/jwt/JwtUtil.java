@@ -2,19 +2,22 @@ package com.example.whostolemyfood.global.config.security.jwt;
 
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
-import java.time.Duration;
 import java.util.Date;
+import java.util.UUID;
 
 import org.springframework.stereotype.Component;
+
+import com.example.whostolemyfood.user.domain.entity.UserRole;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class JwtUtil {
@@ -24,65 +27,53 @@ public class JwtUtil {
 
     @PostConstruct
     public void init() {
-        // properties에서 가져온 secret string을 Key 객체로 변환
+        // secret string을 Key 객체로 변환
         this.key = Keys.hmacShaKeyFor(properties.getSecret().getBytes(StandardCharsets.UTF_8));
     }
 
-    public boolean hasCloverInfo(String token) {
-        Claims claims = parseClaims(token);
-        Object cloverId = claims.get("cloverId");
-        Object cloverName = claims.get("cloverName");
-
-        return cloverId instanceof Number && cloverName instanceof String;
-    }
-
-    public String createMiniToken(String userId, String role) {
+    /**
+     * Access Token 생성 (UUID와 Role을 담습니다)
+     */
+    public String createToken(UUID userId, UserRole role) {
         Date now = new Date();
-        long duration = role.equals("Master")
-                ? Duration.ofHours(12).toMillis()
-                : Duration.ofMinutes(15).toMillis();
-
-        Date expiry = new Date(now.getTime() + duration);
+        Date expiry = new Date(now.getTime() + getAccessTokenExpireMillis());
 
         return Jwts.builder()
-                .subject(userId)         // setSubject -> subject
-                .claim("role", role)
-                .issuedAt(now)           // setIssuedAt -> issuedAt
-                .expiration(expiry)      // setExpiration -> expiration
-                .signWith(key)           // 알고리즘(HS512 등)은 key를 보고 자동 결정됨
-                .compact();
-    }
-
-    public String generateAccessToken(String userId, String role, Long cloverId, String cloverName) {
-        return Jwts.builder()
-                .subject(userId)
-                .claim("role", role)
-                .claim("cloverId", cloverId)
-                .claim("cloverName", cloverName)
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + getAccessTokenExpireMillis()))
+                .subject(userId.toString()) // UUID를 String으로 저장
+                .claim("role", role.name())  // 권한 정보 추가
+                .issuedAt(now)
+                .expiration(expiry)
                 .signWith(key)
                 .compact();
     }
 
-    public String generateRefreshToken(String userId) {
+    /**
+     * Refresh Token 생성 (보통 보안상 subject만 담습니다)
+     */
+    public String generateRefreshToken(UUID userId) {
+        Date now = new Date();
+        Date expiry = new Date(now.getTime() + getRefreshTokenExpireMillis());
+
         return Jwts.builder()
-                .subject(userId)
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + getRefreshTokenExpireMillis()))
+                .subject(userId.toString())
+                .issuedAt(now)
+                .expiration(expiry)
                 .signWith(key)
                 .compact();
     }
 
+    /**
+     * 토큰 유효성 검증
+     */
     public boolean validateToken(String token) {
         try {
-            // parserBuilder().setSigningKey() -> parser().verifyWith()
             Jwts.parser()
                     .verifyWith((javax.crypto.SecretKey) key)
                     .build()
-                    .parseSignedClaims(token); // parseClaimsJws -> parseSignedClaims
+                    .parseSignedClaims(token);
             return true;
         } catch (JwtException | IllegalArgumentException e) {
+            log.warn("JWT 검증 실패: {}", e.getMessage());
             return false;
         }
     }
@@ -95,14 +86,6 @@ public class JwtUtil {
         return parseClaims(token).get("role", String.class);
     }
 
-    public Long extractCloverId(String token) {
-        return parseClaims(token).get("cloverId", Long.class);
-    }
-
-    public String extractCloverName(String token) {
-        return parseClaims(token).get("cloverName", String.class);
-    }
-
     private long getAccessTokenExpireMillis() {
         return 1000L * 60 * properties.getToken().getAccess().getMinute();
     }
@@ -111,11 +94,11 @@ public class JwtUtil {
         return 1000L * 60 * properties.getToken().getRefresh().getMinute();
     }
 
-    public Claims parseClaims(String token) {
+    private Claims parseClaims(String token) {
         return Jwts.parser()
                 .verifyWith((javax.crypto.SecretKey) key)
                 .build()
                 .parseSignedClaims(token)
-                .getPayload(); // getBody() -> getPayload()
+                .getPayload();
     }
 }
