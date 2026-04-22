@@ -1,6 +1,6 @@
 package com.example.whostolemyfood.address.domain.entity;
 
-import com.example.whostolemyfood.global.entity.BaseSoftDeleteEntity;
+import com.example.whostolemyfood.global.entity.BaseAuditEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -12,14 +12,13 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class AddressEntity extends BaseSoftDeleteEntity {
+public class AddressEntity extends BaseAuditEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "address_id", nullable = false, updatable = false)
     private UUID id;
 
-    // OrderEntity와 동일하게 Entity가 아닌 UUID로 관리
     @Column(name = "user_id", nullable = false)
     private UUID userId;
 
@@ -39,9 +38,7 @@ public class AddressEntity extends BaseSoftDeleteEntity {
     @Builder.Default
     private Boolean isDefault = false;
 
-    @Column(name = "is_deleted", nullable = false)
-    @Builder.Default
-    private Boolean isDeleted = false;
+    // is_deleted 필드 삭제 (부모 클래스와 중복 방지)
 
     public void updateAddress(String alias, String address, String detail, String zipCode, Boolean isDefault) {
         this.alias = alias;
@@ -57,8 +54,5 @@ public class AddressEntity extends BaseSoftDeleteEntity {
         this.isDefault = isDefault;
     }
 
-    public void markAsDeleted(UUID deletedBy) {
-        this.isDeleted = true;
-        super.delete(deletedBy);
-    }
+    // markAsDeleted 삭제 -> 부모의 softDelete(UUID)를 직접 사용합니다.
 }

@@ -32,7 +32,6 @@ public class AddressServiceV1 {
     public ResCreateAddressDtoV1 createAddress(ReqCreateAddressDtoV1 request) {
         // TODO: [인증/인가] SecurityContext 기반 사용자 ID 추출
         UUID mockUserId = UUID.fromString("a7a4e42a-e45a-450c-bcee-ff05c4235698"); 
-        log.info("Creating address for user: {}, alias: {}", mockUserId, request.getAlias());
         
         if (Boolean.TRUE.equals(request.getIsDefault())) {
             handleDefaultAddress(mockUserId);
@@ -48,9 +47,7 @@ public class AddressServiceV1 {
      * 본인의 배송지 목록 조회
      */
     public Page<ResGetAddressDtoV1> getMyAddresses(String alias, Pageable pageable) {
-        // TODO: [인증/인가] SecurityContext 기반 사용자 ID 추출
         UUID mockUserId = UUID.fromString("a7a4e42a-e45a-450c-bcee-ff05c4235698"); 
-        log.info("Fetching addresses for user: {}, filter: {}", mockUserId, alias);
         
         Page<AddressEntity> addresses;
         if (alias != null && !alias.isBlank()) {
@@ -67,19 +64,10 @@ public class AddressServiceV1 {
      */
     @Transactional
     public ResGetAddressDtoV1 updateAddress(UUID addressId, ReqUpdateAddressDtoV1 request) {
-        // TODO: [인증/인가] SecurityContext 기반 사용자 ID 추출
         UUID mockUserId = UUID.fromString("a7a4e42a-e45a-450c-bcee-ff05c4235698"); 
-        log.info("Updating address: {} for user: {}", addressId, mockUserId);
         
         AddressEntity address = addressRepository.findByIdAndIsDeletedFalse(addressId)
                 .orElseThrow(() -> new CustomException(ErrorCode.ADDRESS_NOT_FOUND));
-
-        // TODO: [인증/인가] 본인 확인 로직 (현재 mockUserId가 고정이므로 실제 통합 시 활성화)
-        /*
-        if (!address.getUserId().equals(mockUserId)) {
-            throw new CustomException(ErrorCode.ADDRESS_NOT_OWNER);
-        }
-        */
 
         if (Boolean.TRUE.equals(request.getIsDefault()) && !address.getIsDefault()) {
             handleDefaultAddress(mockUserId);
@@ -101,28 +89,17 @@ public class AddressServiceV1 {
      */
     @Transactional
     public void deleteAddress(UUID addressId) {
-        // TODO: [인증/인가] SecurityContext 기반 사용자 ID 추출
         UUID mockUserId = UUID.fromString("a7a4e42a-e45a-450c-bcee-ff05c4235698"); 
-        log.info("Deleting address: {} for user: {}", addressId, mockUserId);
         
         AddressEntity address = addressRepository.findByIdAndIsDeletedFalse(addressId)
                 .orElseThrow(() -> new CustomException(ErrorCode.ADDRESS_NOT_FOUND));
 
-        // TODO: [인증/인가] 본인 확인 로직
-        /*
-        if (!address.getUserId().equals(mockUserId)) {
-            throw new CustomException(ErrorCode.ADDRESS_NOT_OWNER);
-        }
-        */
-
-        address.markAsDeleted(mockUserId);
+        // 부모(BaseAuditEntity)의 softDelete(UUID)를 호출하여 완벽하게 삭제 처리
+        address.softDelete(mockUserId);
     }
 
     private void handleDefaultAddress(UUID userId) {
         addressRepository.findByUserIdAndIsDefaultTrueAndIsDeletedFalse(userId)
-                .ifPresent(existingDefault -> {
-                    log.info("Unsetting default address: {}", existingDefault.getId());
-                    existingDefault.setDefault(false);
-                });
+                .ifPresent(existingDefault -> existingDefault.setDefault(false));
     }
 }

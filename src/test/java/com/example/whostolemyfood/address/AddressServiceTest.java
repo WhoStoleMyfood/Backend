@@ -80,7 +80,7 @@ public class AddressServiceTest {
     @DisplayName("[성공] 배송지 목록 조회 - 별칭 검색어 포함 시 필터링 결과 반환")
     void getMyAddressesWithSearchTest() {
         // Given
-        AddressEntity address = AddressEntity.builder().alias("회사").isDeleted(false).build();
+        AddressEntity address = AddressEntity.builder().alias("회사").build();
         given(addressRepository.findAllByUserIdAndAliasContainingAndIsDeletedFalse(any(), any(), any()))
                 .willReturn(new PageImpl<>(List.of(address)));
 
@@ -98,9 +98,8 @@ public class AddressServiceTest {
         UUID addressId = UUID.randomUUID();
         AddressEntity address = AddressEntity.builder()
                 .id(addressId)
-                .userId(UUID.randomUUID()) // ENP 방지를 위해 userId 설정
+                .userId(UUID.randomUUID())
                 .alias("옛날집")
-                .isDeleted(false)
                 .build();
         
         given(addressRepository.findByIdAndIsDeletedFalse(addressId)).willReturn(Optional.of(address));

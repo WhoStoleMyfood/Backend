@@ -31,6 +31,7 @@ public class ReqCreateAddressDtoV1 {
                 .detail(this.detail)
                 .zipCode(this.zipCode)
                 .isDefault(this.isDefault != null ? this.isDefault : false)
+                // isDeleted는 부모(BaseSoftDeleteEntity)가 자동으로 false로 설정.
                 .build();
     }
 }
