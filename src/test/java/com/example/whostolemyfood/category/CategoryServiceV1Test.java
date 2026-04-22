@@ -6,8 +6,7 @@ import static org.mockito.BDDMockito.*;
 import com.example.whostolemyfood.category.application.service.CategoryServiceV1;
 import com.example.whostolemyfood.category.domain.entity.CategoryEntity;
 import com.example.whostolemyfood.category.domain.repository.CategoryRepository;
-import com.example.whostolemyfood.category.presentation.dto.request.ReqCreateCategoryDtoV1;
-import com.example.whostolemyfood.category.presentation.dto.request.ReqUpdateCategoryDtoV1;
+import com.example.whostolemyfood.category.presentation.dto.request.ReqCategoryDtoV1;
 import com.example.whostolemyfood.category.presentation.dto.response.ResGetCategoryDtoV1;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,7 +31,7 @@ class CategoryServiceV1Test {
     @DisplayName("카테고리 생성 성공")
     void createCategory_success() {
         // given
-        ReqCreateCategoryDtoV1 request = new ReqCreateCategoryDtoV1("한식");
+        ReqCategoryDtoV1 request = new ReqCategoryDtoV1("한식");
         CategoryEntity savedEntity = CategoryEntity.builder()
                 .categoryId(UUID.randomUUID())
                 .name("한식")
@@ -67,7 +66,7 @@ class CategoryServiceV1Test {
     void updateCategory_success() {
         // given
         UUID categoryId = UUID.randomUUID();
-        ReqUpdateCategoryDtoV1 updateRequest = new ReqUpdateCategoryDtoV1(categoryId, "중식");
+        ReqCategoryDtoV1 updateRequest = new ReqCategoryDtoV1("중식");
 
         CategoryEntity existingCategory = CategoryEntity.builder()
                 .categoryId(categoryId)
@@ -78,7 +77,7 @@ class CategoryServiceV1Test {
                 .willReturn(Optional.of(existingCategory));
 
         // when
-        ResGetCategoryDtoV1 result = categoryService.updateCategory(updateRequest);
+        ResGetCategoryDtoV1 result = categoryService.updateCategory(categoryId,updateRequest);
 
         // then
         assertThat(result.getName()).isEqualTo("중식");

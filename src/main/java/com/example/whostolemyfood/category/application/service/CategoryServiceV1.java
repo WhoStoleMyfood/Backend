@@ -2,11 +2,8 @@ package com.example.whostolemyfood.category.application.service;
 
 import com.example.whostolemyfood.category.domain.entity.CategoryEntity;
 import com.example.whostolemyfood.category.domain.repository.CategoryRepository;
-import com.example.whostolemyfood.category.presentation.dto.request.ReqCreateCategoryDtoV1;
-import com.example.whostolemyfood.category.presentation.dto.request.ReqUpdateCategoryDtoV1;
+import com.example.whostolemyfood.category.presentation.dto.request.ReqCategoryDtoV1;
 import com.example.whostolemyfood.category.presentation.dto.response.ResGetCategoryDtoV1;
-import com.example.whostolemyfood.order.domain.entity.OrderEntity;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,7 +20,7 @@ public class CategoryServiceV1 {
 
     //카테고리 생성
     @Transactional
-    public ResGetCategoryDtoV1 createCategory(ReqCreateCategoryDtoV1 reqCreateCategoryDto) {
+    public ResGetCategoryDtoV1 createCategory(ReqCategoryDtoV1 reqCreateCategoryDto) {
         CategoryEntity categoryEntity=CategoryEntity
                 .builder()
                 .categoryId(UUID.randomUUID())
@@ -54,10 +51,10 @@ public class CategoryServiceV1 {
      * 카테고리 수정
      */
     @Transactional
-    public ResGetCategoryDtoV1 updateCategory(ReqUpdateCategoryDtoV1 reqUpdateCategoryDto) {
-        CategoryEntity categoryEntity = getCategoryById(reqUpdateCategoryDto.getCategoryId());
+    public ResGetCategoryDtoV1 updateCategory(UUID id, ReqCategoryDtoV1 reqCategoryDto) {
+        CategoryEntity categoryEntity = getCategoryById(id);
 
-        categoryEntity.updateName(reqUpdateCategoryDto.getName());
+        categoryEntity.updateName(reqCategoryDto.getName());
         return ResGetCategoryDtoV1.from(categoryEntity);
     }
 
