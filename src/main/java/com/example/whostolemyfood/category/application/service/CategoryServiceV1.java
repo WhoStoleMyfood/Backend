@@ -20,11 +20,14 @@ public class CategoryServiceV1 {
 
     //카테고리 생성
     @Transactional
-    public ResGetCategoryDtoV1 createCategory(ReqCategoryDtoV1 reqCreateCategoryDto) {
+    public ResGetCategoryDtoV1 createCategory(ReqCategoryDtoV1 reqCategoryDto) {
+        if (categoryRepository.existsByNameAndIsDeletedFalse(reqCategoryDto.getName())) {
+            throw new IllegalArgumentException("이미 존재하는 카테고리입니다.");
+        }
         CategoryEntity categoryEntity=CategoryEntity
                 .builder()
                 .categoryId(UUID.randomUUID())
-                .name(reqCreateCategoryDto.getName())
+                .name(reqCategoryDto.getName())
                 .build();
         categoryEntity=categoryRepository.save(categoryEntity);
         return ResGetCategoryDtoV1.from(categoryEntity);

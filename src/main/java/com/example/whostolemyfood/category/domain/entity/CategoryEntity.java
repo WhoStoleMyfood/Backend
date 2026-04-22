@@ -25,7 +25,7 @@ public class CategoryEntity extends BaseAuditEntity {
     private UUID categoryId;
 
     // 카테고리 명
-    @Column(name="name")
+    @Column(name="name",unique = true)
     private String name;
 
     @Builder
