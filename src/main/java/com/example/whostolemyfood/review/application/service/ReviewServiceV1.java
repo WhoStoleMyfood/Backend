@@ -20,6 +20,7 @@ import com.example.whostolemyfood.user.domain.entity.UserEntity;
 import com.example.whostolemyfood.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -174,7 +175,8 @@ public class ReviewServiceV1 {
 	}
 
 	public Page<ResGetReviewPageDtoV1> getReviews(ReqGetReviewsDtoV1 condition) {
-		Page<ReviewEntity> reviewPage = reviewRepository.search(condition);
+		Pageable pageable = condition.toPageable(); // 네 방식에 맞게
+		Page<ReviewEntity> reviewPage = reviewRepository.findAllByIsDeletedFalse(pageable);
 
 		return reviewPage.map(review -> ResGetReviewPageDtoV1.builder()
 			.reviewId(review.getReviewId())
