@@ -17,6 +17,14 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * JWT(JSON Web Token) 생성, 검증 및 정보 추출을 담당하는 유틸리티 클래스입니다.
+ * * - Access Token 및 Refresh Token 발급
+ * - 토큰의 유효성(만료 여부, 서명 등) 검증
+ * - 토큰 내부의 Payload(Subject, Role 등) 추출
+ * - UUID 기반의 사용자 식별 체계 지원
+ */
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -31,9 +39,9 @@ public class JwtUtil {
         this.key = Keys.hmacShaKeyFor(properties.getSecret().getBytes(StandardCharsets.UTF_8));
     }
 
-    /**
-     * Access Token 생성 (UUID와 Role을 담습니다)
-     */
+
+    //Access Token 생성
+
     public String createToken(UUID userId, UserRole role) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + getAccessTokenExpireMillis());
@@ -47,9 +55,7 @@ public class JwtUtil {
                 .compact();
     }
 
-    /**
-     * Refresh Token 생성 (보통 보안상 subject만 담습니다)
-     */
+    //Refresh Token 생성
     public String generateRefreshToken(UUID userId) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + getRefreshTokenExpireMillis());
@@ -62,9 +68,7 @@ public class JwtUtil {
                 .compact();
     }
 
-    /**
-     * 토큰 유효성 검증
-     */
+    //토큰 유효성 검증
     public boolean validateToken(String token) {
         try {
             Jwts.parser()

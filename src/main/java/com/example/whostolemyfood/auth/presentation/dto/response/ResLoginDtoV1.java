@@ -9,4 +9,5 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ResLoginDtoV1 {
     private final UUID userId;
+    private final String accessToken;
 }

@@ -3,6 +3,7 @@ package com.example.whostolemyfood.user.presentation.controller;
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -10,44 +11,40 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.whostolemyfood.user.application.security.AuthUser;
 import com.example.whostolemyfood.user.application.service.UserService;
+import com.example.whostolemyfood.user.domain.entity.UserEntity;
 import com.example.whostolemyfood.user.presentation.dto.request.ReqUpdateUserDtoV1;
 import com.example.whostolemyfood.user.presentation.dto.response.ResGetUserByIdDtoV1;
+import com.example.whostolemyfood.user.presentation.dto.response.ResUpdateUserDtoV1;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/users") // 관례상 복수형(users)을 많이 사용합니다.
+@RequestMapping("/api/v1/user")
 public class UserControllerV1 {
 
-    private final UserService userService; // 인터페이스를 주입받는 것이 유연합니다.
+    private final UserService userService;
 
-    /**
-     * 회원 단건 조회
-     */
-    @GetMapping("/{userId}")
-    public ResponseEntity<ResGetUserByIdDtoV1> getUserById(@PathVariable UUID userId) {
-        // 서비스 호출
-        ResGetUserByIdDtoV1 response = userService.getUserById(userId);
+    // 내 정보 조회
+    @GetMapping("/me")
+    public ResponseEntity<ResGetUserByIdDtoV1> getMyInfo(
+            @AuthenticationPrincipal AuthUser loginUser // 1. 타입 변경!
+    ) {
+        // 2. loginUser.userId()로 안전하게 ID를 꺼내서 서비스에 넘깁니다.
+        return ResponseEntity.ok(userService.getUserById(loginUser.userId()));
+    }
 
-        // 성공 시 200 OK와 함께 데이터 반환
+    @PatchMapping("/me")
+    public ResponseEntity<ResUpdateUserDtoV1> updateMyInfo(
+            @AuthenticationPrincipal AuthUser loginUser,
+            @Valid @RequestBody ReqUpdateUserDtoV1 requestDto
+    ) {
+
+        ResUpdateUserDtoV1 response = userService.updateUser(loginUser.userId(), requestDto);
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * 회원 정보 수정
-     */
-    @PatchMapping("/{userId}")
-    public ResponseEntity<Void> updateUser(
-            @PathVariable UUID userId,
-            @Valid @RequestBody ReqUpdateUserDtoV1 requestDto
-    ) {
-        // 서비스 호출 (수정 로직 수행)
-        userService.updateUser(userId, requestDto);
-
-        // 수정 완료 시 별도의 바디 없이 200 OK 혹은 204 No Content 반환
-        return ResponseEntity.ok().build();
-    }
 }

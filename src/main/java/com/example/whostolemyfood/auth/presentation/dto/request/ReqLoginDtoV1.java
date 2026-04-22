@@ -2,15 +2,16 @@ package com.example.whostolemyfood.auth.presentation.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 
 @Getter
-@RequiredArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 public class ReqLoginDtoV1 {
-    @NotBlank(message = "필수 입력값을 입력해주세요.")
-    private final String email;
 
-    @NotBlank(message = "필수 입력값을 입력해주세요.")
-    private final String password;
+    @NotBlank(message = "이메일을 입력해주세요.")
+    private String email;
+
+    @NotBlank(message = "비밀번호를 입력해주세요.")
+    private String password;
 }

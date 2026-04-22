@@ -58,9 +58,7 @@ public class UserEntity extends BaseAuditEntity {
         // 때문에 AddressEntity에 setUser(this) 같은 메서드가 필요합니다.
     }
 
-    /**
-     회원 정보 수정을 위한 메서드
-    */
+    // 회원정보 수정 메서드
     public void updateUserInfo(String name, String password) {
         if (name != null && !name.isBlank()) {
             this.userName = name;

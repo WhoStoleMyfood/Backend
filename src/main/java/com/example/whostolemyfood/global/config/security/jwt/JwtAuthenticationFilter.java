@@ -18,6 +18,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.example.whostolemyfood.user.application.security.AuthUser; // 패키지 경로 확인!
+import com.example.whostolemyfood.user.domain.entity.UserRole;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -32,38 +35,39 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        // 1. 요청 헤더에서 Bearer 토큰 추출
         String token = resolveToken(request);
 
-        // 2. 토큰이 유효한지 검증
         if (StringUtils.hasText(token) && jwtUtil.validateToken(token)) {
             try {
-                // 3. 토큰에서 사용자 정보 추출 (UUID와 Role)
+                // 3. 토큰에서 사용자 정보 추출
                 String userIdString = jwtUtil.extractSubject(token);
-                String role = jwtUtil.extractRole(token); // JwtUtil에 해당 메서드가 있어야 함
+                String roleName = jwtUtil.extractRole(token);
                 UUID userId = UUID.fromString(userIdString);
+                UserRole role = UserRole.valueOf(roleName); // String을 Enum으로 변환
 
                 log.info("인증 성공: userId={}, role={}", userId, role);
 
-                // 4. 시큐리티 전용 권한 객체 생성 (ROLE_ 접두사 관례 준수)
+                // 4. 권한 객체 생성
                 List<SimpleGrantedAuthority> authorities =
-                        Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role));
+                        Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role.name()));
 
-                // 5. 인증 객체 생성 (Principal에 userId를 직접 넣거나 전용 DTO를 생성해서 넣음)
+                // 🌟 5. 핵심: Principal에 UUID 대신 'AuthUser' 신분증 객체를 생성해서 넣습니다.
+                // 이메일 정보가 토큰에 없다면 우선 임시값("N/A")을 넣거나, JwtUtil을 고쳐서 이메일도 추출하세요!
+                AuthUser authUser = new AuthUser(userId, "N/A", role);
+
+                // 이제 첫 번째 인자로 UUID가 아닌 authUser(신분증)가 들어갑니다.
                 UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(userId, null, authorities);
+                        new UsernamePasswordAuthenticationToken(authUser, null, authorities);
 
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                // 6. SecurityContextHolder에 인증 정보 저장 (이후 컨트롤러에서 꺼내 쓸 수 있음)
+                // 6. SecurityContextHolder에 인증 정보 저장
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
             } catch (Exception e) {
                 log.error("Security Context 인증 설정 실패: {}", e.getMessage());
             }
         }
-
-        // 7. 다음 필터로 진행
         filterChain.doFilter(request, response);
     }
 

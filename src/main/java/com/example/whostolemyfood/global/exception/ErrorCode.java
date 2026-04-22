@@ -12,7 +12,7 @@ public enum ErrorCode {
     USER_DUPLICATION_EMAIL(HttpStatus.BAD_REQUEST, "U002", "이미 존재하는 이메일입니다."),
     USER_WRONG_PW(HttpStatus.UNAUTHORIZED, "U003", "비밀번호가 일치하지 않습니다."),
 
-    //Auth
+    // Auth
     ACCESS_DENIED(HttpStatus.NOT_FOUND, "A001", "잘못된 권한입니다."),
 
     // Global

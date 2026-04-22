@@ -7,9 +7,9 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Component
-@ConfigurationProperties(prefix = "spring.jwt")
+@ConfigurationProperties(prefix = "jwt")
 @Getter
-@Setter //ConfigurationProperties 가 setter를 통해 바인딩을 시도함
+@Setter
 public class JwtProperties {
     private String secret;
     private Token token;

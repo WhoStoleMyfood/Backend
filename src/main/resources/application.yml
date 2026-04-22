@@ -4,9 +4,9 @@ spring:
 
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/whostolemyfood
-    username: postgres
-    password: 1234
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
 
   jpa:
     database: postgresql
@@ -22,9 +22,17 @@ spring:
 
   data:
     redis:
-      host: localhost
-      port: 6379
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
 
 logging:
-  level:
-    org.hibernate.SQL: debug
+    level:
+      org.hibernate.SQL: debug
+
+jwt:
+  secret: ${JWT_SECRET}
+  token:
+    access:
+      minute: ${JWT_ACCESS_MINUTE}
+    refresh:
+      minute: ${JWT_REFRESH_MINUTE}
