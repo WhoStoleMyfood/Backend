@@ -32,19 +32,7 @@ public interface OrderRepository extends JpaRepository<OrderEntity, UUID> {
     /**
      * 전체 주문 중 숨김 여부에 따른 필터링 조회 (삭제된 데이터 제외)
      */
-    Page<OrderEntity> findAllByIsHidden(Boolean isHidden, Pageable pageable);
-
-    /**
-     * 결제를 위한 주문 존재 여부 조회
-     */
-    Optional<OrderEntity> findByOrderIdAndUserId(UUID orderId, UUID userId);
-
     Page<OrderEntity> findAllByIsHiddenAndIsDeletedFalse(Boolean isHidden, Pageable pageable);
 
-    /**
-     * Soft Delete가 false인지 검사
-     */
     Optional<OrderEntity> findByOrderIdAndIsDeletedFalse(UUID orderId);
 }
-
-

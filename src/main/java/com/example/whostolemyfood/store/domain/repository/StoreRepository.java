@@ -6,9 +6,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface StoreRepository extends JpaRepository<StoreEntity, Integer> {
+public interface StoreRepository extends JpaRepository<StoreEntity, UUID> {
 
     Boolean existsByName(String storeName);
 
-    Optional<StoreEntity> findById(UUID id);
+    Optional<StoreEntity> findById(UUID storeId);
 }
