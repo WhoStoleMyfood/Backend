@@ -6,18 +6,28 @@ import com.example.whostolemyfood.order.domain.repository.OrderRepository;
 import com.example.whostolemyfood.review.domain.entity.ReviewEntity;
 import com.example.whostolemyfood.review.domain.repository.ReviewRepository;
 import com.example.whostolemyfood.review.presentation.dto.request.ReqCreateReviewDtoV1;
+import com.example.whostolemyfood.review.presentation.dto.request.ReqGetReviewsDtoV1;
 import com.example.whostolemyfood.review.presentation.dto.request.ReqUpdateReviewDtoV1;
 import com.example.whostolemyfood.review.presentation.dto.response.ResCreateReviewDtoV1;
 import com.example.whostolemyfood.review.presentation.dto.response.ResGetReviewDtoV1;
+import com.example.whostolemyfood.review.presentation.dto.response.ResGetReviewPageDtoV1;
+import com.example.whostolemyfood.review.presentation.dto.response.ResGetStoreRatingSummaryDtoV1;
 import com.example.whostolemyfood.store.domain.entity.StoreEntity;
+import com.example.whostolemyfood.store.domain.entity.StoreRatingSummaryEntity;
+import com.example.whostolemyfood.store.domain.repository.StoreRatingSummaryRepository;
 import com.example.whostolemyfood.store.domain.repository.StoreRepository;
 import com.example.whostolemyfood.user.domain.entity.UserEntity;
 import com.example.whostolemyfood.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.UUID;
+
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +38,7 @@ public class ReviewServiceV1 {
 	private final OrderRepository orderRepository;
 	private final UserRepository userRepository;
 	private final StoreRepository storeRepository;
+	private final StoreRatingSummaryRepository storeRatingSummaryRepository;
 
 	@Transactional
 	public ResCreateReviewDtoV1 createReview(UUID orderId, UUID loginUserId, ReqCreateReviewDtoV1 request) {
@@ -55,7 +66,7 @@ public class ReviewServiceV1 {
 			return ResCreateReviewDtoV1.builder()
 				.reviewId(deletedReview.getReviewId())
 				.orderId(deletedReview.getOrder().getOrderId())
-				.storeId(deletedReview.getStore().getStoreId())
+				.storeId(deletedReview.getStore().getId())
 				.rating(deletedReview.getRating())
 				.content(deletedReview.getContent())
 				.createdAt(deletedReview.getCreatedAt())
@@ -81,7 +92,7 @@ public class ReviewServiceV1 {
 		return ResCreateReviewDtoV1.builder()
 			.reviewId(saved.getReviewId())
 			.orderId(saved.getOrder().getOrderId())
-			.storeId(saved.getStore().getStoreId())
+			.storeId(saved.getStore().getId())
 			.rating(saved.getRating())
 			.content(saved.getContent())
 			.createdAt(saved.getCreatedAt())
@@ -124,6 +135,61 @@ public class ReviewServiceV1 {
 		review.deleteReview(loginUserId);
 	}
 
+	public ResGetStoreRatingSummaryDtoV1 getStoreRatingSummary(UUID storeId) {
+		StoreEntity store = storeRepository.findById(storeId)
+			.orElseThrow(() -> new IllegalArgumentException("가게를 찾을 수 없습니다."));
+
+		StoreRatingSummaryEntity summary = null;
+
+		if (store.getStoreRatingId() != null) {
+			summary = storeRatingSummaryRepository
+				.findByIdAndIsDeletedFalse(store.getStoreRatingId())
+				.orElse(null);
+		}
+
+		if (summary == null) {
+			return ResGetStoreRatingSummaryDtoV1.builder()
+				.storeId(storeId)
+				.reviewCount(0)
+				.totalRatingSum(0)
+				.averageRating(BigDecimal.ZERO.setScale(1, RoundingMode.HALF_UP))
+				.rating1Count(0)
+				.rating2Count(0)
+				.rating3Count(0)
+				.rating4Count(0)
+				.rating5Count(0)
+				.build();
+		}
+
+		return ResGetStoreRatingSummaryDtoV1.builder()
+			.storeId(storeId)
+			.reviewCount(summary.getReviewCount())
+			.totalRatingSum(summary.getTotalRatingSum())
+			.averageRating(summary.getAverageRating())
+			.rating1Count(summary.getRating1Count())
+			.rating2Count(summary.getRating2Count())
+			.rating3Count(summary.getRating3Count())
+			.rating4Count(summary.getRating4Count())
+			.rating5Count(summary.getRating5Count())
+			.build();
+	}
+
+	public Page<ResGetReviewPageDtoV1> getReviews(ReqGetReviewsDtoV1 condition) {
+		Pageable pageable = condition.toPageable(); // 네 방식에 맞게
+		Page<ReviewEntity> reviewPage = reviewRepository.findAllByIsDeletedFalse(pageable);
+
+		return reviewPage.map(review -> ResGetReviewPageDtoV1.builder()
+			.reviewId(review.getReviewId())
+			.orderId(review.getOrder().getOrderId())
+			.storeId(review.getStore().getId())
+			.userId(review.getUser().getId())
+			.userName(review.getUser().getUserName())
+			.rating(review.getRating())
+			.content(review.getContent())
+			.createdAt(review.getCreatedAt())
+			.build());
+	}
+
 	private void validateCreatePermission(OrderEntity order, UUID loginUserId) {
 		if (!order.getUserId().equals(loginUserId)) {
 			throw new SecurityException("본인 주문에만 리뷰를 작성할 수 있습니다.");
@@ -138,7 +204,7 @@ public class ReviewServiceV1 {
 		return ResGetReviewDtoV1.builder()
 			.reviewId(review.getReviewId())
 			.orderId(review.getOrder().getOrderId())
-			.storeId(review.getStore().getStoreId())
+			.storeId(review.getStore().getId())
 			.userId(review.getUser().getId())
 			.userName(review.getUser().getUserName())
 			.rating(review.getRating())
