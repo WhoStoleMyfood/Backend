@@ -17,9 +17,16 @@ public class ResGetAddressDtoV1 {
     private String detail;
     private String zipCode;
     private Boolean isDefault;
-    private LocalDateTime createdAt; // Order 스타일과 맞추기 위해 추가
+    private LocalDateTime createdAt;
+    private String message;
 
+    // 메시지 없이 변환할 때 (기본 호출)
     public static ResGetAddressDtoV1 from(AddressEntity entity) {
+        return from(entity, null); // 아래 메서드를 호출하여 중복 제거
+    }
+
+    // 메시지를 포함하여 변환할 때
+    public static ResGetAddressDtoV1 from(AddressEntity entity, String message) {
         return ResGetAddressDtoV1.builder()
                 .addressId(entity.getId())
                 .alias(entity.getAlias())
@@ -28,6 +35,7 @@ public class ResGetAddressDtoV1 {
                 .zipCode(entity.getZipCode())
                 .isDefault(entity.getIsDefault())
                 .createdAt(entity.getCreatedAt())
+                .message(message)
                 .build();
     }
 }

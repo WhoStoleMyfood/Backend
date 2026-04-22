@@ -7,6 +7,8 @@ import com.example.whostolemyfood.address.presentation.dto.request.ReqCreateAddr
 import com.example.whostolemyfood.address.presentation.dto.request.ReqUpdateAddressDtoV1;
 import com.example.whostolemyfood.address.presentation.dto.response.ResCreateAddressDtoV1;
 import com.example.whostolemyfood.address.presentation.dto.response.ResGetAddressDtoV1;
+import com.example.whostolemyfood.global.exception.CustomException;
+import com.example.whostolemyfood.global.exception.ErrorCode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -90,47 +92,55 @@ public class AddressServiceTest {
     }
 
     @Test
-    @DisplayName("[성공] 배송지 수정 - 본인 확인 통과 시 필드 정보 업데이트")
+    @DisplayName("[성공] 배송지 수정 - 유효한 데이터 입력 시 필드 정보 업데이트")
     void updateAddressSuccessTest() {
         // Given
         UUID addressId = UUID.randomUUID();
-        AddressEntity address = AddressEntity.builder().id(addressId).alias("옛날집").isDeleted(false).build();
+        AddressEntity address = AddressEntity.builder()
+                .id(addressId)
+                .userId(UUID.randomUUID()) // ENP 방지를 위해 userId 설정
+                .alias("옛날집")
+                .isDeleted(false)
+                .build();
+        
         given(addressRepository.findByIdAndIsDeletedFalse(addressId)).willReturn(Optional.of(address));
 
         ReqUpdateAddressDtoV1 request = ReqUpdateAddressDtoV1.builder().alias("새로운집").address("서울").build();
 
-        // TODO: [인증/인가] 통합 후 서비스의 mockUserId와 테스트 ID를 일치시켜 검증 로직 보완 필요
-        ReflectionTestUtils.setField(address, "userId", address.getUserId()); 
+        // When
+        ResGetAddressDtoV1 response = addressService.updateAddress(addressId, request);
 
-        try {
-            ResGetAddressDtoV1 response = addressService.updateAddress(addressId, request);
-            assertThat(response.getAlias()).isEqualTo("새로운집");
-        } catch (Exception ignored) {
-            // 현재 mockUserId(Random)로 인한 본인 확인 실패 예외는 테스트 단계에서 무시
-        }
+        // Then
+        assertThat(response.getAlias()).isEqualTo("새로운집");
     }
 
     @Test
-    @DisplayName("[실패] 배송지 수정 - 존재하지 않는 ID 조회 시 예외 발생")
+    @DisplayName("[실패] 배송지 수정 - 존재하지 않는 ID 조회 시 ADDRESS_NOT_FOUND 예외 발생")
     void updateAddressNotFoundTest() {
         // Given
         UUID addressId = UUID.randomUUID();
         given(addressRepository.findByIdAndIsDeletedFalse(addressId)).willReturn(Optional.empty());
 
-        // When & Then
-        assertThrows(IllegalArgumentException.class, () -> 
+        // When
+        CustomException exception = assertThrows(CustomException.class, () -> 
             addressService.updateAddress(addressId, ReqUpdateAddressDtoV1.builder().build())
         );
+
+        // Then
+        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.ADDRESS_NOT_FOUND);
     }
 
     @Test
-    @DisplayName("[실패] 배송지 삭제 - 존재하지 않는 ID 조회 시 예외 발생")
+    @DisplayName("[실패] 배송지 삭제 - 존재하지 않는 ID 조회 시 ADDRESS_NOT_FOUND 예외 발생")
     void deleteAddressNotFoundTest() {
         // Given
         UUID addressId = UUID.randomUUID();
         given(addressRepository.findByIdAndIsDeletedFalse(addressId)).willReturn(Optional.empty());
 
-        // When & Then
-        assertThrows(IllegalArgumentException.class, () -> addressService.deleteAddress(addressId));
+        // When
+        CustomException exception = assertThrows(CustomException.class, () -> addressService.deleteAddress(addressId));
+
+        // Then
+        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.ADDRESS_NOT_FOUND);
     }
 }

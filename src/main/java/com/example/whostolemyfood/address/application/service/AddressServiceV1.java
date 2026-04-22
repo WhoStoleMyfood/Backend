@@ -6,6 +6,8 @@ import com.example.whostolemyfood.address.presentation.dto.request.ReqCreateAddr
 import com.example.whostolemyfood.address.presentation.dto.request.ReqUpdateAddressDtoV1;
 import com.example.whostolemyfood.address.presentation.dto.response.ResCreateAddressDtoV1;
 import com.example.whostolemyfood.address.presentation.dto.response.ResGetAddressDtoV1;
+import com.example.whostolemyfood.global.exception.CustomException;
+import com.example.whostolemyfood.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -29,7 +31,7 @@ public class AddressServiceV1 {
     @Transactional
     public ResCreateAddressDtoV1 createAddress(ReqCreateAddressDtoV1 request) {
         // TODO: [인증/인가] SecurityContext 기반 사용자 ID 추출
-        UUID mockUserId = UUID.randomUUID(); 
+        UUID mockUserId = UUID.fromString("a7a4e42a-e45a-450c-bcee-ff05c4235698"); 
         log.info("Creating address for user: {}, alias: {}", mockUserId, request.getAlias());
         
         if (Boolean.TRUE.equals(request.getIsDefault())) {
@@ -39,7 +41,7 @@ public class AddressServiceV1 {
         AddressEntity address = request.toEntity(mockUserId);
         AddressEntity savedAddress = addressRepository.save(address);
         
-        return ResCreateAddressDtoV1.from(savedAddress);
+        return ResCreateAddressDtoV1.from(savedAddress, "배송지가 성공적으로 생성되었습니다.");
     }
 
     /**
@@ -47,7 +49,7 @@ public class AddressServiceV1 {
      */
     public Page<ResGetAddressDtoV1> getMyAddresses(String alias, Pageable pageable) {
         // TODO: [인증/인가] SecurityContext 기반 사용자 ID 추출
-        UUID mockUserId = UUID.randomUUID(); 
+        UUID mockUserId = UUID.fromString("a7a4e42a-e45a-450c-bcee-ff05c4235698"); 
         log.info("Fetching addresses for user: {}, filter: {}", mockUserId, alias);
         
         Page<AddressEntity> addresses;
@@ -66,16 +68,18 @@ public class AddressServiceV1 {
     @Transactional
     public ResGetAddressDtoV1 updateAddress(UUID addressId, ReqUpdateAddressDtoV1 request) {
         // TODO: [인증/인가] SecurityContext 기반 사용자 ID 추출
-        UUID mockUserId = UUID.randomUUID(); 
+        UUID mockUserId = UUID.fromString("a7a4e42a-e45a-450c-bcee-ff05c4235698"); 
         log.info("Updating address: {} for user: {}", addressId, mockUserId);
         
         AddressEntity address = addressRepository.findByIdAndIsDeletedFalse(addressId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 배송지입니다. ID: " + addressId));
+                .orElseThrow(() -> new CustomException(ErrorCode.ADDRESS_NOT_FOUND));
 
-        // 본인 확인
+        // TODO: [인증/인가] 본인 확인 로직 (현재 mockUserId가 고정이므로 실제 통합 시 활성화)
+        /*
         if (!address.getUserId().equals(mockUserId)) {
-            throw new IllegalStateException("본인의 배송지만 수정할 수 있습니다.");
+            throw new CustomException(ErrorCode.ADDRESS_NOT_OWNER);
         }
+        */
 
         if (Boolean.TRUE.equals(request.getIsDefault()) && !address.getIsDefault()) {
             handleDefaultAddress(mockUserId);
@@ -89,7 +93,7 @@ public class AddressServiceV1 {
                 request.getIsDefault()
         );
 
-        return ResGetAddressDtoV1.from(address);
+        return ResGetAddressDtoV1.from(address, "배송지 정보가 성공적으로 수정되었습니다.");
     }
 
     /**
@@ -98,15 +102,18 @@ public class AddressServiceV1 {
     @Transactional
     public void deleteAddress(UUID addressId) {
         // TODO: [인증/인가] SecurityContext 기반 사용자 ID 추출
-        UUID mockUserId = UUID.randomUUID(); 
+        UUID mockUserId = UUID.fromString("a7a4e42a-e45a-450c-bcee-ff05c4235698"); 
         log.info("Deleting address: {} for user: {}", addressId, mockUserId);
         
         AddressEntity address = addressRepository.findByIdAndIsDeletedFalse(addressId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 배송지입니다. ID: " + addressId));
+                .orElseThrow(() -> new CustomException(ErrorCode.ADDRESS_NOT_FOUND));
 
+        // TODO: [인증/인가] 본인 확인 로직
+        /*
         if (!address.getUserId().equals(mockUserId)) {
-            throw new IllegalStateException("본인의 배송지만 삭제할 수 있습니다.");
+            throw new CustomException(ErrorCode.ADDRESS_NOT_OWNER);
         }
+        */
 
         address.markAsDeleted(mockUserId);
     }
