@@ -48,29 +48,45 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
 
-        /**
-     * 존재하지 않는 데이터 요청이나 잘못된 인자 값 처리
-     */
-    @ExceptionHandler(IllegalArgumentException.class)
-    protected ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException ex) {
-        ErrorResponse response = ErrorResponse.builder()
-                .status(400)
-                .code("BUSINESS_ERROR")
-                .message(ex.getMessage())
-                .build();
-        return ResponseEntity.badRequest().body(response);
-    }
+//        /**
+//     * 존재하지 않는 데이터 요청이나 잘못된 인자 값 처리
+//     */
+//    @ExceptionHandler(IllegalArgumentException.class)
+//    protected ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException ex) {
+//        ErrorResponse response = ErrorResponse.builder()
+//                .status(400)
+//                .code("BUSINESS_ERROR")
+//                .message(ex.getMessage())
+//                .build();
+//        return ResponseEntity.badRequest().body(response);
+//    }
+//
+//    /**
+//     * 그 외 비즈니스 로직 오류 처리 (주문 상태 위반 등)
+//     */
+//    @ExceptionHandler(IllegalStateException.class)
+//    protected ResponseEntity<ErrorResponse> handleIllegalStateException(IllegalStateException ex) {
+//        ErrorResponse response = ErrorResponse.builder()
+//                .status(400)
+//                .code("BUSINESS_ERROR")
+//                .message(ex.getMessage())
+//                .build();
+//        return ResponseEntity.badRequest().body(response);
+//    }
 
     /**
-     * 그 외 비즈니스 로직 오류 처리 (주문 상태 위반 등)
+     * (추가) 도메인별 상세 에러 처리를 위한 공통 핸들러
+     * 제가 작업하면서 상세 에러 코드가 필요해서 추가해 뒀어요!
      */
-    @ExceptionHandler(IllegalStateException.class)
-    protected ResponseEntity<ErrorResponse> handleIllegalStateException(IllegalStateException ex) {
-        ErrorResponse response = ErrorResponse.builder()
-                .status(400)
-                .code("BUSINESS_ERROR")
-                .message(ex.getMessage())
-                .build();
-        return ResponseEntity.badRequest().body(response);
+    @ExceptionHandler(CustomException.class)
+    protected ResponseEntity<ErrorResponse> handleCustomException(CustomException ex) {
+        ErrorCode errorCode = ex.getErrorCode();
+        return ResponseEntity
+                .status(errorCode.getStatus())
+                .body(ErrorResponse.builder()
+                        .status(errorCode.getStatus().value())
+                        .code(errorCode.getCode())
+                        .message(errorCode.getMessage())
+                        .build());
     }
 }
