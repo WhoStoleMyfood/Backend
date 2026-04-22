@@ -26,6 +26,9 @@ public class StoreEntity extends BaseSoftDeleteEntity {
     private UUID id;
 
     // store_rating_id
+    @Column(name = "store_rating_id")
+    private UUID storeRatingId;
+
     // user_id
 //    @ManyToOne
 //    @JoinColumn(name = "category_id")
@@ -35,6 +38,7 @@ public class StoreEntity extends BaseSoftDeleteEntity {
 //    @Column(name = "area_id")
 //    private Area area;
     // store_status_id
+
     @Column(nullable = false, unique = true)
     private String name;
     @Column(nullable = false)
@@ -91,5 +95,9 @@ public class StoreEntity extends BaseSoftDeleteEntity {
         this.isDeleted = true;
         super.delete(deletedBy);
         this.status = StoreStatus.SHUTDOWN;
+    }
+
+    public void updateStoreRatingId(UUID storeRatingId) {
+        this.storeRatingId = storeRatingId;
     }
 }
