@@ -43,7 +43,8 @@ public class PaymentEntity extends BaseTimeEntity {
 
     private LocalDateTime approvedAt;
 
-    public PaymentEntity(ReqMakePay reqMakePay, OrderEntity order) {
+    public PaymentEntity(ReqMakePay reqMakePay, OrderEntity order, UUID userId) {
+        this.setCreatedInfo(userId);
         this.amount = reqMakePay.getAmount();
         this.paymentKey = reqMakePay.getPaymentKey();
         this.payType = reqMakePay.getPayType();
@@ -52,8 +53,9 @@ public class PaymentEntity extends BaseTimeEntity {
         this.order = order;
     }
 
-    public void payCancel() {
+    public void payCancel(UUID userId) {
         if(payStatus == PaymentStatus.DONE) {
+            this.setUpdatedInfo(userId);
             this.payStatus = PaymentStatus.CANCELED;
         }
     }

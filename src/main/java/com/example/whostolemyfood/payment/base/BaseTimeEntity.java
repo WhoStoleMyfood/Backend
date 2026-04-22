@@ -2,7 +2,10 @@ package com.example.whostolemyfood.payment.base;
 
 import com.example.whostolemyfood.user.domain.entity.UserEntity;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.data.annotation.CreatedBy;
@@ -15,18 +18,27 @@ import java.util.UUID;
 @MappedSuperclass
 @Getter
 @EntityListeners(AuditingEntityListener.class)
+@NoArgsConstructor
+@AllArgsConstructor
 public abstract class BaseTimeEntity {
 
     @CreationTimestamp
     private LocalDateTime createdAt;
 
-    @CreatedBy
     private UUID createdBy;
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    @LastModifiedBy
     private UUID updatedBy;
 
+
+    protected void setCreatedInfo(UUID userId) {
+        this.createdBy = userId;
+        this.updatedBy = userId;
+    }
+
+    protected void setUpdatedInfo(UUID userId) {
+        this.updatedBy = userId;
+    }
 }

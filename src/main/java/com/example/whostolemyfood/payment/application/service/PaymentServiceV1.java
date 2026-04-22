@@ -51,7 +51,7 @@ public class PaymentServiceV1 {
 
         UUID currentAuditor = auditor.getCurrentAuditor().orElseThrow(()-> new RuntimeException("존재하지 않는 유저입니다."));
         OrderEntity orderEntity = orderRepository.findByOrderIdAndUserId(UUID.fromString(reqMakePay.getOrderId()), currentAuditor).orElseThrow(() -> new RuntimeException("존재하지 않는 주문입니다."));
-        PaymentEntity paymentEntity = new PaymentEntity(reqMakePay, orderEntity);
+        PaymentEntity paymentEntity = new PaymentEntity(reqMakePay, orderEntity, currentAuditor);
         paymentRepository.save(paymentEntity);
         return new ResMakePay(paymentEntity.getId(), paymentEntity.getPaymentKey());
 
@@ -62,7 +62,7 @@ public class PaymentServiceV1 {
 
         UUID currentAuditor = auditor.getCurrentAuditor().orElseThrow(()-> new RuntimeException("존재하지 않는 유저입니다."));
         PaymentEntity allByCreatedByAndId = paymentRepository.findAllByCreatedByAndId(currentAuditor, UUID.fromString(reqModifyPay.getPaymentId())).orElseThrow(()-> new RuntimeException("존재하지 않는 결제 내역입니다."));
-        allByCreatedByAndId.payCancel();
+        allByCreatedByAndId.payCancel(currentAuditor);
         return new ResModifyPay(allByCreatedByAndId.getId(), LocalDateTime.now());
 
     }
