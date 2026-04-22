@@ -13,6 +13,7 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 public class ErrorResponse {
+
     private int status;
     private String code;
     private String message;
@@ -27,4 +28,5 @@ public class ErrorResponse {
         private String value;
         private String reason;
     }
+
 }
