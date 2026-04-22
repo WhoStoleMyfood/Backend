@@ -8,7 +8,7 @@ import java.util.UUID;
 
 @Getter
 @Builder
-public class ResGetAreaDtoV1 {
+public class ResCreateAreaDtoV1 {
 
 	private UUID areaId;
 	private String ukName;
@@ -16,8 +16,8 @@ public class ResGetAreaDtoV1 {
 	private String district;
 	private Boolean isActive;
 
-	public static ResGetAreaDtoV1 from(AreaEntity areaEntity) {
-		return ResGetAreaDtoV1.builder()
+	public static ResCreateAreaDtoV1 from(AreaEntity areaEntity) {
+		return ResCreateAreaDtoV1.builder()
 			.areaId(areaEntity.getAreaId())
 			.ukName(areaEntity.getUkName())
 			.city(areaEntity.getCity())
