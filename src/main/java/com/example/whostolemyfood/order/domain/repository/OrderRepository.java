@@ -4,6 +4,8 @@ import com.example.whostolemyfood.order.domain.entity.OrderEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -31,4 +33,9 @@ public interface OrderRepository extends JpaRepository<OrderEntity, UUID> {
      * 전체 주문 중 숨김 여부에 따른 필터링 조회 (삭제된 데이터 제외)
      */
     Page<OrderEntity> findAllByIsHiddenAndIsDeletedFalse(Boolean isHidden, Pageable pageable);
+
+    /**
+     * Soft Delete가 false인지 검사
+     */
+    Optional<OrderEntity> findByOrderIdAndIsDeletedFalse(UUID orderId);
 }
