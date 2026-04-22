@@ -46,24 +46,42 @@ public class ReviewRatingBatchService {
 				: BigDecimal.valueOf((double) totalRatingSum / reviewCount)
 				.setScale(1, RoundingMode.HALF_UP);
 
-			StoreRatingSummaryEntity summary = storeRatingSummaryRepository
-				.findByStoreIdAndIsDeletedFalse(storeId)
-				.orElseGet(() -> StoreRatingSummaryEntity.builder()
-					.storeId(storeId)
-					.build());
+			StoreRatingSummaryEntity summary = null;
 
-			summary.refresh(
-				reviewCount,
-				totalRatingSum,
-				averageRating,
-				rating1Count,
-				rating2Count,
-				rating3Count,
-				rating4Count,
-				rating5Count
-			);
+			if (store.getStoreRatingId() != null) {
+				summary = storeRatingSummaryRepository
+					.findByIdAndIsDeletedFalse(store.getStoreRatingId())
+					.orElse(null);
+			}
 
-			storeRatingSummaryRepository.save(summary);
+			if (summary == null) {
+				summary = StoreRatingSummaryEntity.builder()
+					.reviewCount(reviewCount)
+					.totalRatingSum(totalRatingSum)
+					.averageRating(averageRating)
+					.rating1Count(rating1Count)
+					.rating2Count(rating2Count)
+					.rating3Count(rating3Count)
+					.rating4Count(rating4Count)
+					.rating5Count(rating5Count)
+					.build();
+
+				StoreRatingSummaryEntity savedSummary = storeRatingSummaryRepository.save(summary);
+
+				store.updateStoreRatingId(savedSummary.getId());
+				storeRepository.save(store);
+			} else {
+				summary.refresh(
+					reviewCount,
+					totalRatingSum,
+					averageRating,
+					rating1Count,
+					rating2Count,
+					rating3Count,
+					rating4Count,
+					rating5Count
+				);
+			}
 		}
 	}
 
@@ -80,15 +98,15 @@ public class ReviewRatingBatchService {
 	}
 
 	private int getTotalRatingSum(UUID storeId) {
-		Integer sum = em.createQuery(
+		Long sum = em.createQuery(
 				"select coalesce(sum(r.rating), 0) from ReviewEntity r " +
 					"where r.store.id = :storeId and r.isDeleted = false",
-				Integer.class
+				Long.class
 			)
 			.setParameter("storeId", storeId)
 			.getSingleResult();
 
-		return sum == null ? 0 : sum;
+		return sum == null ? 0 : sum.intValue();
 	}
 
 	private int getCountByRating(UUID storeId, int rating) {

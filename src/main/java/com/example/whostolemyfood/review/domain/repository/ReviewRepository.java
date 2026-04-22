@@ -4,6 +4,8 @@ import com.example.whostolemyfood.review.domain.entity.ReviewEntity;
 import com.example.whostolemyfood.review.presentation.dto.request.ReqGetReviewsDtoV1;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
@@ -19,5 +21,8 @@ public interface ReviewRepository extends JpaRepository<ReviewEntity, UUID> {
 	Optional<ReviewEntity> findByOrder_OrderIdAndIsDeletedTrue(UUID orderId);
 
 	Page<ReviewEntity> search(ReqGetReviewsDtoV1 condition);
+
+	@EntityGraph(attributePaths = {"user", "store", "order"})
+	Page<ReviewEntity> findAllByIsDeletedFalse(Pageable pageable);
 
 }
