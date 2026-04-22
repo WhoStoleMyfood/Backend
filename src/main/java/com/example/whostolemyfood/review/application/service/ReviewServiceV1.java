@@ -20,6 +20,7 @@ import com.example.whostolemyfood.user.domain.entity.UserEntity;
 import com.example.whostolemyfood.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -135,24 +136,33 @@ public class ReviewServiceV1 {
 	}
 
 	public ResGetStoreRatingSummaryDtoV1 getStoreRatingSummary(UUID storeId) {
-		StoreRatingSummaryEntity summary = storeRatingSummaryRepository
-			.findByStoreIdAndIsDeletedFalse(storeId)
-			.orElse(
-				StoreRatingSummaryEntity.builder()
-					.storeId(storeId)
-					.reviewCount(0)
-					.totalRatingSum(0)
-					.averageRating(BigDecimal.ZERO.setScale(1, RoundingMode.HALF_UP))
-					.rating1Count(0)
-					.rating2Count(0)
-					.rating3Count(0)
-					.rating4Count(0)
-					.rating5Count(0)
-					.build()
-			);
+		StoreEntity store = storeRepository.findById(storeId)
+			.orElseThrow(() -> new IllegalArgumentException("가게를 찾을 수 없습니다."));
+
+		StoreRatingSummaryEntity summary = null;
+
+		if (store.getStoreRatingId() != null) {
+			summary = storeRatingSummaryRepository
+				.findByIdAndIsDeletedFalse(store.getStoreRatingId())
+				.orElse(null);
+		}
+
+		if (summary == null) {
+			return ResGetStoreRatingSummaryDtoV1.builder()
+				.storeId(storeId)
+				.reviewCount(0)
+				.totalRatingSum(0)
+				.averageRating(BigDecimal.ZERO.setScale(1, RoundingMode.HALF_UP))
+				.rating1Count(0)
+				.rating2Count(0)
+				.rating3Count(0)
+				.rating4Count(0)
+				.rating5Count(0)
+				.build();
+		}
 
 		return ResGetStoreRatingSummaryDtoV1.builder()
-			.storeId(summary.getStoreId())
+			.storeId(storeId)
 			.reviewCount(summary.getReviewCount())
 			.totalRatingSum(summary.getTotalRatingSum())
 			.averageRating(summary.getAverageRating())
@@ -165,7 +175,8 @@ public class ReviewServiceV1 {
 	}
 
 	public Page<ResGetReviewPageDtoV1> getReviews(ReqGetReviewsDtoV1 condition) {
-		Page<ReviewEntity> reviewPage = reviewRepository.search(condition);
+		Pageable pageable = condition.toPageable(); // 네 방식에 맞게
+		Page<ReviewEntity> reviewPage = reviewRepository.findAllByIsDeletedFalse(pageable);
 
 		return reviewPage.map(review -> ResGetReviewPageDtoV1.builder()
 			.reviewId(review.getReviewId())
