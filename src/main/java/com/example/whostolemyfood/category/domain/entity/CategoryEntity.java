@@ -8,6 +8,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.UUID;
@@ -15,6 +16,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "p_categories")
 @NoArgsConstructor
+@Getter
 public class CategoryEntity extends BaseAuditEntity {
 
     // 카테고리 id
@@ -35,8 +37,6 @@ public class CategoryEntity extends BaseAuditEntity {
     public void updateName(String name) {
         this.name = name;
     }
-
-
 
 
 
