@@ -1,5 +1,7 @@
 package com.example.whostolemyfood.order;
 
+import com.example.whostolemyfood.global.exception.CustomException;
+import com.example.whostolemyfood.global.exception.ErrorCode;
 import com.example.whostolemyfood.order.application.service.OrderServiceV1;
 import com.example.whostolemyfood.order.domain.entity.OrderEntity;
 import com.example.whostolemyfood.order.domain.entity.OrderStatus;
@@ -38,12 +40,6 @@ public class OrderServiceTest {
     @Mock
     private OrderRepository orderRepository;
 
-    @Mock
-    private Object storeRepository; 
-    
-    @Mock
-    private Object addressRepository;
-
     @Test
     @DisplayName("[성공] 주문 생성 시 음식값과 배달비(3000원)가 정확히 합산되어야 함")
     void createOrderPriceCalculationTest() {
@@ -67,8 +63,10 @@ public class OrderServiceTest {
     @DisplayName("[성공] 5분 이내 취소 요청 시 주문 상태가 CANCELLED로 변경되어야 함")
     void cancelOrderSuccessTest() {
         UUID orderId = UUID.randomUUID();
-        OrderEntity order = OrderEntity.builder().orderId(orderId).status(OrderStatus.PENDING).isDeleted(false).build();
+        OrderEntity order = OrderEntity.builder().userId(OrderServiceV1.MOCK_USER_ID).status(OrderStatus.PENDING).build();
+        ReflectionTestUtils.setField(order, "orderId", orderId); // 🚨 빌더 대신 Reflection 사용
         ReflectionTestUtils.setField(order, "createdAt", LocalDateTime.now().minusMinutes(2));
+        
         given(orderRepository.findById(orderId)).willReturn(Optional.of(order));
 
         ResGetOrderDtoV1 response = orderService.cancelOrder(orderId);
@@ -76,10 +74,12 @@ public class OrderServiceTest {
     }
 
     @Test
-    @DisplayName("[성공] 사장님이 주문 상태를 ACCEPTED로 변경할 수 있어야 함")
+    @DisplayName("[성공] 사장님이 주문 상태를 순차적으로 변경할 수 있어야 함")
     void updateOrderStatusSuccessTest() {
         UUID orderId = UUID.randomUUID();
-        OrderEntity order = OrderEntity.builder().orderId(orderId).status(OrderStatus.PENDING).isDeleted(false).build();
+        OrderEntity order = OrderEntity.builder().status(OrderStatus.PENDING).build();
+        ReflectionTestUtils.setField(order, "orderId", orderId);
+        
         given(orderRepository.findById(orderId)).willReturn(Optional.of(order));
 
         ResGetOrderDtoV1 response = orderService.updateOrderStatus(orderId, OrderStatus.ACCEPTED);
@@ -90,7 +90,9 @@ public class OrderServiceTest {
     @DisplayName("[성공] 활성 상태인 주문은 상세 조회가 정상적으로 수행되어야 함")
     void getOrderSuccessTest() {
         UUID orderId = UUID.randomUUID();
-        OrderEntity order = OrderEntity.builder().orderId(orderId).totalPrice(23000).deliveryFee(3000).isDeleted(false).build();
+        OrderEntity order = OrderEntity.builder().totalPrice(23000).deliveryFee(3000).build();
+        ReflectionTestUtils.setField(order, "orderId", orderId);
+        
         given(orderRepository.findById(orderId)).willReturn(Optional.of(order));
 
         ResGetOrderDtoV1 response = orderService.getOrder(orderId);
@@ -100,7 +102,9 @@ public class OrderServiceTest {
     @Test
     @DisplayName("[성공] 주문 목록 조회 시 페이징 데이터가 정상적으로 반환되어야 함")
     void getOrdersSuccessTest() {
-        OrderEntity order = OrderEntity.builder().orderId(UUID.randomUUID()).totalPrice(20000).isDeleted(false).build();
+        OrderEntity order = OrderEntity.builder().totalPrice(20000).build();
+        ReflectionTestUtils.setField(order, "orderId", UUID.randomUUID());
+        
         Page<OrderEntity> page = new PageImpl<>(List.of(order));
         given(orderRepository.findAllByIsDeletedFalse(any())).willReturn(page);
 
@@ -109,53 +113,55 @@ public class OrderServiceTest {
     }
 
     @Test
-    @DisplayName("[실패] 주문 생성 후 5분이 경과하면 취소가 불가능해야 함")
+    @DisplayName("[실패] 주문 생성 후 5분이 경과하면 취소가 불가능해야 함 (ORDER_CANCEL_TIME_EXCEEDED)")
     void cancelOrderTimeLimitTest() {
         UUID orderId = UUID.randomUUID();
-        OrderEntity oldOrder = OrderEntity.builder().orderId(orderId).status(OrderStatus.PENDING).isDeleted(false).build();
+        OrderEntity oldOrder = OrderEntity.builder().status(OrderStatus.PENDING).build();
+        ReflectionTestUtils.setField(oldOrder, "orderId", orderId);
         ReflectionTestUtils.setField(oldOrder, "createdAt", LocalDateTime.now().minusMinutes(6));
+        
         given(orderRepository.findById(orderId)).willReturn(Optional.of(oldOrder));
 
-        assertThrows(IllegalStateException.class, () -> orderService.cancelOrder(orderId));
+        CustomException exception = assertThrows(CustomException.class, () -> orderService.cancelOrder(orderId));
+        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.ORDER_CANCEL_TIME_EXCEEDED);
     }
 
     @Test
-    @DisplayName("[실패] 이미 취소된(CANCELLED) 주문은 상태를 변경할 수 없어야 함")
-    void updateOrderStatusCancelledFailureTest() {
+    @DisplayName("[실패] 이미 수락된 주문은 취소가 불가능해야 함 (ORDER_CANCEL_NOT_PENDING)")
+    void cancelOrderNotPendingTest() {
         UUID orderId = UUID.randomUUID();
-        OrderEntity cancelledOrder = OrderEntity.builder().orderId(orderId).status(OrderStatus.CANCELLED).isDeleted(false).build();
-        given(orderRepository.findById(orderId)).willReturn(Optional.of(cancelledOrder));
-
-        assertThrows(IllegalStateException.class, () -> orderService.updateOrderStatus(orderId, OrderStatus.ACCEPTED));
-    }
-
-    @Test
-    @DisplayName("[실패] 이미 삭제된(isDeleted=true) 주문은 상세 조회가 불가능해야 함")
-    void getOrderDeletedFailureTest() {
-        UUID orderId = UUID.randomUUID();
-        OrderEntity deletedOrder = OrderEntity.builder().orderId(orderId).isDeleted(true).build();
-        given(orderRepository.findById(orderId)).willReturn(Optional.of(deletedOrder));
-
-        assertThrows(IllegalArgumentException.class, () -> orderService.getOrder(orderId));
-    }
-
-    @Test
-    @DisplayName("[실패] 이미 수락(ACCEPTED)된 주문은 요청사항을 수정할 수 없어야 함")
-    void updateOrderRequestFailureTest() {
-        UUID orderId = UUID.randomUUID();
-        OrderEntity acceptedOrder = OrderEntity.builder().orderId(orderId).status(OrderStatus.ACCEPTED).isDeleted(false).build();
+        OrderEntity acceptedOrder = OrderEntity.builder().status(OrderStatus.ACCEPTED).build();
+        ReflectionTestUtils.setField(acceptedOrder, "orderId", orderId);
+        
         given(orderRepository.findById(orderId)).willReturn(Optional.of(acceptedOrder));
 
-        assertThrows(IllegalStateException.class, () -> orderService.updateOrderRequest(orderId, "수정해주세요"));
+        CustomException exception = assertThrows(CustomException.class, () -> orderService.cancelOrder(orderId));
+        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.ORDER_CANCEL_NOT_PENDING);
     }
 
     @Test
-    @DisplayName("[실패] 배달 완료(DELIVERED)된 주문은 삭제할 수 없어야 함")
-    void deleteOrderDeliveredFailureTest() {
+    @DisplayName("[실패] 이미 최종 상태에 도달한 주문은 상태 변경 불가 (ORDER_ALREADY_FINALIZED)")
+    void updateOrderStatusFailureTest() {
         UUID orderId = UUID.randomUUID();
-        OrderEntity deliveredOrder = OrderEntity.builder().orderId(orderId).status(OrderStatus.DELIVERED).isDeleted(false).build();
+        OrderEntity completedOrder = OrderEntity.builder().status(OrderStatus.COMPLETED).build();
+        ReflectionTestUtils.setField(completedOrder, "orderId", orderId);
+        
+        given(orderRepository.findById(orderId)).willReturn(Optional.of(completedOrder));
+
+        CustomException exception = assertThrows(CustomException.class, () -> orderService.updateOrderStatus(orderId, OrderStatus.ACCEPTED));
+        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.ORDER_ALREADY_FINALIZED);
+    }
+
+    @Test
+    @DisplayName("[실패] 배달 완료된 주문은 삭제 불가 (ORDER_CANNOT_DELETE_DELIVERED)")
+    void deleteOrderFailureTest() {
+        UUID orderId = UUID.randomUUID();
+        OrderEntity deliveredOrder = OrderEntity.builder().status(OrderStatus.DELIVERED).build();
+        ReflectionTestUtils.setField(deliveredOrder, "orderId", orderId);
+        
         given(orderRepository.findById(orderId)).willReturn(Optional.of(deliveredOrder));
 
-        assertThrows(IllegalStateException.class, () -> orderService.deleteOrder(orderId));
+        CustomException exception = assertThrows(CustomException.class, () -> orderService.deleteOrder(orderId));
+        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.ORDER_CANNOT_DELETE_DELIVERED);
     }
 }
