@@ -32,11 +32,9 @@ public class MenuServiceV1 {
         StoreEntity store = storeRepository.findById(storeId).orElseThrow(
                         ()-> new IllegalArgumentException("해당 스토어를 찾을 수 없습니다")
         );
-//        StoreEntity store = storeRepository.findById(storeId))
-//                .orElseThrow(()-> new IllegalArgumentException("해당 스토어를 찾을 수 없습니다"));
 
         // 스토어 내 메뉴 이름 중복 확인
-        if (menuRepository.existsByStoreIdAndNameAndIsDeletedFalse(store.getId(), request.getName())) {
+        if (menuRepository.existsByStoreIdAndNameAndIsDeletedFalse(store.getStoreId(), request.getName())) {
             throw new IllegalArgumentException("해당 스토어에 이미 존재하는 메뉴 이름입니다");
         }
         MenuEntity menu = MenuEntity.builder()
@@ -70,7 +68,6 @@ public class MenuServiceV1 {
     // 메뉴 수정
     @Transactional
     public ResGetMenuDtoV1 updateMenu(UUID storeId, UUID menuId, ReqUpdateMenuDtoV1 request) {
-        // 수정시에는 숨겨진 메뉴도 수정할수 있기에 isHiddenFalse는 뺴는게 좋을듯
         MenuEntity menu = menuRepository.findByMenuIdAndStoreIdAndIsDeletedFalse(menuId, storeId)
                 .orElseThrow(()-> new IllegalArgumentException("해당 스토어에 메뉴를 찾을 수 없습니다"));
         // 유저 권한 확인
@@ -98,7 +95,7 @@ public class MenuServiceV1 {
     // 메뉴 숨김, 노출
     @Transactional
     public void hiddenMenu(UUID storeId, UUID menuId) {
-        // isHiddenFalse가 없어야지 숨김 상태를 찾아 노출로 변경가
+        // isHiddenFalse가 없어야지 숨김 상태를 찾아 노출로 변경가능
         MenuEntity menu = menuRepository.findByMenuIdAndStoreIdAndIsDeletedFalse(menuId, storeId)
                 .orElseThrow(()-> new IllegalArgumentException("해당 스토어 혹은 메뉴가 존재하지 않습니다"));
 

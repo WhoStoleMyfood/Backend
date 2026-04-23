@@ -38,9 +38,9 @@ public class StoreControllerV1 {
 
     // ALL
     @Operation(summary = "스토어 조회")
-    @GetMapping("/{id}")
-    public ResponseEntity<ResGetStoreDtoV1> getStore(@PathVariable UUID id) {
-        ResGetStoreDtoV1 response = storeServiceV1.getStore(id);
+    @GetMapping("/{storeId}")
+    public ResponseEntity<ResGetStoreDtoV1> getStore(@PathVariable UUID storeId) {
+        ResGetStoreDtoV1 response = storeServiceV1.getStore(storeId);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -57,15 +57,22 @@ public class StoreControllerV1 {
 
     // Owner, manager, master
     @Operation(summary = "스토어 수정")
-    @PutMapping("/{id}")
-    public ResponseEntity<ResGetStoreDtoV1> updateStore(@Valid @PathVariable UUID id, @RequestBody ReqUpdateStoreDtoV1 request) {
-        ResGetStoreDtoV1 response = storeServiceV1.updateStore(id, request);
+    @PutMapping("/{storeId}")
+    public ResponseEntity<ResGetStoreDtoV1> updateStore(@Valid @PathVariable UUID storeId, @RequestBody ReqUpdateStoreDtoV1 request) {
+        ResGetStoreDtoV1 response = storeServiceV1.updateStore(storeId, request);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
+    @Operation(summary = "스토어 숨김 / 노출")
+    @PatchMapping("/{storeId}/hide")
+    public ResponseEntity<Void> hideStore(@Valid @PathVariable UUID storeId) {
+        storeServiceV1.hiddenStore(storeId);
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
     @Operation(summary = "스토어 삭제")
-    @DeleteMapping("/{id}")
-    public void deleteStore(@Valid@PathVariable UUID id) {
-        storeServiceV1.deleteStore(id);
+    @DeleteMapping("/{storeId}")
+    public void deleteStore(@Valid @PathVariable UUID storeId) {
+        storeServiceV1.deleteStore(storeId);
     }
 }

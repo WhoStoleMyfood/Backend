@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ReqCreateMenuDtoV1 {
 
-    @NotBlank
+    @NotBlank(message = "메뉴 이름은 필수입니다")
     private String name;
     @Min(value = 0, message = "메뉴 최소 선정금액은 0원 이상이여야 합니다")
     private Integer price;

@@ -19,7 +19,7 @@ public class ResGetMenuDtoV1 {
 
     public static ResGetMenuDtoV1 from(MenuEntity menu) {
         return new ResGetMenuDtoV1(
-                menu.getStore().getId(),
+                menu.getStore().getStoreId(),
                 menu.getMenuId(),
                 menu.getName(),
                 menu.getPrice(),

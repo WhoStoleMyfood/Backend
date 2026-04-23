@@ -8,8 +8,8 @@ import java.util.UUID;
 
 @Getter
 public class ResCreateStoreDtoV1 {
-    private UUID id;
-    private String storeName;
+    private UUID storeId;
+    private String name;
     private String address;
     private String phone;
     private String content;
@@ -17,9 +17,9 @@ public class ResCreateStoreDtoV1 {
     private LocalTime openTime;
     private LocalTime closeTime;
 
-    public ResCreateStoreDtoV1(UUID id, String storeName, String address, String phone, String content, Integer minOrderPrice, LocalTime openTime, LocalTime closeTime) {
-        this.id = id;
-        this.storeName = storeName;
+    public ResCreateStoreDtoV1(UUID storeId, String name, String address, String phone, String content, Integer minOrderPrice, LocalTime openTime, LocalTime closeTime) {
+        this.storeId = storeId;
+        this.name = name;
         this.address = address;
         this.phone = phone;
         this.content = content;
@@ -30,7 +30,7 @@ public class ResCreateStoreDtoV1 {
 
     public static ResCreateStoreDtoV1 from(StoreEntity store) {
         return new ResCreateStoreDtoV1(
-                store.getId(),
+                store.getStoreId(),
                 store.getName(),
                 store.getAddress(),
                 store.getPhone(),

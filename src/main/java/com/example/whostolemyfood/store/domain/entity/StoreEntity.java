@@ -1,7 +1,10 @@
 package com.example.whostolemyfood.store.domain.entity;
 
+import com.example.whostolemyfood.area.domain.entity.AreaEntity;
+import com.example.whostolemyfood.category.domain.entity.CategoryEntity;
 import com.example.whostolemyfood.global.entity.BaseSoftDeleteEntity;
 import com.example.whostolemyfood.store.presentation.dto.request.ReqUpdateStoreDtoV1;
+import com.example.whostolemyfood.user.domain.entity.UserEntity;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.*;
@@ -23,21 +26,28 @@ public class StoreEntity extends BaseSoftDeleteEntity {
     @Id
     @Column(name = "store_id")
     @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    private UUID storeId;
 
     // store_rating_id
     @Column(name = "store_rating_id")
     private UUID storeRatingId;
 
     // user_id
-//    @ManyToOne
-//    @JoinColumn(name = "category_id")
-//    private Category category;
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private UserEntity user;
+
+    @ManyToOne
+    @JoinColumn(name = "category_id")
+    private CategoryEntity category;
+
+    @ManyToOne
+    @JoinColumn(name = "area_id")
+    private AreaEntity area;
 
 //    @ManyToOne
-//    @Column(name = "area_id")
-//    private Area area;
-    // store_status_id
+//    @JoinColumn(name = "store_rating_summary_id")
+//    private StoreRatingSummaryEntity storeRatingSummary;
 
     @Column(nullable = false, unique = true)
     private String name;
@@ -71,7 +81,7 @@ public class StoreEntity extends BaseSoftDeleteEntity {
 
     // owner용 업데이트
     public void updateAllFields(ReqUpdateStoreDtoV1 request) {
-        this.name = request.getStoreName();
+        this.name = request.getName();
         this.address = request.getAddress();
         this.phone = request.getPhone();
         this.content = request.getContent();
@@ -82,10 +92,9 @@ public class StoreEntity extends BaseSoftDeleteEntity {
         if (request.getStatus() != null) {
             this.status = request.getStatus();
         }
-        // 상태, 숨김
     }
 
-    // manager / master용 업데이트
+//      manager / master용 업데이트
 //    public void updateOptionalFields(ReqUpdateStoreDtoV1 request) {
 //        this.status = request.getStatus();
 //        this.isHidden = request.getIsHidden();
@@ -99,5 +108,9 @@ public class StoreEntity extends BaseSoftDeleteEntity {
 
     public void updateStoreRatingId(UUID storeRatingId) {
         this.storeRatingId = storeRatingId;
+    }
+
+    public void toggleIsHidden() {
+        this.isHidden = !this.isHidden;
     }
 }

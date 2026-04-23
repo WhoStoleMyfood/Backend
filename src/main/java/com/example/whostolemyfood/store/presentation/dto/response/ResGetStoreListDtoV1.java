@@ -11,15 +11,15 @@ import java.util.UUID;
 public class ResGetStoreListDtoV1 {
 
     private UUID storeId;
-    private String storeName;
+    private String name;
     private Integer minOrderPrice;
     private StoreStatus storeStatus;
     private LocalTime openTime;
     private LocalTime closeTime;
 
-    public ResGetStoreListDtoV1(UUID storeId,String storeName, Integer minOrderPrice, StoreStatus storeStatus, LocalTime openTime, LocalTime closeTime) {
+    public ResGetStoreListDtoV1(UUID storeId,String name, Integer minOrderPrice, StoreStatus storeStatus, LocalTime openTime, LocalTime closeTime) {
         this.storeId = storeId;
-        this.storeName = storeName;
+        this.name = name;
         this.minOrderPrice = minOrderPrice;
         this.storeStatus = storeStatus;
         this.openTime = openTime;
@@ -39,7 +39,7 @@ public class ResGetStoreListDtoV1 {
             );
         }
         return new ResGetStoreListDtoV1(
-                store.getId(),
+                store.getStoreId(),
                 store.getName(),
                 store.getMinOrderPrice(),
                 currentStatus,

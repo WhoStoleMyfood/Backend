@@ -9,7 +9,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalTime;
-import java.util.UUID;
 
 @Getter
 @NoArgsConstructor
@@ -17,7 +16,7 @@ public class ReqCreateStoreDtoV1 {
 
 //    private UUID userId;
     @NotBlank(message = "가게 이름은 필수입니다")
-    private String storeName;
+    private String name;
 
     @NotBlank(message = "가게 주소는 필수입니다")
     private String address;

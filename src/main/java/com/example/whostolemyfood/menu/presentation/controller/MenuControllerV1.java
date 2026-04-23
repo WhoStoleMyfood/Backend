@@ -73,8 +73,6 @@ public class MenuControllerV1 {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
-
-
     @Operation(summary = "메뉴 삭제")
     @DeleteMapping("/{menuId}")
     public void deleteMenu(@Valid @PathVariable UUID storeId, @PathVariable UUID menuId) {

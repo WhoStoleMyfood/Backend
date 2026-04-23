@@ -18,7 +18,7 @@ public class ResCreateMenuDtoV1 {
 
     public static ResCreateMenuDtoV1 from(MenuEntity menu) {
         return new ResCreateMenuDtoV1(
-                menu.getStore().getId(),
+                menu.getStore().getStoreId(),
                 menu.getMenuId(),
                 menu.getName(),
                 menu.getPrice(),
