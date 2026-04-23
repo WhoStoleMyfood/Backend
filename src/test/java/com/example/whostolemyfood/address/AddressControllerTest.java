@@ -88,7 +88,7 @@ public class AddressControllerTest {
         mockMvc.perform(get("/api/v1/addresses?size=10")
                         .with(user(authUser)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.content").isArray()); // PageResponse 구조에 맞춰 수정
+                .andExpect(jsonPath("$.content").isArray()); // PageResponse 구조에 맞춰 수정
     }
 
     @Test
