@@ -16,6 +16,10 @@ public enum ErrorCode {
     //Auth
     ACCESS_DENIED(HttpStatus.NOT_FOUND, "A001", "잘못된 권한입니다."),
 
+    // Address
+    ADDRESS_NOT_FOUND(HttpStatus.NOT_FOUND, "AD001", "존재하지 않는 배송지입니다."),
+    ADDRESS_NOT_OWNER(HttpStatus.FORBIDDEN, "AD002", "본인의 배송지만 관리할 수 있습니다."),
+
     // Global
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "G001", "서버 내부 오류입니다.");
 
