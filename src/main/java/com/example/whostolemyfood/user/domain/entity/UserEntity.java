@@ -37,7 +37,7 @@ public class UserEntity extends BaseAuditEntity {
     @Column(name = "user_name", nullable = false, length = 255)
     private String userName;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AddressEntity> addresses = new ArrayList<>();
 
     @Builder
