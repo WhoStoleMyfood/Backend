@@ -6,5 +6,4 @@ import java.util.UUID;
 
 @Getter
 public class StoreSearchResponseDtoV1 {
-    private ResGetStoreListDtoV1 resGetStoreListDtoV1;
 }
