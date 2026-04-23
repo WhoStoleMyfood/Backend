@@ -1,5 +1,8 @@
 package com.example.whostolemyfood.store.infrastructure.repository;
 
+import com.example.whostolemyfood.category.domain.entity.QCategoryEntity;
+import com.example.whostolemyfood.store.domain.entity.QStoreEntity;
+import com.example.whostolemyfood.store.domain.entity.QStoreRatingSummaryEntity;
 import com.example.whostolemyfood.store.domain.repository.StoreRepositoryCustom;
 import com.example.whostolemyfood.store.presentation.dto.request.StoreSearchConditionV1;
 import com.example.whostolemyfood.store.presentation.dto.response.StoreSearchResponseDtoV1;
@@ -7,11 +10,14 @@ import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @RequiredArgsConstructor
 public class StoreRepositoryCustomImpl implements StoreRepositoryCustom {
@@ -19,8 +25,74 @@ public class StoreRepositoryCustomImpl implements StoreRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public Optional<StoreSearchResponseDtoV1> searchStore(StoreSearchConditionV1 cond, Pageable pageable) {
-        return Optional.empty();
+    public Page<StoreSearchResponseDtoV1> searchStore(StoreSearchConditionV1 cond, Pageable pageable) {
+
+        QStoreEntity store = QStoreEntity.storeEntity;
+        QCategoryEntity category = QCategoryEntity.categoryEntity;
+        QStoreRatingSummaryEntity ratingSummary = QStoreRatingSummaryEntity.storeRatingSummaryEntity;
+
+
+        // 1. 데이터 조회 쿼리
+        List<StoreSearchResponseDtoV1> content = queryFactory
+                .select(new QStoreSearchResponseDtoV1(
+                        store.id,
+                        store.name,
+                        store.minOrderPrice,
+                        category.name,
+                        ratingSummary.averageRating // QClass 필드명 확인 필요 (보통 카멜케이스)
+                ))
+                .from(store)
+                .leftJoin(store.category, category) // 엔티티에 정의된 연관관계 필드명 사용
+                .leftJoin(store.storeRatingSummary, ratingSummary)
+                .where(
+                        keywordContains(cond.getKeyword()),
+                        categoryEq(cond.getCategoryId()),
+                        minOrderPriceLoe(cond.getMinOrderPrice()),
+                        store.isDeleted.isFalse() // BaseSoftDeleteEntity 필드명 확인
+                )
+                .orderBy(getOrderBy(cond.getSortBy()))
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        Long total = queryFactory
+                .select(store.count())
+                .from(store)
+                .leftJoin(store.category, category)
+                .where(
+                        keywordContains(cond.getKeyword()),
+                        categoryEq(cond.getCategoryId()),
+                        minOrderPriceLoe(cond.getMinOrderPrice()),
+                        store.isDeleted.isFalse()
+                )
+                .fetchOne();
+
+        return new PageImpl<>(content, pageable, total != null ? total : 0L);
+//
+    }
+
+    private BooleanExpression keywordContains(String keyword) {
+        // 가게 이름에 키워드가 포함되어 있는지 확인
+        return StringUtils.hasText(keyword) ? QStoreEntity.storeEntity.name.contains(keyword) : null;
+    }
+
+    private BooleanExpression categoryEq(UUID categoryId) {
+        // 카테고리 ID가 일치하는지 확인
+        return categoryId != null ? QStoreEntity.storeEntity.category.categoryId.eq(categoryId) : null;
+    }
+
+    private BooleanExpression minOrderPriceLoe(Integer minOrderPrice) {
+        // 입력받은 금액보다 '가게의 최소주문금액'이 작거나 같은 경우 (Loe: Less or Equal)
+        return minOrderPrice != null ? QStoreEntity.storeEntity.minOrderPrice.loe(minOrderPrice) : null;
+    }
+
+    // 정렬 조건 처리 (필요에 따라 구현)
+    private OrderSpecifier<?> getOrderBy(String sortBy) {
+        if (!StringUtils.hasText(sortBy)) {
+            return QStoreEntity.storeEntity.createdAt.desc(); // 기본 정렬: 최신순
+        }
+        // 예: "rating"이 들어오면 별점순 정렬 등 로직 추가 가능
+        return QStoreEntity.storeEntity.createdAt.desc();
     }
 
 }

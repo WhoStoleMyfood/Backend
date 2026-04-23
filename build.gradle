@@ -28,7 +28,7 @@ tasks.withType(JavaCompile).configureEach {
 sourceSets {
     main {
         java {
-            srcDirs += querydslSrcDir
+            srcDirs += [querydslSrcDir]
         }
     }
 }
@@ -70,3 +70,4 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform()
 }
+
