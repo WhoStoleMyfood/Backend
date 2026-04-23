@@ -1,10 +1,12 @@
 package com.example.whostolemyfood.store.infrastructure.repository;
 
+import com.example.whostolemyfood.address.domain.entity.QAddressEntity;
 import com.example.whostolemyfood.category.domain.entity.QCategoryEntity;
 import com.example.whostolemyfood.store.domain.entity.QStoreEntity;
 import com.example.whostolemyfood.store.domain.entity.QStoreRatingSummaryEntity;
 import com.example.whostolemyfood.store.domain.repository.StoreRepositoryCustom;
 import com.example.whostolemyfood.store.presentation.dto.request.StoreSearchConditionV1;
+import com.example.whostolemyfood.store.presentation.dto.response.QStoreSearchResponseDtoV1;
 import com.example.whostolemyfood.store.presentation.dto.response.StoreSearchResponseDtoV1;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -29,38 +31,44 @@ public class StoreRepositoryCustomImpl implements StoreRepositoryCustom {
 
         QStoreEntity store = QStoreEntity.storeEntity;
         QCategoryEntity category = QCategoryEntity.categoryEntity;
-        QStoreRatingSummaryEntity ratingSummary = QStoreRatingSummaryEntity.storeRatingSummaryEntity;
+        QAddressEntity address = QAddressEntity.addressEntity;
+        QStoreRatingSummaryEntity storeRating = QStoreRatingSummaryEntity.storeRatingSummaryEntity;
 
-
-        // 1. 데이터 조회 쿼리
+        // 1. 데이터 조회 쿼리 (DTO 생성자 파라미터 9개 순서 엄수)
         List<StoreSearchResponseDtoV1> content = queryFactory
                 .select(new QStoreSearchResponseDtoV1(
-                        store.id,
-                        store.name,
-                        store.minOrderPrice,
-                        category.name,
-                        ratingSummary.averageRating // QClass 필드명 확인 필요 (보통 카멜케이스)
+                        store.id,            // 1. storeId
+                        store.name,          // 2. storeName
+                        store.address,       // 3. storeAddress
+                        store.phone,         // 4. storePhone
+                        store.content,       // 5. content
+                        store.minOrderPrice, // 6. minOrderPrice
+                        store.status,        // 7. status
+                        store.openTime,      // 8. openTime
+                        store.closeTime      // 9. closeTime
                 ))
                 .from(store)
-                .leftJoin(store.category, category) // 엔티티에 정의된 연관관계 필드명 사용
-                .leftJoin(store.storeRatingSummary, ratingSummary)
+                .leftJoin(store.category, category)
+//                .leftJoin(store.address, address)
+//                .leftJoin(store.storeRatingId, storeRating)
                 .where(
                         keywordContains(cond.getKeyword()),
                         categoryEq(cond.getCategoryId()),
                         minOrderPriceLoe(cond.getMinOrderPrice()),
-                        store.isDeleted.isFalse() // BaseSoftDeleteEntity 필드명 확인
+                        store.isDeleted.isFalse()
                 )
                 .orderBy(getOrderBy(cond.getSortBy()))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
 
+        // 2. Count 쿼리
         Long total = queryFactory
                 .select(store.count())
                 .from(store)
                 .leftJoin(store.category, category)
                 .where(
-                        keywordContains(cond.getKeyword()),
+                        this.keywordContains(cond.getKeyword()),
                         categoryEq(cond.getCategoryId()),
                         minOrderPriceLoe(cond.getMinOrderPrice()),
                         store.isDeleted.isFalse()
@@ -68,7 +76,6 @@ public class StoreRepositoryCustomImpl implements StoreRepositoryCustom {
                 .fetchOne();
 
         return new PageImpl<>(content, pageable, total != null ? total : 0L);
-//
     }
 
     private BooleanExpression keywordContains(String keyword) {
