@@ -1,6 +1,6 @@
 package com.example.whostolemyfood.order.domain.entity;
 
-import com.example.whostolemyfood.global.entity.BaseSoftDeleteEntity;
+import com.example.whostolemyfood.global.entity.BaseAuditEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.ArrayList;
@@ -11,16 +11,14 @@ import java.util.UUID;
 @Table(name = "p_orders")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
-@Builder
-public class OrderEntity extends BaseSoftDeleteEntity {
+public class OrderEntity extends BaseAuditEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID orderId;
 
     @Column(nullable = false)
-    private UUID userId; // TODO: [인증/인가] SecurityContext 사용자 ID 연동
+    private UUID userId; 
 
     @Column(nullable = false)
     private UUID storeId;
@@ -42,18 +40,23 @@ public class OrderEntity extends BaseSoftDeleteEntity {
     private Integer deliveryFee;
 
     @Column(nullable = false)
-    @Builder.Default
-    private Boolean isDeleted = false;
-
-    @Column(nullable = false)
-    @Builder.Default
     private Boolean isHidden = false;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
     private List<OrderItemEntity> orderItems = new ArrayList<>();
 
-    // 데이터 저장(Persist) 전 초기 상태(PENDING) 설정
+    @Builder
+    public OrderEntity(UUID userId, UUID storeId, UUID addressId, String request, Integer totalPrice, OrderStatus status, Integer deliveryFee, Boolean isHidden) {
+        this.userId = userId;
+        this.storeId = storeId;
+        this.addressId = addressId;
+        this.request = request;
+        this.totalPrice = totalPrice;
+        this.status = status;
+        this.deliveryFee = deliveryFee;
+        this.isHidden = isHidden != null ? isHidden : false;
+    }
+
     @PrePersist
     protected void onCreate() {
         if (status == null) {
@@ -65,7 +68,6 @@ public class OrderEntity extends BaseSoftDeleteEntity {
         this.status = OrderStatus.CANCELLED;
     }
 
-    // [비즈니스 로직] 객체 스스로 상태를 보호하도록 엔티티 내부에 핵심 로직 구현 (도메인 주도 설계)
     public void updateRequest(String newRequest) {
         if (this.getStatus() != OrderStatus.PENDING) {
             throw new IllegalStateException("주문이 이미 수락되어 요청사항을 수정할 수 없습니다.");
@@ -74,11 +76,23 @@ public class OrderEntity extends BaseSoftDeleteEntity {
     }
 
     public void updateStatus(OrderStatus nextStatus) {
-        this.status = nextStatus;
-    }
+        if (this.status == OrderStatus.CANCELLED || this.status == OrderStatus.COMPLETED) {
+            throw new IllegalStateException("이미 최종 상태에 도달한 주문은 상태를 변경할 수 없습니다.");
+        }
 
-    public void markAsDeleted(UUID deletedBy) {
-        this.isDeleted = true;
-        super.delete(deletedBy);
+        boolean isValid = false;
+        switch (this.status) {
+            case PENDING: isValid = (nextStatus == OrderStatus.ACCEPTED); break;
+            case ACCEPTED: isValid = (nextStatus == OrderStatus.COOKING); break;
+            case COOKING: isValid = (nextStatus == OrderStatus.DELIVERING); break;
+            case DELIVERING: isValid = (nextStatus == OrderStatus.DELIVERED); break;
+            case DELIVERED: isValid = (nextStatus == OrderStatus.COMPLETED); break;
+        }
+
+        if (!isValid) {
+            throw new IllegalStateException(this.status + " 상태에서 " + nextStatus + " 상태로의 변경은 허용되지 않습니다.");
+        }
+
+        this.status = nextStatus;
     }
 }
