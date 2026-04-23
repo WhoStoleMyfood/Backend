@@ -5,6 +5,9 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
+### 개인적인 메모 ###
+*.txt
+
 ### STS ###
 .apt_generated
 .classpath

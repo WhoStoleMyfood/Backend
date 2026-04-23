@@ -28,3 +28,14 @@ spring:
 logging:
   level:
     org.hibernate.SQL: debug
+
+jwt:
+  secret: ${JWT_SECRET}
+  token:
+    access:
+      minute: ${JWT_ACCESS_MINUTE}
+    refresh:
+      minute: ${JWT_REFRESH_MINUTE}
+
+auth:
+  admin-token: ${ADMIN_SIGNUP_TOKEN}
