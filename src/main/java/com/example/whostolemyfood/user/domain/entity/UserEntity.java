@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 
 import com.example.whostolemyfood.address.domain.entity.AddressEntity;
 import com.example.whostolemyfood.global.entity.BaseAuditEntity;
+import com.example.whostolemyfood.user.presentation.dto.request.ReqUpdateUserDtoV1;
 
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -37,35 +38,45 @@ public class UserEntity extends BaseAuditEntity {
     @Column(name = "user_name", nullable = false, length = 255)
     private String userName;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Column(name = "address", length = 255)
+    private String address;
+
+    /**
+     * 리팩토링 핵심 포인트:
+     * 1. @Column 제거: 이 필드 때문에 p_users에 컬럼이 생기지 않게 합니다.
+     * 2. @JoinColumn: p_address 테이블에 있는 'user_id' 외래키를 연결 고리로 사용합니다.
+     */
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "user_id")
     private List<AddressEntity> addresses = new ArrayList<>();
 
     @Builder
-    public UserEntity(UserRole role, String email, String password, String name) {
+    public UserEntity(UserRole role, String email, String password, String name, String address) {
         this.userRole = role;
         this.userEmail = email;
         this.userPassword = password;
         this.userName = name;
+        this.address = address;
     }
 
     /**
      * 연관관계 편의 메서드
-     * 유저 객체에 주소를 추가할 때, 주소 객체에도 유저를 자동으로 연결해줍니다.
+     * 이제 AddressEntity에 User객체가 없어도 이 메서드로 리스트 관리가 가능합니다.
      */
     public void addAddress(AddressEntity address) {
         this.addresses.add(address);
-        // AddressEntity 측에도 유저 정보를 세팅해줘야 양방향 정합성이 맞습니다.
-        // 때문에 AddressEntity에 setUser(this) 같은 메서드가 필요합니다.
     }
 
     // 회원정보 수정 메서드
-    public void updateUserInfo(String name, String password) {
-        if (name != null && !name.isBlank()) {
-            this.userName = name;
+    public void updateUserInfo(ReqUpdateUserDtoV1 dto) {
+        if (dto.getName() != null && !dto.getName().isBlank()) {
+            this.userName = dto.getName();
         }
-        // 비밀번호는 수정용 데이터가 들어왔을 때만 변경하도록 방어 로직 추가
-        if (password != null && !password.isBlank()) {
-            this.userPassword = password;
+        if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
+            this.userPassword = dto.getPassword();
+        }
+        if (dto.getAddress() != null && !dto.getAddress().isBlank()) {
+            this.address = dto.getAddress();
         }
     }
 }
