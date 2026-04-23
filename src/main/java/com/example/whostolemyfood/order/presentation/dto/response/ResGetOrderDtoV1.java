@@ -23,6 +23,7 @@ public class ResGetOrderDtoV1 {
     private OrderStatus status;
     private Integer deliveryFee;
     private LocalDateTime createdAt;
+    private String message; // 메시지 필드 추가
     private List<OrderItemResponse> orderItems;
 
     @Getter
@@ -36,7 +37,8 @@ public class ResGetOrderDtoV1 {
         private Integer priceAtOrder;
     }
 
-    public static ResGetOrderDtoV1 from(OrderEntity order) {
+    // 서비스에서 메시지를 함께 보낼 수 있도록 수정
+    public static ResGetOrderDtoV1 from(OrderEntity order, String message) {
         return ResGetOrderDtoV1.builder()
                 .orderId(order.getOrderId())
                 .userId(order.getUserId())
@@ -47,6 +49,7 @@ public class ResGetOrderDtoV1 {
                 .status(order.getStatus())
                 .deliveryFee(order.getDeliveryFee())
                 .createdAt(order.getCreatedAt())
+                .message(message)
                 .orderItems(order.getOrderItems().stream()
                         .map(item -> OrderItemResponse.builder()
                                 .orderItemId(item.getOrderItemId())
@@ -56,5 +59,9 @@ public class ResGetOrderDtoV1 {
                                 .build())
                         .collect(Collectors.toList()))
                 .build();
+    }
+
+    public static ResGetOrderDtoV1 from(OrderEntity order) {
+        return from(order, null);
     }
 }

@@ -58,6 +58,7 @@ public class GlobalExceptionHandler {
                 .build();
         return ResponseEntity.badRequest().body(response);
     }
+
     /**
      * (추가) 도메인별 상세 에러 처리를 위한 공통 핸들러
      * 제가 작업하면서 상세 에러 코드가 필요해서 추가해 뒀어요!

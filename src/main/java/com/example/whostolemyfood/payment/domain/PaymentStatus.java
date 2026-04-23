@@ -6,6 +6,7 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum PaymentStatus {
+
     READY("결제 생성"),
     IN_PROGRESS("결제 인증 완료/승인 대기"),
     DONE("결제 완료"),
