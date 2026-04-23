@@ -9,11 +9,11 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface MenuRepository extends JpaRepository<MenuEntity, UUID> {
+    //
+    Optional<MenuEntity> findByMenuIdAndStore_StoreIdAndIsHiddenFalseAndIsDeletedFalse(UUID menuId , UUID storeId);
+    Optional<MenuEntity> findByMenuIdAndStore_StoreIdAndIsDeletedFalse(UUID menuId , UUID storeId);
 
-    Optional<MenuEntity> findByMenuIdAndStoreIdAndIsHiddenFalseAndIsDeletedFalse(UUID menuId , UUID storeId);
-    Optional<MenuEntity> findByMenuIdAndStoreIdAndIsDeletedFalse(UUID menuId , UUID storeId);
-
-    Boolean existsByStoreIdAndNameAndIsDeletedFalse(UUID storeId, String name);
+    Boolean existsByStore_StoreIdAndNameAndIsDeletedFalse(UUID storeId, String name);
 
     Page<MenuEntity> findAllByIsHiddenFalseAndIsDeletedFalse(Pageable pageable);
 }

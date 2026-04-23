@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/store")
+@RequestMapping("/api/stores")
 @RequiredArgsConstructor
 public class StoreControllerV1 {
 

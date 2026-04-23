@@ -90,7 +90,7 @@ public class MenuServiceTest {
         MenuEntity menu = createMenuEntity(menuId, store);
 
         given(storeRepository.findById(storeId)).willReturn(Optional.of(store));
-        given(menuRepository.existsByStoreIdAndNameAndIsDeletedFalse(storeId, menu.getName())).willReturn(false);
+        given(menuRepository.existsByStore_StoreIdAndNameAndIsDeletedFalse(storeId, menu.getName())).willReturn(false);
         given(menuRepository.save(any(MenuEntity.class))).willReturn(menu);
 
         ResCreateMenuDtoV1 response = menuServiceV1.addMenu(storeId,request);
@@ -111,7 +111,7 @@ public class MenuServiceTest {
         ReqCreateMenuDtoV1 request = createMenuRequest();
 
         given(storeRepository.findById(storeId)).willReturn(Optional.of(store));
-        given(menuRepository.existsByStoreIdAndNameAndIsDeletedFalse(storeId, "올리브유 구덩이에 빠진 스파르닭")).willReturn(true);
+        given(menuRepository.existsByStore_StoreIdAndNameAndIsDeletedFalse(storeId, "올리브유 구덩이에 빠진 스파르닭")).willReturn(true);
 
         assertThrows(IllegalArgumentException.class, () -> menuServiceV1.addMenu(storeId, request));
     }
@@ -126,7 +126,7 @@ public class MenuServiceTest {
 
         ReflectionTestUtils.setField(menu, "isHidden", true);
 
-        given(menuRepository.findByMenuIdAndStoreIdAndIsHiddenFalseAndIsDeletedFalse(menuId, storeId)).willReturn(Optional.empty());
+        given(menuRepository.findByMenuIdAndStore_StoreIdAndIsHiddenFalseAndIsDeletedFalse(menuId, storeId)).willReturn(Optional.empty());
 
         assertThrows(IllegalArgumentException.class, ()-> menuServiceV1.getMenu(storeId, menuId));
     }
