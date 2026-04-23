@@ -26,9 +26,17 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/auth/signup", "/api/v1/auth/login").permitAll() // 누구나 접근 가능
-                        .requestMatchers("/api/v1/auth/logout").authenticated() // 로그아웃은 반드시 인증 필요
+                        // 1. 누구나 접근 가능한 경로
+                        .requestMatchers("/api/v1/auth/signup", "/api/v1/auth/login").permitAll()
+
+                        // 2. 인증이 반드시 필요한 경로들
+                        .requestMatchers("/api/v1/auth/logout").authenticated() // 로그아웃
+                        .requestMatchers("/api/v1/auth/signout").authenticated() // 회원 탈퇴
+                        .requestMatchers("/api/v1/user/me").authenticated()   // 내 정보 조회 및 수정
+
+                        // 3. 그 외 모든 요청도 인증 필요
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

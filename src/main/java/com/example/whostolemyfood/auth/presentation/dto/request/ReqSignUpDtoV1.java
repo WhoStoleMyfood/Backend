@@ -29,4 +29,7 @@ public class ReqSignUpDtoV1 {
 
     @NotNull(message = "유저 타입은 필수입니다.")
     private UserRole userRole;
+
+    // 관리자 가입을 위한 토큰
+    private String adminToken;
 }

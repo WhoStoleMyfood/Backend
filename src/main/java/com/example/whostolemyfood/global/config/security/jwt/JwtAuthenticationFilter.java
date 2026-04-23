@@ -39,7 +39,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (StringUtils.hasText(token) && jwtUtil.validateToken(token)) {
             try {
-                // 3. 토큰에서 사용자 정보 추출
+                // 토큰에서 사용자 정보 추출
                 String userIdString = jwtUtil.extractSubject(token);
                 String roleName = jwtUtil.extractRole(token);
                 UUID userId = UUID.fromString(userIdString);
@@ -47,21 +47,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 log.info("인증 성공: userId={}, role={}", userId, role);
 
-                // 4. 권한 객체 생성
+                // 권한 객체 생성
                 List<SimpleGrantedAuthority> authorities =
                         Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role.name()));
 
-                // 🌟 5. 핵심: Principal에 UUID 대신 'AuthUser' 신분증 객체를 생성해서 넣습니다.
+                // Principal에 UUID 대신 'AuthUser' 신분증 객체를 생성해서 넣기
                 // 이메일 정보가 토큰에 없다면 우선 임시값("N/A")을 넣거나, JwtUtil을 고쳐서 이메일도 추출하세요!
                 AuthUser authUser = new AuthUser(userId, "N/A", role);
 
-                // 이제 첫 번째 인자로 UUID가 아닌 authUser(신분증)가 들어갑니다.
+                // 이제 첫 번째 인자로 UUID가 아닌 authUser(신분증)가 들어감
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(authUser, null, authorities);
 
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                // 6. SecurityContextHolder에 인증 정보 저장
+                // SecurityContextHolder에 인증 정보 저장
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
             } catch (Exception e) {

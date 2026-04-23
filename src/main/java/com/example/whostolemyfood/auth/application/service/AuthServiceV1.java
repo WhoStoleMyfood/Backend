@@ -3,6 +3,7 @@ package com.example.whostolemyfood.auth.application.service;
 import java.util.UUID;
 import jakarta.validation.Valid;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,22 +30,38 @@ public class AuthServiceV1 implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
+    // application.yml의 auth.admin-token 값을 읽어오기
+    @Value("${auth.admin-token}")
+    private String adminSecretKey;
+
     @Override
     @Transactional
     public ResSignUpDtoV1 signup(@Valid ReqSignUpDtoV1 requestDto) {
-        // 권한 체크 및 중복 체크 로직 (그대로 유지)
-        if (requestDto.getUserRole() == UserRole.MASTER || requestDto.getUserRole() == UserRole.MANAGER) {
-            throw new CustomException(ErrorCode.ACCESS_DENIED);
+
+        System.out.println("--- 회원가입 디버깅 ---");
+        System.out.println("서버 AdminKey: " + adminSecretKey);
+        System.out.println("포스트맨 AdminToken: " + requestDto.getAdminToken());
+
+        // 1. 권한별 가입 제한 로직
+        UserRole requestedRole = requestDto.getUserRole();
+
+        if (requestedRole == UserRole.MASTER || requestedRole == UserRole.MANAGER) {
+            // 하드코딩 대신 주입받은 adminSecretKey와 비교합니다.
+            if (adminSecretKey == null || !adminSecretKey.equals(requestDto.getAdminToken())) {
+                throw new CustomException(ErrorCode.ACCESS_DENIED);
+            }
         }
 
+        // 2. 이메일 중복 체크
         if (userRepository.existsByUserEmail(requestDto.getEmail())) {
             throw new CustomException(ErrorCode.USER_DUPLICATION_EMAIL);
         }
 
+        // 3. 저장 로직
         String encodedPassword = passwordEncoder.encode(requestDto.getPassword());
 
         UserEntity user = UserEntity.builder()
-                .role(requestDto.getUserRole())
+                .role(requestedRole)
                 .email(requestDto.getEmail())
                 .password(encodedPassword)
                 .name(requestDto.getUserName())

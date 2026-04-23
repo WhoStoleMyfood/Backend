@@ -26,13 +26,13 @@ public class AuthControllerV1 {
 
     private final AuthServiceV1 authServiceV1;
 
-    // 회원가입 (AuthUser 없음 - 비회원이니까요!)
+    // 회원가입
     @PostMapping("/signup")
     public ResponseEntity<ResSignUpDtoV1> signUp(@Valid @RequestBody ReqSignUpDtoV1 requestDto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(authServiceV1.signup(requestDto));
     }
 
-    // 로그인 (AuthUser 없음 - 여기서 신분증이 발급되니까요!)
+    // 로그인
     @PostMapping("/login")
     public ResponseEntity<ResLoginDtoV1> login(@Valid @RequestBody ReqLoginDtoV1 requestDto) {
         return ResponseEntity.ok(authServiceV1.login(requestDto));

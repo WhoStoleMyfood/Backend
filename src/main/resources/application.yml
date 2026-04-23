@@ -36,3 +36,7 @@ jwt:
       minute: ${JWT_ACCESS_MINUTE}
     refresh:
       minute: ${JWT_REFRESH_MINUTE}
+
+# 관리자 가입용 토큰 추가
+auth:
+  admin-token: ${ADMIN_SIGNUP_TOKEN}
