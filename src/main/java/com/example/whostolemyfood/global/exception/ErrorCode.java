@@ -13,8 +13,8 @@ public enum ErrorCode {
     USER_DUPLICATION_EMAIL(HttpStatus.BAD_REQUEST, "U002", "이미 존재하는 이메일입니다."),
     USER_WRONG_PW(HttpStatus.UNAUTHORIZED, "U003", "비밀번호가 일치하지 않습니다."),
 
-    //Auth
-    ACCESS_DENIED(HttpStatus.NOT_FOUND, "A001", "잘못된 권한입니다."),
+    // Auth
+    ACCESS_DENIED(HttpStatus.FORBIDDEN, "A001", "잘못된 권한입니다."),
 
     // Address
     ADDRESS_NOT_FOUND(HttpStatus.NOT_FOUND, "AD001", "존재하지 않는 배송지입니다."),
@@ -28,7 +28,7 @@ public enum ErrorCode {
     ORDER_CANNOT_DELETE_DELIVERED(HttpStatus.BAD_REQUEST, "O005", "배달이 완료된 주문은 삭제할 수 없습니다."),
     ORDER_REQUEST_UPDATE_FAILED(HttpStatus.BAD_REQUEST, "O006", "주문이 이미 수락되어 요청사항을 수정할 수 없습니다."),
     ORDER_STATUS_UPDATE_FAILED(HttpStatus.BAD_REQUEST, "O007", "허용되지 않은 주문 상태 변경입니다."),
-  
+
     // Global
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "G001", "서버 내부 오류입니다.");
 
