@@ -1,50 +1,58 @@
 package com.example.whostolemyfood.address.domain.entity;
 
-import com.example.whostolemyfood.global.entity.BaseSoftDeleteEntity;
-import com.example.whostolemyfood.user.domain.entity.UserEntity;
+import com.example.whostolemyfood.global.entity.BaseAuditEntity;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.UUID;
 
 @Entity
-@Getter
 @Table(name = "p_address")
+@Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class AddressEntity extends BaseSoftDeleteEntity {
+@AllArgsConstructor
+@Builder
+public class AddressEntity extends BaseAuditEntity {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.UUID)
-	@Column(name = "address_id", nullable = false, updatable = false)
-	private UUID id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "address_id", nullable = false, updatable = false)
+    private UUID id;
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "user_id", nullable = false)
-	private UserEntity user;
+    @Column(name = "user_id", nullable = false)
+    private UUID userId;
 
-	@Column(name = "alias", length = 50)
-	private String alias;
+    @Column(name = "alias", length = 50)
+    private String alias;
 
-	@Column(name = "address", nullable = false, length = 255)
-	private String address;
+    @Column(name = "address", nullable = false, length = 255)
+    private String address;
 
-	@Column(name = "detail", length = 255)
-	private String detail;
+    @Column(name = "detail", length = 255)
+    private String detail;
 
-	@Column(name = "zip_code", length = 20)
-	private String zipCode;
+    @Column(name = "zip_code", length = 255)
+    private String zipCode;
 
-	@Column(name = "is_default", nullable = false)
-	private Boolean isDefault = false;
+    @Column(name = "is_default", nullable = false)
+    @Builder.Default
+    private Boolean isDefault = false;
 
-	public AddressEntity(UserEntity user, String alias, String address, String detail, String zipCode) {
-		this.user = user;
-		this.alias = alias;
-		this.address = address;
-		this.detail = detail;
-		this.zipCode = zipCode;
-		this.isDefault = false;
-	}
+    // is_deleted 필드 삭제 (부모 클래스와 중복 방지)
+
+    public void updateAddress(String alias, String address, String detail, String zipCode, Boolean isDefault) {
+        this.alias = alias;
+        this.address = address;
+        this.detail = detail;
+        this.zipCode = zipCode;
+        if (isDefault != null) {
+            this.isDefault = isDefault;
+        }
+    }
+
+    public void setDefault(Boolean isDefault) {
+        this.isDefault = isDefault;
+    }
+
+    // markAsDeleted 삭제 -> 부모의 softDelete(UUID)를 직접 사용합니다.
 }
