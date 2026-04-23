@@ -6,6 +6,12 @@ import com.example.whostolemyfood.area.presentation.dto.request.ReqCreateAreaDto
 import com.example.whostolemyfood.area.presentation.dto.request.ReqUpdateAreaDtoV1;
 import com.example.whostolemyfood.area.presentation.dto.response.ResCreateAreaDtoV1;
 import com.example.whostolemyfood.area.presentation.dto.response.ResGetAreaDtoV1;
+import com.example.whostolemyfood.global.exception.CustomException;
+import com.example.whostolemyfood.global.exception.ErrorCode;
+import com.example.whostolemyfood.user.application.security.AuthUser;
+import com.example.whostolemyfood.user.domain.entity.UserEntity;
+import com.example.whostolemyfood.user.domain.entity.UserRole;
+import com.example.whostolemyfood.user.domain.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,9 +26,11 @@ import java.util.UUID;
 public class AreaServiceV1 {
 
 	private final AreaRepository areaRepository;
+	private final UserRepository userRepository;
 
 	@Transactional
-	public ResCreateAreaDtoV1 createArea(ReqCreateAreaDtoV1 reqDto) {
+	public ResCreateAreaDtoV1 createArea(AuthUser loginUser, ReqCreateAreaDtoV1 reqDto) {
+		validateAreaManageAuthority(loginUser);
 		validateDuplicateUkName(reqDto.getUkName());
 
 		AreaEntity areaEntity = AreaEntity.builder()
@@ -31,6 +39,8 @@ public class AreaServiceV1 {
 			.district(reqDto.getDistrict())
 			.isActive(true)
 			.build();
+
+		areaEntity.markCreatedBy(loginUser.userId());
 
 		AreaEntity savedArea = areaRepository.save(areaEntity);
 		return ResCreateAreaDtoV1.from(savedArea);
@@ -56,7 +66,9 @@ public class AreaServiceV1 {
 	}
 
 	@Transactional
-	public ResGetAreaDtoV1 updateArea(UUID areaId, ReqUpdateAreaDtoV1 reqDto) {
+	public ResGetAreaDtoV1 updateArea(AuthUser loginUser, UUID areaId, ReqUpdateAreaDtoV1 reqDto) {
+		validateAreaManageAuthority(loginUser);
+
 		AreaEntity areaEntity = findAreaById(areaId);
 
 		if (!areaEntity.getUkName().equals(reqDto.getUkName())) {
@@ -68,21 +80,28 @@ public class AreaServiceV1 {
 			reqDto.getCity(),
 			reqDto.getDistrict()
 		);
+		areaEntity.markUpdatedBy(loginUser.userId());
 
 		return ResGetAreaDtoV1.from(areaEntity);
 	}
 
 	@Transactional
-	public ResGetAreaDtoV1 updateAreaActive(UUID areaId, Boolean isActive) {
+	public ResGetAreaDtoV1 updateAreaActive(AuthUser loginUser, UUID areaId, Boolean isActive) {
+		validateAreaManageAuthority(loginUser);
+
 		AreaEntity areaEntity = findAreaById(areaId);
 		areaEntity.updateActive(isActive);
+		areaEntity.markUpdatedBy(loginUser.userId());
+
 		return ResGetAreaDtoV1.from(areaEntity);
 	}
 
 	@Transactional
-	public void deleteArea(UUID areaId) {
+	public void deleteArea(AuthUser loginUser, UUID areaId) {
+		validateAreaManageAuthority(loginUser);
+
 		AreaEntity areaEntity = findAreaById(areaId);
-		areaRepository.delete(areaEntity);
+		areaEntity.softDelete(loginUser.userId());
 	}
 
 	private AreaEntity findAreaById(UUID areaId) {
@@ -93,6 +112,23 @@ public class AreaServiceV1 {
 	private void validateDuplicateUkName(String ukName) {
 		if (areaRepository.existsByUkName(ukName)) {
 			throw new IllegalArgumentException("이미 존재하는 지역명입니다.");
+		}
+	}
+
+	private void validateAreaManageAuthority(AuthUser loginUser) {
+		UserEntity user = userRepository.findById(loginUser.userId())
+			.orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+		if (Boolean.TRUE.equals(user.getIsDeleted())) {
+			throw new CustomException(ErrorCode.USER_NOT_FOUND);
+		}
+
+		if (user.getUserRole() != loginUser.role()) {
+			throw new CustomException(ErrorCode.ACCESS_DENIED);
+		}
+
+		if (user.getUserRole() != UserRole.MANAGER && user.getUserRole() != UserRole.MASTER) {
+			throw new CustomException(ErrorCode.ACCESS_DENIED);
 		}
 	}
 }
