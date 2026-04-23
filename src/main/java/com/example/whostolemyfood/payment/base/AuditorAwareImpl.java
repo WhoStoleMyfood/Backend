@@ -15,19 +15,19 @@ public class AuditorAwareImpl implements AuditorAware<UUID> {
     @Override
     public Optional<UUID> getCurrentAuditor() {
 
-        return Optional.of(UUID.fromString("550e8400-e29b-41d4-a716-446655440000"));
+       //return Optional.of(UUID.fromString("550e8400-e29b-41d4-a716-446655440000"));
 
-//        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-//
-//        if (authentication == null || !authentication.isAuthenticated()) {
-//            return Optional.empty();
-//        }
-//
-//        if (authentication.getPrincipal() instanceof UserDetails userDetails) {
-//
-//            return Optional.of(UUID.fromString(userDetails.getUsername()));
-//        }
-//
-//        return Optional.empty();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return Optional.empty();
+        }
+
+        if (authentication.getPrincipal() instanceof UserDetails userDetails) {
+
+            return Optional.of(UUID.fromString(userDetails.getUsername()));
+        }
+
+        return Optional.empty();
     }
 }

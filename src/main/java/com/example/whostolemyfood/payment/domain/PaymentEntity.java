@@ -1,9 +1,12 @@
 package com.example.whostolemyfood.payment.domain;
 
+import com.example.whostolemyfood.global.exception.CustomException;
+import com.example.whostolemyfood.global.exception.ErrorCode;
 import com.example.whostolemyfood.order.domain.entity.OrderEntity;
 import com.example.whostolemyfood.payment.base.BaseTimeEntity;
 import com.example.whostolemyfood.payment.presentation.dto.request.ReqMakePay;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -17,6 +20,7 @@ import java.util.UUID;
 @Getter
 @EntityListeners(AuditingEntityListener.class)
 @NoArgsConstructor
+@AllArgsConstructor
 public class PaymentEntity extends BaseTimeEntity {
 
     @Id
@@ -57,6 +61,8 @@ public class PaymentEntity extends BaseTimeEntity {
         if(payStatus == PaymentStatus.DONE) {
             this.setUpdatedInfo(userId);
             this.payStatus = PaymentStatus.CANCELED;
+        }else{
+            throw new CustomException(ErrorCode.FAIL_TO_MODIFY_STATUS);
         }
     }
 
