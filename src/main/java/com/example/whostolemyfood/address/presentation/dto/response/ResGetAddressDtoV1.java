@@ -12,6 +12,7 @@ import java.util.UUID;
 @Builder
 public class ResGetAddressDtoV1 {
     private UUID addressId;
+    private UUID userId; // 유저 ID 필드 추가
     private String alias;
     private String address;
     private String detail;
@@ -29,6 +30,7 @@ public class ResGetAddressDtoV1 {
     public static ResGetAddressDtoV1 from(AddressEntity entity, String message) {
         return ResGetAddressDtoV1.builder()
                 .addressId(entity.getId())
+                .userId(entity.getUserId())
                 .alias(entity.getAlias())
                 .address(entity.getAddress())
                 .detail(entity.getDetail())

@@ -10,8 +10,6 @@ import java.util.UUID;
 @Table(name = "p_address")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
-@Builder
 public class AddressEntity extends BaseAuditEntity {
 
     @Id
@@ -35,10 +33,17 @@ public class AddressEntity extends BaseAuditEntity {
     private String zipCode;
 
     @Column(name = "is_default", nullable = false)
-    @Builder.Default
     private Boolean isDefault = false;
 
-    // is_deleted 필드 삭제 (부모 클래스와 중복 방지)
+    @Builder
+    public AddressEntity(UUID userId, String alias, String address, String detail, String zipCode, Boolean isDefault) {
+        this.userId = userId;
+        this.alias = alias;
+        this.address = address;
+        this.detail = detail;
+        this.zipCode = zipCode;
+        this.isDefault = isDefault != null ? isDefault : false;
+    }
 
     public void updateAddress(String alias, String address, String detail, String zipCode, Boolean isDefault) {
         this.alias = alias;
@@ -53,6 +58,4 @@ public class AddressEntity extends BaseAuditEntity {
     public void setDefault(Boolean isDefault) {
         this.isDefault = isDefault;
     }
-
-    // markAsDeleted 삭제 -> 부모의 softDelete(UUID)를 직접 사용합니다.
 }

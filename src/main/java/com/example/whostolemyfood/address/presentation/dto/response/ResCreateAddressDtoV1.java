@@ -12,6 +12,7 @@ import java.util.UUID;
 @Builder
 public class ResCreateAddressDtoV1 {
     private UUID addressId;
+    private UUID userId; // 유저 ID 필드 추가
     private String alias;
     private String address;
     private String detail;
@@ -23,6 +24,7 @@ public class ResCreateAddressDtoV1 {
     public static ResCreateAddressDtoV1 from(AddressEntity entity, String message) {
         return ResCreateAddressDtoV1.builder()
                 .addressId(entity.getId())
+                .userId(entity.getUserId())
                 .alias(entity.getAlias())
                 .address(entity.getAddress())
                 .detail(entity.getDetail())
