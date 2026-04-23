@@ -9,10 +9,13 @@ import com.example.whostolemyfood.review.presentation.dto.response.ResCreateRevi
 import com.example.whostolemyfood.review.presentation.dto.response.ResGetReviewDtoV1;
 import com.example.whostolemyfood.review.presentation.dto.response.ResGetReviewPageDtoV1;
 import com.example.whostolemyfood.review.presentation.dto.response.ResGetStoreRatingSummaryDtoV1;
+import com.example.whostolemyfood.user.application.security.AuthUser;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -26,17 +29,16 @@ public class ReviewControllerV1 {
 	private final ReviewRatingBatchService reviewRatingBatchService;
 
 	@PostMapping("/orders/{orderId}/reviews")
-	//@PreAuthorize("hasRole('CUSTOMER')") - 인증인가 끝나면 주석해제
+	@PreAuthorize("hasRole('CUSTOMER')")
 	public ResponseEntity<ResCreateReviewDtoV1> createReview(
 		@PathVariable UUID orderId,
-		@Valid @RequestBody ReqCreateReviewDtoV1 request
-		// @AuthenticationPrincipal UserEntity loginUser
+		@Valid @RequestBody ReqCreateReviewDtoV1 request,
+		@AuthenticationPrincipal AuthUser loginUser
 	) {
-		UUID testUserId = UUID.fromString("11111111-1111-1111-1111-111111111111"); // 테스트용
 		ResCreateReviewDtoV1 response = reviewServiceV1.createReview(
 			orderId,
-			testUserId,
-			// loginUser.getId(),
+			loginUser.userId(),
+			loginUser.role().name(),
 			request
 		);
 		return ResponseEntity.ok(response);
@@ -51,37 +53,31 @@ public class ReviewControllerV1 {
 	}
 
 	@PutMapping("/reviews/{reviewId}")
-	//@PreAuthorize("hasRole('CUSTOMER')") - 인증인가 끝나면 주석해제
+	@PreAuthorize("hasRole('CUSTOMER')")
 	public ResponseEntity<ResGetReviewDtoV1> updateReview(
 		@PathVariable UUID reviewId,
-		@Valid @RequestBody ReqUpdateReviewDtoV1 request
-		// @AuthenticationPrincipal UserEntity loginUser
+		@Valid @RequestBody ReqUpdateReviewDtoV1 request,
+		@AuthenticationPrincipal AuthUser loginUser
 	) {
-		UUID testUserId = UUID.fromString("11111111-1111-1111-1111-111111111111"); // 테스트용
 		ResGetReviewDtoV1 response = reviewServiceV1.updateReview(
 			reviewId,
-			testUserId,
-			// loginUser.getId(),
+			loginUser.userId(),
+			loginUser.role().name(),
 			request
 		);
 		return ResponseEntity.ok(response);
 	}
 
 	@DeleteMapping("/reviews/{reviewId}")
-	//@PreAuthorize("hasAnyRole('CUSTOMER','MANAGER','MASTER')") - 인증인가 끝나면 주석해제
+	@PreAuthorize("hasAnyRole('CUSTOMER','MANAGER','MASTER')")
 	public ResponseEntity<String> deleteReview(
-		@PathVariable UUID reviewId
-		// @AuthenticationPrincipal UserEntity loginUser
+		@PathVariable UUID reviewId,
+		@AuthenticationPrincipal AuthUser loginUser
 	) {
-		UUID testUserId = UUID.fromString("11111111-1111-1111-1111-111111111111"); // 테스트용
-		String testRole = "CUSTOMER"; // 테스트용
-
 		reviewServiceV1.deleteReview(
 			reviewId,
-			testUserId,
-			testRole
-			// loginUser.getId(),
-			// loginUser.getRole().name()
+			loginUser.userId(),
+			loginUser.role().name()
 		);
 		return ResponseEntity.ok("리뷰 삭제가 완료되었습니다.");
 	}
@@ -103,6 +99,7 @@ public class ReviewControllerV1 {
 	}
 
 	@PostMapping("/reviews/rating-summary/refresh")
+	@PreAuthorize("hasAnyRole('MANAGER','MASTER')")
 	public ResponseEntity<String> refreshRatingSummary() {
 		reviewRatingBatchService.refreshAllStoreRatings();
 		return ResponseEntity.ok("가게 평점 집계가 완료되었습니다.");
