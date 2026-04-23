@@ -1,5 +1,7 @@
 package com.example.whostolemyfood.order;
 
+import com.example.whostolemyfood.global.exception.CustomException;
+import com.example.whostolemyfood.global.exception.ErrorCode;
 import com.example.whostolemyfood.global.exception.GlobalExceptionHandler;
 import com.example.whostolemyfood.order.application.service.OrderServiceV1;
 import com.example.whostolemyfood.order.domain.entity.OrderStatus;
@@ -9,6 +11,7 @@ import com.example.whostolemyfood.order.presentation.dto.request.ReqUpdateOrderR
 import com.example.whostolemyfood.order.presentation.dto.request.ReqUpdateOrderStatusDtoV1;
 import com.example.whostolemyfood.order.presentation.dto.response.ResCreateOrderDtoV1;
 import com.example.whostolemyfood.order.presentation.dto.response.ResGetOrderDtoV1;
+import com.example.whostolemyfood.order.presentation.dto.response.ResGetOrderListDtoV1;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -56,7 +59,7 @@ public class OrderControllerTest {
         ResCreateOrderDtoV1 response = ResCreateOrderDtoV1.builder().orderId(UUID.randomUUID()).totalPrice(13000).build();
         given(orderService.createOrder(any())).willReturn(response);
 
-        mockMvc.perform(post("/api/orders")
+        mockMvc.perform(post("/api/v1/orders")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
@@ -70,7 +73,7 @@ public class OrderControllerTest {
                 .orderId(orderId).status(OrderStatus.CANCELLED).build();
         given(orderService.cancelOrder(orderId)).willReturn(response);
 
-        mockMvc.perform(patch("/api/orders/" + orderId + "/cancel"))
+        mockMvc.perform(patch("/api/v1/orders/" + orderId + "/cancel"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("CANCELLED"));
     }
@@ -85,7 +88,7 @@ public class OrderControllerTest {
         
         given(orderService.updateOrderStatus(any(), any())).willReturn(response);
 
-        mockMvc.perform(patch("/api/orders/" + orderId + "/status")
+        mockMvc.perform(patch("/api/v1/orders/" + orderId + "/status")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -100,7 +103,7 @@ public class OrderControllerTest {
         ResGetOrderDtoV1 response = ResGetOrderDtoV1.builder().orderId(orderId).request("수정내용").build();
         given(orderService.updateOrderRequest(any(), any())).willReturn(response);
 
-        mockMvc.perform(put("/api/orders/" + orderId)
+        mockMvc.perform(put("/api/v1/orders/" + orderId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateRequest)))
                 .andExpect(status().isOk())
@@ -108,15 +111,14 @@ public class OrderControllerTest {
     }
 
     @Test
-    @DisplayName("[보안] 삭제된 주문 번호로 상세 조회 시 400 에러를 반환해야 함")
+    @DisplayName("[보안] 삭제된 주문 번호로 상세 조회 시 404 에러를 반환해야 함")
     void getOrderDeletedFailureTest() throws Exception {
         UUID orderId = UUID.randomUUID();
-        given(orderService.getOrder(orderId)).willThrow(new IllegalArgumentException("존재하지 않거나 삭제된 주문입니다."));
+        given(orderService.getOrder(orderId)).willThrow(new CustomException(ErrorCode.ORDER_NOT_FOUND));
 
-        mockMvc.perform(get("/api/orders/" + orderId))
+        mockMvc.perform(get("/api/v1/orders/" + orderId))
                 .andDo(print())
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("BUSINESS_ERROR"));
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -127,7 +129,7 @@ public class OrderControllerTest {
                 .orderItems(List.of(ReqCreateOrderDtoV1.OrderItemRequest.builder().quantity(0).build()))
                 .build();
 
-        mockMvc.perform(post("/api/orders")
+        mockMvc.perform(post("/api/v1/orders")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidRequest)))
                 .andDo(print())
@@ -142,7 +144,7 @@ public class OrderControllerTest {
     void getOrdersSizeLimitTest() throws Exception {
         given(orderService.getOrders(any(), any(), any())).willReturn(new PageImpl<>(List.of()));
 
-        mockMvc.perform(get("/api/orders?size=100"))
+        mockMvc.perform(get("/api/v1/orders?size=100"))
                 .andDo(print())
                 .andExpect(status().isOk());
     }

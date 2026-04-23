@@ -21,9 +21,6 @@ public class StoreRatingSummaryEntity {
 	@GeneratedValue(strategy = GenerationType.UUID)
 	private UUID id;
 
-	@Column(name = "store_id", nullable = false, unique = true)
-	private UUID storeId;
-
 	@Column(name = "review_count", nullable = false)
 	@Builder.Default
 	private Integer reviewCount = 0;

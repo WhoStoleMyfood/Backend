@@ -11,15 +11,16 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ReviewRatingBatchScheduler {
 
-	private final ReviewRatingBatchService reviewRatingBatchService;
+    private final ReviewRatingBatchService reviewRatingBatchService;
 
-//	/**
-//	 * 매일 한국시간 기준 자정 실행
-//	 */
-//	@Scheduled(cron = "0 0 0 * * *", zone = "Asia/Seoul")
-//	public void refreshStoreRatingSummary() {
-//		log.info("리뷰 평점 집계 배치 시작");
-//		reviewRatingBatchService.refreshAllStoreRatings();
-//		log.info("리뷰 평점 집계 배치 종료");
-//	}
+    /**
+     * 매일 한국시간 기준 자정 실행
+     */
+    // @Scheduled(cron = "*/10 * * * * *", zone = "Asia/Seoul") // 테스트용으로 10초마다 실행
+    @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Seoul") // 하루 한번 자정에 실행
+    public void refreshStoreRatingSummary() {
+        log.info("리뷰 평점 집계 배치 시작");
+        reviewRatingBatchService.refreshAllStoreRatings();
+        log.info("리뷰 평점 집계 배치 종료");
+    }
 }
