@@ -1,6 +1,7 @@
 package com.example.whostolemyfood.payment.application.service;
 
 import com.example.whostolemyfood.global.config.security.SecurityConfig;
+import com.example.whostolemyfood.global.config.security.jwt.JwtUtil;
 import com.example.whostolemyfood.global.exception.CustomException;
 import com.example.whostolemyfood.global.exception.ErrorCode;
 import com.example.whostolemyfood.order.domain.entity.OrderEntity;
@@ -20,6 +21,7 @@ import com.example.whostolemyfood.user.domain.entity.UserRole;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -46,6 +48,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+@Slf4j
 @SpringBootTest
 class PaymentServiceV1Test {
 
@@ -60,6 +63,9 @@ class PaymentServiceV1Test {
 
     @Autowired
     PaymentRepository paymentRepository;
+
+    @Autowired
+    JwtUtil jwtUtil;
 
     @Test
     @WithMockUser(username = "550e8400-e29b-41d4-a716-446655440000", roles = "CUSTOMER")
@@ -166,5 +172,12 @@ class PaymentServiceV1Test {
         //then
         assertThat(resModifyPay.getPaymentId()).isEqualTo(id);
 
+    }
+
+    @Test
+    void createToken () {
+        UUID userID = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
+        String token = jwtUtil.createToken(userID, UserRole.CUSTOMER);
+        log.info("{}", token);
     }
 }

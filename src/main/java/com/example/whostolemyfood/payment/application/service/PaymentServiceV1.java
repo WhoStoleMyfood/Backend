@@ -6,7 +6,9 @@ import com.example.whostolemyfood.order.domain.entity.OrderEntity;
 import com.example.whostolemyfood.order.domain.repository.OrderRepository;
 import com.example.whostolemyfood.payment.base.AuditorAwareImpl;
 import com.example.whostolemyfood.payment.domain.PaymentEntity;
+import com.example.whostolemyfood.payment.domain.PaymentStatus;
 import com.example.whostolemyfood.payment.infrastructure.PaymentRepository;
+import com.example.whostolemyfood.payment.presentation.dto.request.ReqConfirmDto;
 import com.example.whostolemyfood.payment.presentation.dto.request.ReqMakePay;
 import com.example.whostolemyfood.payment.presentation.dto.request.ReqModifyPay;
 import com.example.whostolemyfood.payment.presentation.dto.response.*;
@@ -15,6 +17,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -67,6 +70,27 @@ public class PaymentServiceV1 {
         allByCreatedByAndId.payCancel(currentAuditor);
         return new ResModifyPay(allByCreatedByAndId.getId(), LocalDateTime.now());
 
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public UUID makePayment (ReqConfirmDto reqConfirmDto) {
+        UUID currentAuditor = getCurrentAuditor();
+        OrderEntity byOrderIdAndUserId = orderRepository.findByOrderIdAndUserId(UUID.fromString(reqConfirmDto.getOrderId()), currentAuditor).orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
+        PaymentEntity paymentEntity = new PaymentEntity(reqConfirmDto, byOrderIdAndUserId, currentAuditor);
+        PaymentEntity save = paymentRepository.save(paymentEntity);
+        return save.getId();
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void successPay (UUID paymentId) {
+        PaymentEntity paymentEntity = paymentRepository.findById(paymentId).orElseThrow(() -> new CustomException(ErrorCode.PAYMENT_NOT_FOUND));
+        paymentEntity.setPayStatus(PaymentStatus.DONE);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void failPay (UUID paymentId) {
+        PaymentEntity paymentEntity = paymentRepository.findById(paymentId).orElseThrow(() -> new CustomException(ErrorCode.PAYMENT_NOT_FOUND));
+        paymentEntity.setPayStatus(PaymentStatus.FAIL);
     }
 
     private UUID getCurrentAuditor() {

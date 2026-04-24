@@ -37,8 +37,8 @@ public class UserEntity extends BaseAuditEntity {
     @Column(name = "user_name", nullable = false, length = 255)
     private String userName;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<AddressEntity> addresses = new ArrayList<>();
+//    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+//    private List<AddressEntity> addresses = new ArrayList<>();
 
     @Builder
     public UserEntity(UserRole role, String email, String password, String name) {

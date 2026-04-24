@@ -4,6 +4,7 @@ import com.example.whostolemyfood.global.exception.CustomException;
 import com.example.whostolemyfood.global.exception.ErrorCode;
 import com.example.whostolemyfood.order.domain.entity.OrderEntity;
 import com.example.whostolemyfood.payment.base.BaseTimeEntity;
+import com.example.whostolemyfood.payment.presentation.dto.request.ReqConfirmDto;
 import com.example.whostolemyfood.payment.presentation.dto.request.ReqMakePay;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -38,6 +39,7 @@ public class PaymentEntity extends BaseTimeEntity {
     @Column(nullable = false)
     private PaymentType payType;
 
+    @Setter
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private PaymentStatus payStatus;
@@ -45,6 +47,7 @@ public class PaymentEntity extends BaseTimeEntity {
     @Column(unique = true, nullable = false)
     private String paymentKey;
 
+    @Setter
     private LocalDateTime approvedAt;
 
     public PaymentEntity(ReqMakePay reqMakePay, OrderEntity order, UUID userId) {
@@ -55,6 +58,15 @@ public class PaymentEntity extends BaseTimeEntity {
         this.approvedAt = LocalDateTime.now();
         this.payStatus = PaymentStatus.DONE;
         this.order = order;
+    }
+
+    public PaymentEntity(ReqConfirmDto reqConfirmDto, OrderEntity order, UUID userId) {
+        this.setCreatedInfo(userId);
+        this.amount = reqConfirmDto.getAmount();
+        this.paymentKey = reqConfirmDto.getPaymentKey();
+        this.order = order;
+        this.payStatus = PaymentStatus.READY;
+        this.payType = PaymentType.CARD;
     }
 
     public void payCancel(UUID userId) {
