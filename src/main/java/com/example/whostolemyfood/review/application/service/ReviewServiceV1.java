@@ -163,7 +163,7 @@ public class ReviewServiceV1 {
 		StoreEntity store = storeRepository.findById(storeId)
 			.orElseThrow(() -> new IllegalArgumentException("가게를 찾을 수 없습니다."));
 
-		UUID storeRatingId = store.getStoreRatingId();
+		UUID storeRatingId = store.getStoreRatingSummary().getId();
 
 		if (storeRatingId == null) {
 			return ResGetStoreRatingSummaryDtoV1.builder()
@@ -228,7 +228,7 @@ public class ReviewServiceV1 {
 		return ResCreateReviewDtoV1.builder()
 			.reviewId(review.getReviewId())
 			.orderId(review.getOrder().getOrderId())
-			.storeId(review.getStore().getId())
+			.storeId(review.getStore().getStoreId())
 			.rating(review.getRating())
 			.content(review.getContent())
 			.createdAt(review.getCreatedAt())
@@ -239,7 +239,7 @@ public class ReviewServiceV1 {
 		return ResGetReviewDtoV1.builder()
 			.reviewId(review.getReviewId())
 			.orderId(review.getOrder().getOrderId())
-			.storeId(review.getStore().getId())
+			.storeId(review.getStore().getStoreId())
 			.userId(review.getUser().getId())
 			.userName(review.getUser().getUserName())
 			.rating(review.getRating())
@@ -253,7 +253,7 @@ public class ReviewServiceV1 {
 		return ResGetReviewPageDtoV1.builder()
 			.reviewId(review.getReviewId())
 			.orderId(review.getOrder().getOrderId())
-			.storeId(review.getStore().getId())
+			.storeId(review.getStore().getStoreId())
 			.userId(review.getUser().getId())
 			.userName(review.getUser().getUserName())
 			.rating(review.getRating())

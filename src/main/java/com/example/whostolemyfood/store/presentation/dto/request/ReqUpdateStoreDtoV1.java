@@ -14,7 +14,7 @@ import java.time.LocalTime;
 public class ReqUpdateStoreDtoV1 {
 
     @NotBlank(message = "가게 이름은 필수입니다")
-    private String storeName;
+    private String name;
 
     @NotBlank(message = "가게 주소는 필수입니다")
     private String address;

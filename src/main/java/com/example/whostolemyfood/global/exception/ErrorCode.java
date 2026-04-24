@@ -29,6 +29,15 @@ public enum ErrorCode {
     ORDER_REQUEST_UPDATE_FAILED(HttpStatus.BAD_REQUEST, "O006", "주문이 이미 수락되어 요청사항을 수정할 수 없습니다."),
     ORDER_STATUS_UPDATE_FAILED(HttpStatus.BAD_REQUEST, "O007", "허용되지 않은 주문 상태 변경입니다."),
 
+    // Store
+    STORE_NOT_FOUND(HttpStatus.NOT_FOUND, "S001" ,"해당 스토어를 찾을 수 없습니다"),
+    STORE_DUPLICATION_NAME(HttpStatus.BAD_REQUEST, "S002", "이미 존재하는 스토어 이름입니다"),
+    STORE_NOT_OWNER(HttpStatus.BAD_REQUEST,"S003", "해당 스토어의 소유주가 아닙니다"),
+
+    // Menu
+    MENU_NOT_FOUND(HttpStatus.NOT_FOUND, "M001", "해당 메뉴를 찾을 수 없습니다"),
+    MENU_DUPLICATION_NAME(HttpStatus.BAD_REQUEST, "M002", "이미 존재하는 메뉴 이름입니다"),
+
     // Global
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "G001", "서버 내부 오류입니다."),
 
