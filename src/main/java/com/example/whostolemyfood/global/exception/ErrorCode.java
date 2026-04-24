@@ -30,7 +30,12 @@ public enum ErrorCode {
     ORDER_STATUS_UPDATE_FAILED(HttpStatus.BAD_REQUEST, "O007", "허용되지 않은 주문 상태 변경입니다."),
 
     // Global
-    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "G001", "서버 내부 오류입니다.");
+    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "G001", "서버 내부 오류입니다."),
+
+    // Payment
+    PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "P001", "결제를 찾을 수 없습니다."),
+    FAIL_TO_MODIFY_STATUS(HttpStatus.BAD_REQUEST, "P002", "결제 상태를 변경할 수 없습니다."),
+    FAIL_PAY(HttpStatus.BAD_REQUEST, "P003", "결제가 거절되었습니다.");
 
     private final HttpStatus status;
     private final String code;

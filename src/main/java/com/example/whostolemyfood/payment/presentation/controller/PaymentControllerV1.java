@@ -1,7 +1,9 @@
 package com.example.whostolemyfood.payment.presentation.controller;
 
+import com.example.whostolemyfood.payment.application.service.PaymentServiceExtend;
 import com.example.whostolemyfood.payment.application.service.PaymentServiceV1;
 import com.example.whostolemyfood.payment.presentation.dto.ResDto;
+import com.example.whostolemyfood.payment.presentation.dto.request.ReqConfirmDto;
 import com.example.whostolemyfood.payment.presentation.dto.request.ReqMakePay;
 import com.example.whostolemyfood.payment.presentation.dto.request.ReqModifyPay;
 import com.example.whostolemyfood.payment.presentation.dto.response.*;
@@ -14,14 +16,16 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/pay")
+@RequestMapping("/api/v1/pay")
 public class PaymentControllerV1 {
 
     private final PaymentServiceV1 paymentService;
+    private final PaymentServiceExtend paymentServiceExtend;
 
     @Operation(description = "결제 목록 조회")
     @GetMapping("/list")
@@ -49,6 +53,13 @@ public class PaymentControllerV1 {
     ResponseEntity<?> updatePayment(@Valid @RequestBody ReqModifyPay reqModifyPay) {
         ResModifyPay resModifyPay = paymentService.updatePayment(reqModifyPay);
         return ResponseEntity.ok().body(ResDto.success(resModifyPay));
+    }
+
+    @PostMapping("/confirm")
+    ResponseEntity<?> confirm(@RequestBody ReqConfirmDto reqConfirmDto) {
+        paymentServiceExtend.payProcess(reqConfirmDto);
+        Map<String, String> message = Map.of("message", "success");
+        return ResponseEntity.ok().body(message);
     }
 
 }

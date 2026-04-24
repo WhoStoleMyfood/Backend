@@ -33,12 +33,12 @@ public abstract class BaseTimeEntity {
     private UUID updatedBy;
 
 
-    protected void setCreatedInfo(UUID userId) {
+    public void setCreatedInfo(UUID userId) {
         this.createdBy = userId;
         this.updatedBy = userId;
     }
 
-    protected void setUpdatedInfo(UUID userId) {
+    public void setUpdatedInfo(UUID userId) {
         this.updatedBy = userId;
     }
 }
