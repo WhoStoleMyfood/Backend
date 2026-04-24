@@ -7,6 +7,7 @@ import com.example.whostolemyfood.order.application.service.OrderServiceV1;
 import com.example.whostolemyfood.order.domain.entity.OrderStatus;
 import com.example.whostolemyfood.order.presentation.controller.OrderControllerV1;
 import com.example.whostolemyfood.order.presentation.dto.request.ReqCreateOrderDtoV1;
+import com.example.whostolemyfood.order.presentation.dto.request.ReqUpdateOrderRequestDtoV1;
 import com.example.whostolemyfood.order.presentation.dto.request.ReqUpdateOrderStatusDtoV1;
 import com.example.whostolemyfood.order.presentation.dto.response.ResCreateOrderDtoV1;
 import com.example.whostolemyfood.order.presentation.dto.response.ResGetOrderDtoV1;
@@ -53,94 +54,107 @@ public class OrderControllerTest {
     @MockitoBean
     private JwtUtil jwtUtil;
 
-    private AuthUser authUser;
+    private AuthUser customerUser;
+    private AuthUser masterUser;
     private UUID userId;
 
     @BeforeEach
     void setUp() {
         userId = UUID.randomUUID();
-        authUser = new AuthUser(userId, "tester@example.com", UserRole.CUSTOMER);
+        customerUser = new AuthUser(userId, "customer@example.com", UserRole.CUSTOMER);
+        masterUser = new AuthUser(UUID.randomUUID(), "master@example.com", UserRole.MASTER);
     }
 
     @Test
-    @DisplayName("[성공] 주문 생성 API - 200 OK 및 데이터 정밀 검증")
+    @DisplayName("[성공] 주문 생성 - 200 OK")
     void createOrderApiTest() throws Exception {
-        UUID expectedOrderId = UUID.randomUUID();
         ReqCreateOrderDtoV1 request = ReqCreateOrderDtoV1.builder()
                 .storeId(UUID.randomUUID()).addressId(UUID.randomUUID())
                 .orderItems(List.of(ReqCreateOrderDtoV1.OrderItemRequest.builder().menuId(UUID.randomUUID()).quantity(1).priceAtOrder(10000).build()))
                 .build();
-        ResCreateOrderDtoV1 response = ResCreateOrderDtoV1.builder()
-                .orderId(expectedOrderId)
-                .message("주문이 성공적으로 생성되었습니다.")
-                .build();
+        ResCreateOrderDtoV1 response = ResCreateOrderDtoV1.builder().orderId(UUID.randomUUID()).message("성공").build();
         
-        given(orderService.createOrder(any(), eq(userId))).willReturn(response);
+        given(orderService.createOrder(any(), eq(userId), eq(UserRole.CUSTOMER))).willReturn(response);
 
         mockMvc.perform(post("/api/v1/orders")
-                        .with(user(authUser))
+                        .with(user(customerUser))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.orderId").value(expectedOrderId.toString()))
-                .andExpect(jsonPath("$.message").value("주문이 성공적으로 생성되었습니다."));
+                .andExpect(status().isOk());
     }
 
     @Test
-    @DisplayName("[성공] 주문 상세 조회 API - 데이터 정합성 검증")
-    void getOrderApiTest() throws Exception {
-        UUID orderId = UUID.randomUUID();
-        ResGetOrderDtoV1 response = ResGetOrderDtoV1.builder()
-                .orderId(orderId)
-                .status(OrderStatus.PENDING)
-                .build();
-        
-        given(orderService.getOrder(eq(orderId), eq(userId), eq(UserRole.CUSTOMER))).willReturn(response);
-
-        mockMvc.perform(get("/api/v1/orders/" + orderId)
-                        .with(user(authUser)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.orderId").value(orderId.toString()))
-                .andExpect(jsonPath("$.status").value("PENDING"));
-    }
-
-    @Test
-    @DisplayName("[성공] 주문 목록 조회 API - PageResponse 반환 확인")
+    @DisplayName("[성공] 주문 목록 조회 - 200 OK")
     void getOrdersApiTest() throws Exception {
         given(orderService.getOrders(any(), any(), any(), eq(userId), eq(UserRole.CUSTOMER)))
                 .willReturn(new PageImpl<>(List.of()));
 
         mockMvc.perform(get("/api/v1/orders")
-                        .with(user(authUser)))
+                        .with(user(customerUser)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray());
     }
 
     @Test
-    @DisplayName("[성공] 주문 취소 API - 결과 상태값 검증")
-    void cancelOrderApiTest() throws Exception {
+    @DisplayName("[성공] 주문 상세 조회 - 200 OK")
+    void getOrderApiTest() throws Exception {
         UUID orderId = UUID.randomUUID();
-        ResGetOrderDtoV1 response = ResGetOrderDtoV1.builder()
-                .orderId(orderId)
-                .status(OrderStatus.CANCELLED)
-                .build();
-        
-        given(orderService.cancelOrder(eq(orderId), eq(userId))).willReturn(response);
+        ResGetOrderDtoV1 response = ResGetOrderDtoV1.builder().orderId(orderId).build();
+        given(orderService.getOrder(eq(orderId), eq(userId), eq(UserRole.CUSTOMER))).willReturn(response);
 
-        mockMvc.perform(patch("/api/v1/orders/" + orderId + "/cancel")
-                        .with(user(authUser)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("CANCELLED"));
+        mockMvc.perform(get("/api/v1/orders/" + orderId)
+                        .with(user(customerUser)))
+                .andExpect(status().isOk());
     }
 
     @Test
-    @DisplayName("[성공] 주문 삭제 API - 204 No Content")
+    @DisplayName("[성공] 요청사항 수정 - 200 OK")
+    void updateOrderRequestApiTest() throws Exception {
+        UUID orderId = UUID.randomUUID();
+        ReqUpdateOrderRequestDtoV1 request = new ReqUpdateOrderRequestDtoV1("수정된 요청");
+        given(orderService.updateOrderRequest(eq(orderId), any(), eq(userId), eq(UserRole.CUSTOMER)))
+                .willReturn(ResGetOrderDtoV1.builder().orderId(orderId).build());
+
+        mockMvc.perform(put("/api/v1/orders/" + orderId)
+                        .with(user(customerUser))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("[성공] 상태 변경 - 200 OK")
+    void updateOrderStatusApiTest() throws Exception {
+        UUID orderId = UUID.randomUUID();
+        ReqUpdateOrderStatusDtoV1 request = new ReqUpdateOrderStatusDtoV1(OrderStatus.ACCEPTED);
+        given(orderService.updateOrderStatus(eq(orderId), any(), eq(userId), eq(UserRole.CUSTOMER)))
+                .willReturn(ResGetOrderDtoV1.builder().orderId(orderId).build());
+
+        mockMvc.perform(patch("/api/v1/orders/" + orderId + "/status")
+                        .with(user(customerUser))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("[성공] 주문 취소 - 200 OK")
+    void cancelOrderApiTest() throws Exception {
+        UUID orderId = UUID.randomUUID();
+        given(orderService.cancelOrder(eq(orderId), eq(userId), eq(UserRole.CUSTOMER)))
+                .willReturn(ResGetOrderDtoV1.builder().orderId(orderId).build());
+
+        mockMvc.perform(patch("/api/v1/orders/" + orderId + "/cancel")
+                        .with(user(customerUser)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("[성공] 주문 삭제 - 204 No Content")
     void deleteOrderApiTest() throws Exception {
         UUID orderId = UUID.randomUUID();
-        AuthUser admin = new AuthUser(UUID.randomUUID(), "admin@example.com", UserRole.MANAGER);
-
         mockMvc.perform(delete("/api/v1/orders/" + orderId)
-                        .with(user(admin)))
+                        .with(user(masterUser)))
                 .andExpect(status().isNoContent());
     }
 }

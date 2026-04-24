@@ -45,6 +45,9 @@ public interface OrderRepository extends JpaRepository<OrderEntity, UUID> {
      * Soft Delete가 false인지 검사
      */
     Optional<OrderEntity> findByOrderIdAndIsDeletedFalse(UUID orderId);
+
+    // [RBAC] CUSTOMER: 본인의 주문만 조회
+    Page<OrderEntity> findAllByUserIdAndIsDeletedFalse(UUID userId, Pageable pageable);
 }
 
 
