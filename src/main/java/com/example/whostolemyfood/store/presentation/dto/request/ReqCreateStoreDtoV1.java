@@ -14,7 +14,6 @@ import java.time.LocalTime;
 @NoArgsConstructor
 public class ReqCreateStoreDtoV1 {
 
-//    private UUID userId;
     @NotBlank(message = "가게 이름은 필수입니다")
     private String name;
 

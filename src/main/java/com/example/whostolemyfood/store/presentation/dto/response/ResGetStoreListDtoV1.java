@@ -2,12 +2,14 @@ package com.example.whostolemyfood.store.presentation.dto.response;
 
 import com.example.whostolemyfood.store.domain.entity.StoreEntity;
 import com.example.whostolemyfood.store.domain.entity.StoreStatus;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.time.LocalTime;
 import java.util.UUID;
 
 @Getter
+@AllArgsConstructor
 public class ResGetStoreListDtoV1 {
 
     private UUID storeId;
@@ -16,15 +18,6 @@ public class ResGetStoreListDtoV1 {
     private StoreStatus storeStatus;
     private LocalTime openTime;
     private LocalTime closeTime;
-
-    public ResGetStoreListDtoV1(UUID storeId,String name, Integer minOrderPrice, StoreStatus storeStatus, LocalTime openTime, LocalTime closeTime) {
-        this.storeId = storeId;
-        this.name = name;
-        this.minOrderPrice = minOrderPrice;
-        this.storeStatus = storeStatus;
-        this.openTime = openTime;
-        this.closeTime = closeTime;
-    }
 
     public static ResGetStoreListDtoV1 from(StoreEntity store) {
         StoreStatus currentStatus;

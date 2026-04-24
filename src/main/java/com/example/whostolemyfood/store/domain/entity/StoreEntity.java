@@ -33,21 +33,21 @@ public class StoreEntity extends BaseSoftDeleteEntity {
     private UUID storeRatingId;
 
     // user_id
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private UserEntity user;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     private CategoryEntity category;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "area_id")
     private AreaEntity area;
 
-//    @ManyToOne
-//    @JoinColumn(name = "store_rating_summary_id")
-//    private StoreRatingSummaryEntity storeRatingSummary;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "store_rating_summary_id")
+    private StoreRatingSummaryEntity storeRatingSummary;
 
     @Column(nullable = false, unique = true)
     private String name;
@@ -78,9 +78,8 @@ public class StoreEntity extends BaseSoftDeleteEntity {
     @Builder.Default
     private Boolean isDeleted = false;
 
-
-    // owner용 업데이트
-    public void updateAllFields(ReqUpdateStoreDtoV1 request) {
+    // 스토어 수정
+    public void updateStore(ReqUpdateStoreDtoV1 request) {
         this.name = request.getName();
         this.address = request.getAddress();
         this.phone = request.getPhone();
@@ -93,12 +92,6 @@ public class StoreEntity extends BaseSoftDeleteEntity {
             this.status = request.getStatus();
         }
     }
-
-//      manager / master용 업데이트
-//    public void updateOptionalFields(ReqUpdateStoreDtoV1 request) {
-//        this.status = request.getStatus();
-//        this.isHidden = request.getIsHidden();
-//    }
 
     public void deleteByOwnerAndMaster(UUID deletedBy) {
         this.isDeleted = true;

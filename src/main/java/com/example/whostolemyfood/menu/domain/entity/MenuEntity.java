@@ -13,6 +13,8 @@ import java.util.UUID;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
+@Builder
 @SQLRestriction("is_deleted = false")
 @SQLDelete(sql = "UPDATE p_menus SET is_deleted = true WHERE menu_id = ?")
 @Table(name = "p_menus")
@@ -36,17 +38,11 @@ public class MenuEntity extends BaseSoftDeleteEntity {
     private String description;
 
     @Column(name = "is_hidden")
+    @Builder.Default
     private Boolean isHidden = false;
     @Column(name = "is_deleted")
+    @Builder.Default
     private Boolean isDeleted = false;
-
-    @Builder
-    public MenuEntity(StoreEntity store, String name, Integer price, String description) {
-        this.store = store;
-        this.name = name;
-        this.price = price;
-        this.description = description;
-    }
 
     public void updateMenu(ReqUpdateMenuDtoV1 request) {
         this.name = request.getName();
