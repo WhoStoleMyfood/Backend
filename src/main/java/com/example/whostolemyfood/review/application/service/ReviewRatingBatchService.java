@@ -30,7 +30,7 @@ public class ReviewRatingBatchService {
 		List<StoreEntity> stores = storeRepository.findAll();
 
 		for (StoreEntity store : stores) {
-			UUID storeId = store.getId();
+			UUID storeId = store.getStoreId();
 
 			int reviewCount = getReviewCount(storeId);
 			int totalRatingSum = getTotalRatingSum(storeId);

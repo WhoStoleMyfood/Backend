@@ -38,8 +38,22 @@ public enum ErrorCode {
     PRICE_MISMATCH(HttpStatus.BAD_REQUEST, "D004", "메뉴 가격이 변동되었습니다. 다시 확인해 주세요."),
     ORDER_MIN_PRICE_NOT_MET(HttpStatus.BAD_REQUEST, "O010", "최소 주문 금액을 만족하지 않습니다."),
 
+    // Store
+    STORE_NOT_FOUND(HttpStatus.NOT_FOUND, "S001" ,"해당 스토어를 찾을 수 없습니다"),
+    STORE_DUPLICATION_NAME(HttpStatus.BAD_REQUEST, "S002", "이미 존재하는 스토어 이름입니다"),
+    STORE_NOT_OWNER(HttpStatus.BAD_REQUEST,"S003", "해당 스토어의 소유주가 아닙니다"),
+
+    // Menu
+    MENU_NOT_FOUND(HttpStatus.NOT_FOUND, "M001", "해당 메뉴를 찾을 수 없습니다"),
+    MENU_DUPLICATION_NAME(HttpStatus.BAD_REQUEST, "M002", "이미 존재하는 메뉴 이름입니다"),
+
     // Global
-    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "G001", "서버 내부 오류입니다.");
+    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "G001", "서버 내부 오류입니다."),
+
+    // Payment
+    PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "P001", "결제를 찾을 수 없습니다."),
+    FAIL_TO_MODIFY_STATUS(HttpStatus.BAD_REQUEST, "P002", "결제 상태를 변경할 수 없습니다."),
+    FAIL_PAY(HttpStatus.BAD_REQUEST, "P003", "결제가 거절되었습니다.");
 
     private final HttpStatus status;
     private final String code;
