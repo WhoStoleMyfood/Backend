@@ -36,6 +36,8 @@ public record AuthUser(
         return email;
     }
 
+    public UUID getUserId() { return userId; }
+
     // 계정 상태 정보 (커스텀 로직이 없다면 기본적으로 true 반환)
     @Override public boolean isAccountNonExpired() { return true; }
     @Override public boolean isAccountNonLocked() { return true; }
