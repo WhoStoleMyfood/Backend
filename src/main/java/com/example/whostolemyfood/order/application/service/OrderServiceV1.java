@@ -1,7 +1,11 @@
 package com.example.whostolemyfood.order.application.service;
 
+import com.example.whostolemyfood.address.domain.entity.AddressEntity;
+import com.example.whostolemyfood.address.domain.repository.AddressRepository;
 import com.example.whostolemyfood.global.exception.CustomException;
 import com.example.whostolemyfood.global.exception.ErrorCode;
+import com.example.whostolemyfood.menu.domain.entity.MenuEntity;
+import com.example.whostolemyfood.menu.domain.repository.MenuRepository;
 import com.example.whostolemyfood.order.domain.entity.OrderEntity;
 import com.example.whostolemyfood.order.domain.entity.OrderItemEntity;
 import com.example.whostolemyfood.order.domain.entity.OrderStatus;
@@ -10,6 +14,10 @@ import com.example.whostolemyfood.order.presentation.dto.request.ReqCreateOrderD
 import com.example.whostolemyfood.order.presentation.dto.response.ResCreateOrderDtoV1;
 import com.example.whostolemyfood.order.presentation.dto.response.ResGetOrderDtoV1;
 import com.example.whostolemyfood.order.presentation.dto.response.ResGetOrderListDtoV1;
+import com.example.whostolemyfood.store.domain.entity.StoreEntity;
+import com.example.whostolemyfood.store.domain.entity.StoreStatus;
+import com.example.whostolemyfood.store.domain.repository.StoreRepository;
+import com.example.whostolemyfood.user.domain.entity.UserRole;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -19,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,30 +37,69 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 public class OrderServiceV1 {
 
-    public static final UUID MOCK_USER_ID = UUID.fromString("a7a4e42a-e45a-450c-bcee-ff05c4235698");
-
     private final OrderRepository orderRepository;
+    private final StoreRepository storeRepository;
+    private final MenuRepository menuRepository;
+    private final AddressRepository addressRepository;
 
     /**
-     * 주문 생성
+     * 주문 생성 (가게 운영 정책 검증 포함)
      */
     @Transactional
-    public ResCreateOrderDtoV1 createOrder(ReqCreateOrderDtoV1 request) {
-        UUID currentUserId = MOCK_USER_ID; 
+    public ResCreateOrderDtoV1 createOrder(ReqCreateOrderDtoV1 request, UUID userId) {
+        log.info("[Order] Creating order. User: {}, Store: {}", userId, request.getStoreId());
 
-        int itemTotalPrice = request.getOrderItems().stream()
-                .mapToInt(item -> item.getPriceAtOrder() * item.getQuantity())
-                .sum();
+        // 1. 가게 존재 여부 및 운영 정책 확인
+        StoreEntity store = storeRepository.findById(request.getStoreId())
+                .orElseThrow(() -> new CustomException(ErrorCode.STORE_NOT_FOUND));
 
-        int deliveryFee = 3000; 
-        int finalTotalPrice = itemTotalPrice + deliveryFee;
-
-        if (finalTotalPrice <= 0) {
-            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
+        // [보안] 숨김 처리된 가게면 주문 차단
+        if (Boolean.TRUE.equals(store.getIsHidden())) {
+            throw new CustomException(ErrorCode.STORE_NOT_FOUND);
         }
 
+        // [상태] 영업 중인 가게인지 확인
+        if (store.getStatus() != StoreStatus.OPEN) {
+            throw new CustomException(ErrorCode.STORE_CLOSED);
+        }
+
+        // [영업시간] 현재 주문 가능한 시간인지 확인
+        LocalTime now = LocalTime.now();
+        if (now.isBefore(store.getOpenTime()) || now.isAfter(store.getCloseTime())) {
+            log.warn("[Order] Store is not in operating hours. Store: {}, Current: {}", store.getId(), now);
+            throw new CustomException(ErrorCode.STORE_CLOSED);
+        }
+
+        // 2. 배송지 존재 여부 및 소유권 확인
+        AddressEntity address = addressRepository.findByIdAndIsDeletedFalse(request.getAddressId())
+                .orElseThrow(() -> new CustomException(ErrorCode.ADDRESS_NOT_FOUND));
+        if (!address.getUserId().equals(userId)) {
+            throw new CustomException(ErrorCode.ADDRESS_NOT_OWNER);
+        }
+
+        // 3. 메뉴 가격 검증 및 음식 총액 계산
+        int calculatedItemTotalPrice = 0;
+        for (ReqCreateOrderDtoV1.OrderItemRequest itemRequest : request.getOrderItems()) {
+            MenuEntity menu = menuRepository.findById(itemRequest.getMenuId())
+                    .orElseThrow(() -> new CustomException(ErrorCode.MENU_NOT_FOUND));
+            
+            if (!menu.getPrice().equals(itemRequest.getPriceAtOrder())) {
+                throw new CustomException(ErrorCode.PRICE_MISMATCH);
+            }
+            calculatedItemTotalPrice += menu.getPrice() * itemRequest.getQuantity();
+        }
+
+        // [최소주문금액] 검증
+        if (store.getMinOrderPrice() != null && calculatedItemTotalPrice < store.getMinOrderPrice()) {
+            throw new CustomException(ErrorCode.ORDER_MIN_PRICE_NOT_MET);
+        }
+
+        int deliveryFee = 3000; 
+        int finalTotalPrice = calculatedItemTotalPrice + deliveryFee;
+
+        // 4. 엔티티 생성
         OrderEntity order = OrderEntity.builder()
-                .userId(currentUserId)
+                .userId(userId)
                 .storeId(request.getStoreId())
                 .addressId(request.getAddressId())
                 .request(request.getRequest())
@@ -60,8 +108,7 @@ public class OrderServiceV1 {
                 .status(OrderStatus.PENDING)
                 .build();
         
-        // [Audit 필수 요구사항 준수] 데이터 생성자 기록
-        order.markCreatedBy(currentUserId);
+        order.markCreatedBy(userId);
 
         List<OrderItemEntity> orderItems = request.getOrderItems().stream()
                 .map(itemRequest -> OrderItemEntity.builder()
@@ -69,30 +116,36 @@ public class OrderServiceV1 {
                         .menuId(itemRequest.getMenuId())
                         .quantity(itemRequest.getQuantity())
                         .priceAtOrder(itemRequest.getPriceAtOrder())
-                        .createdBy(currentUserId)
+                        .createdBy(userId)
                         .build())
                 .toList();
 
         order.getOrderItems().addAll(orderItems);
 
         OrderEntity savedOrder = orderRepository.save(order);
+        log.info("[Order] Successfully created. OrderId: {}", savedOrder.getOrderId());
         return ResCreateOrderDtoV1.from(savedOrder, "주문이 성공적으로 생성되었습니다.");
     }
 
     /**
-     * 주문 단건 조회
+     * 주문 상세 조회
      */
-    public ResGetOrderDtoV1 getOrder(UUID orderId) {
+    public ResGetOrderDtoV1 getOrder(UUID orderId, UUID userId, UserRole role) {
         OrderEntity order = orderRepository.findById(orderId)
                 .filter(o -> !o.getIsDeleted())
                 .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
+
+        if (role == UserRole.CUSTOMER && !order.getUserId().equals(userId)) {
+            throw new CustomException(ErrorCode.ORDER_NOT_OWNER);
+        }
+
         return ResGetOrderDtoV1.from(order);
     }
 
     /**
      * 주문 목록 조회
      */
-    public Page<ResGetOrderListDtoV1> getOrders(UUID storeId, Boolean isHidden, Pageable pageable) {
+    public Page<ResGetOrderListDtoV1> getOrders(UUID storeId, Boolean isHidden, Pageable pageable, UUID userId, UserRole role) {
         if (storeId != null && isHidden != null) {
             return orderRepository.findAllByStoreIdAndIsHiddenAndIsDeletedFalse(storeId, isHidden, pageable).map(ResGetOrderListDtoV1::from);
         } else if (storeId != null) {
@@ -107,10 +160,14 @@ public class OrderServiceV1 {
      * 주문 취소
      */
     @Transactional
-    public ResGetOrderDtoV1 cancelOrder(UUID orderId) {
+    public ResGetOrderDtoV1 cancelOrder(UUID orderId, UUID userId) {
         OrderEntity order = orderRepository.findById(orderId)
                 .filter(o -> !o.getIsDeleted())
                 .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
+
+        if (!order.getUserId().equals(userId)) {
+            throw new CustomException(ErrorCode.ORDER_NOT_OWNER);
+        }
 
         if (order.getStatus() != OrderStatus.PENDING) {
             throw new CustomException(ErrorCode.ORDER_CANCEL_NOT_PENDING);
@@ -123,6 +180,7 @@ public class OrderServiceV1 {
         }
 
         order.cancelOrder();
+        order.markUpdatedBy(userId);
         return ResGetOrderDtoV1.from(order, "주문이 성공적으로 취소되었습니다.");
     }
 
@@ -130,13 +188,18 @@ public class OrderServiceV1 {
      * 주문 요청사항 수정
      */
     @Transactional
-    public ResGetOrderDtoV1 updateOrderRequest(UUID orderId, String newRequest) {
+    public ResGetOrderDtoV1 updateOrderRequest(UUID orderId, String newRequest, UUID userId) {
         OrderEntity order = orderRepository.findById(orderId)
                 .filter(o -> !o.getIsDeleted())
                 .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
 
+        if (!order.getUserId().equals(userId)) {
+            throw new CustomException(ErrorCode.ORDER_NOT_OWNER);
+        }
+
         try {
             order.updateRequest(newRequest); 
+            order.markUpdatedBy(userId);
         } catch (IllegalStateException e) {
             throw new CustomException(ErrorCode.ORDER_REQUEST_UPDATE_FAILED);
         }
@@ -148,19 +211,18 @@ public class OrderServiceV1 {
      * 주문 상태 변경
      */
     @Transactional
-    public ResGetOrderDtoV1 updateOrderStatus(UUID orderId, OrderStatus nextStatus) {
+    public ResGetOrderDtoV1 updateOrderStatus(UUID orderId, OrderStatus nextStatus, UUID userId, UserRole role) {
         OrderEntity order = orderRepository.findById(orderId)
                 .filter(o -> !o.getIsDeleted())
                 .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
         
-        if (order.getStatus() == OrderStatus.CANCELLED || 
-            order.getStatus() == OrderStatus.DELIVERED || 
-            order.getStatus() == OrderStatus.COMPLETED) {
-            throw new CustomException(ErrorCode.ORDER_ALREADY_FINALIZED);
+        if (role == UserRole.CUSTOMER) {
+            throw new CustomException(ErrorCode.ACCESS_DENIED);
         }
 
         try {
             order.updateStatus(nextStatus);
+            order.markUpdatedBy(userId);
         } catch (IllegalStateException e) {
             throw new CustomException(ErrorCode.ORDER_STATUS_UPDATE_FAILED);
         }
@@ -172,7 +234,11 @@ public class OrderServiceV1 {
      * 주문 삭제
      */
     @Transactional
-    public void deleteOrder(UUID orderId) {
+    public void deleteOrder(UUID orderId, UUID userId, UserRole role) {
+        if (role != UserRole.MANAGER && role != UserRole.MASTER) {
+            throw new CustomException(ErrorCode.ACCESS_DENIED);
+        }
+
         OrderEntity order = orderRepository.findById(orderId)
                 .filter(o -> !o.getIsDeleted())
                 .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
@@ -181,6 +247,6 @@ public class OrderServiceV1 {
             throw new CustomException(ErrorCode.ORDER_CANNOT_DELETE_DELIVERED);
         }
 
-        order.softDelete(MOCK_USER_ID); 
+        order.softDelete(userId); 
     }
 }
