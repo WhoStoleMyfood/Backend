@@ -29,33 +29,38 @@ public class AddressServiceV1 {
      * 배송지 생성
      */
     @Transactional
-    public ResCreateAddressDtoV1 createAddress(ReqCreateAddressDtoV1 request) {
-        // TODO: [인증/인가] SecurityContext 기반 사용자 ID 추출
-        UUID mockUserId = UUID.fromString("a7a4e42a-e45a-450c-bcee-ff05c4235698"); 
+    public ResCreateAddressDtoV1 createAddress(ReqCreateAddressDtoV1 request, UUID userId) {
+        log.info("[Address] Creating new address for User: {}, Alias: {}", userId, request.getAlias());
         
         if (Boolean.TRUE.equals(request.getIsDefault())) {
-            handleDefaultAddress(mockUserId);
+            handleDefaultAddress(userId);
         }
 
-        AddressEntity address = request.toEntity(mockUserId);
+        AddressEntity address = request.toEntity(userId);
+        
+        // 🚨 [Audit 필수사항] 생성자 정보 기록
+        address.markCreatedBy(userId);
+
         AddressEntity savedAddress = addressRepository.save(address);
         
+        log.info("[Address] Address created successfully. AddressId: {}, User: {}", savedAddress.getId(), userId);
         return ResCreateAddressDtoV1.from(savedAddress, "배송지가 성공적으로 생성되었습니다.");
     }
 
     /**
      * 본인의 배송지 목록 조회
      */
-    public Page<ResGetAddressDtoV1> getMyAddresses(String alias, Pageable pageable) {
-        UUID mockUserId = UUID.fromString("a7a4e42a-e45a-450c-bcee-ff05c4235698"); 
+    public Page<ResGetAddressDtoV1> getMyAddresses(UUID userId, String alias, Pageable pageable) {
+        log.info("[Address] Fetching addresses for User: {}, Filter: {}", userId, alias);
         
         Page<AddressEntity> addresses;
         if (alias != null && !alias.isBlank()) {
-            addresses = addressRepository.findAllByUserIdAndAliasContainingAndIsDeletedFalse(mockUserId, alias, pageable);
+            addresses = addressRepository.findAllByUserIdAndAliasContainingAndIsDeletedFalse(userId, alias, pageable);
         } else {
-            addresses = addressRepository.findAllByUserIdAndIsDeletedFalse(mockUserId, pageable);
+            addresses = addressRepository.findAllByUserIdAndIsDeletedFalse(userId, pageable);
         }
         
+        log.info("[Address] Successfully fetched {} addresses for User: {}", addresses.getTotalElements(), userId);
         return addresses.map(ResGetAddressDtoV1::from);
     }
 
@@ -63,14 +68,23 @@ public class AddressServiceV1 {
      * 배송지 수정
      */
     @Transactional
-    public ResGetAddressDtoV1 updateAddress(UUID addressId, ReqUpdateAddressDtoV1 request) {
-        UUID mockUserId = UUID.fromString("a7a4e42a-e45a-450c-bcee-ff05c4235698"); 
+    public ResGetAddressDtoV1 updateAddress(UUID addressId, ReqUpdateAddressDtoV1 request, UUID userId) {
+        log.info("[Address] Updating address info. AddressId: {}, User: {}", addressId, userId);
         
         AddressEntity address = addressRepository.findByIdAndIsDeletedFalse(addressId)
-                .orElseThrow(() -> new CustomException(ErrorCode.ADDRESS_NOT_FOUND));
+                .orElseThrow(() -> {
+                    log.warn("[Address] Update failed. Address not found. AddressId: {}", addressId);
+                    return new CustomException(ErrorCode.ADDRESS_NOT_FOUND);
+                });
+
+        // [인가] 본인 확인 로직
+        if (!address.getUserId().equals(userId)) {
+            log.warn("[Address] Update unauthorized. User {} tried to update address owned by {}", userId, address.getUserId());
+            throw new CustomException(ErrorCode.ADDRESS_NOT_OWNER);
+        }
 
         if (Boolean.TRUE.equals(request.getIsDefault()) && !address.getIsDefault()) {
-            handleDefaultAddress(mockUserId);
+            handleDefaultAddress(userId);
         }
 
         address.updateAddress(
@@ -80,7 +94,11 @@ public class AddressServiceV1 {
                 request.getZipCode(),
                 request.getIsDefault()
         );
+        
+        // 🚨 [Audit 필수사항] 수정자 정보 기록
+        address.markUpdatedBy(userId);
 
+        log.info("[Address] Address updated successfully. AddressId: {}", addressId);
         return ResGetAddressDtoV1.from(address, "배송지 정보가 성공적으로 수정되었습니다.");
     }
 
@@ -88,18 +106,31 @@ public class AddressServiceV1 {
      * 배송지 삭제 (Soft Delete)
      */
     @Transactional
-    public void deleteAddress(UUID addressId) {
-        UUID mockUserId = UUID.fromString("a7a4e42a-e45a-450c-bcee-ff05c4235698"); 
+    public void deleteAddress(UUID addressId, UUID userId) {
+        log.info("[Address] Requesting soft-delete. AddressId: {}, User: {}", addressId, userId);
         
         AddressEntity address = addressRepository.findByIdAndIsDeletedFalse(addressId)
-                .orElseThrow(() -> new CustomException(ErrorCode.ADDRESS_NOT_FOUND));
+                .orElseThrow(() -> {
+                    log.warn("[Address] Delete failed. Address not found. AddressId: {}", addressId);
+                    return new CustomException(ErrorCode.ADDRESS_NOT_FOUND);
+                });
 
-        // 부모(BaseAuditEntity)의 softDelete(UUID)를 호출하여 완벽하게 삭제 처리
-        address.softDelete(mockUserId);
+        // [인가] 본인 확인 로직
+        if (!address.getUserId().equals(userId)) {
+            log.warn("[Address] Delete unauthorized. User {} tried to delete address owned by {}", userId, address.getUserId());
+            throw new CustomException(ErrorCode.ADDRESS_NOT_OWNER);
+        }
+
+        // [Audit 필수사항] 삭제자 정보 기록 및 Soft Delete 수행
+        address.softDelete(userId);
+        log.info("[Address] Address soft-deleted successfully. AddressId: {}", addressId);
     }
 
     private void handleDefaultAddress(UUID userId) {
         addressRepository.findByUserIdAndIsDefaultTrueAndIsDeletedFalse(userId)
-                .ifPresent(existingDefault -> existingDefault.setDefault(false));
+                .ifPresent(existingDefault -> {
+                    log.info("[Address] Unsetting existing default address. AddressId: {}, User: {}", existingDefault.getId(), userId);
+                    existingDefault.setDefault(false);
+                });
     }
 }

@@ -42,6 +42,7 @@ public class AddressServiceTest {
     @DisplayName("[성공] 배송지 생성 - 유효한 정보 입력 시 정상 저장")
     void createAddressSuccessTest() {
         // Given
+        UUID userId = UUID.randomUUID();
         ReqCreateAddressDtoV1 request = ReqCreateAddressDtoV1.builder()
                 .alias("우리집").address("서울시").isDefault(true).build();
         
@@ -52,7 +53,7 @@ public class AddressServiceTest {
         });
 
         // When
-        ResCreateAddressDtoV1 response = addressService.createAddress(request);
+        ResCreateAddressDtoV1 response = addressService.createAddress(request, userId);
 
         // Then
         assertThat(response.getAddressId()).isNotNull();
@@ -62,15 +63,16 @@ public class AddressServiceTest {
     @DisplayName("[성공] 기본 배송지 설정 - 새로운 기본지 생성 시 기존 기본지는 해제")
     void handleDefaultAddressTest() {
         // Given
+        UUID userId = UUID.randomUUID();
         AddressEntity existingDefault = AddressEntity.builder().isDefault(true).build();
-        given(addressRepository.findByUserIdAndIsDefaultTrueAndIsDeletedFalse(any()))
+        given(addressRepository.findByUserIdAndIsDefaultTrueAndIsDeletedFalse(userId))
                 .willReturn(Optional.of(existingDefault));
         
         ReqCreateAddressDtoV1 request = ReqCreateAddressDtoV1.builder().isDefault(true).address("새 주소").build();
         given(addressRepository.save(any())).willAnswer(invocation -> invocation.getArgument(0));
 
         // When
-        addressService.createAddress(request);
+        addressService.createAddress(request, userId);
 
         // Then
         assertThat(existingDefault.getIsDefault()).isFalse();
@@ -80,49 +82,74 @@ public class AddressServiceTest {
     @DisplayName("[성공] 배송지 목록 조회 - 별칭 검색어 포함 시 필터링 결과 반환")
     void getMyAddressesWithSearchTest() {
         // Given
+        UUID userId = UUID.randomUUID();
         AddressEntity address = AddressEntity.builder().alias("회사").build();
         given(addressRepository.findAllByUserIdAndAliasContainingAndIsDeletedFalse(any(), any(), any()))
                 .willReturn(new PageImpl<>(List.of(address)));
 
         // When
-        Page<ResGetAddressDtoV1> result = addressService.getMyAddresses("회사", PageRequest.of(0, 10));
+        Page<ResGetAddressDtoV1> result = addressService.getMyAddresses(userId, "회사", PageRequest.of(0, 10));
 
         // Then
         assertThat(result.getContent().get(0).getAlias()).isEqualTo("회사");
     }
 
     @Test
-    @DisplayName("[성공] 배송지 수정 - 유효한 데이터 입력 시 필드 정보 업데이트")
+    @DisplayName("[성공] 배송지 수정 - 본인 소유 배송지일 경우 정보 업데이트")
     void updateAddressSuccessTest() {
         // Given
+        UUID userId = UUID.randomUUID();
         UUID addressId = UUID.randomUUID();
         AddressEntity address = AddressEntity.builder()
-                .id(addressId)
-                .userId(UUID.randomUUID())
+                .userId(userId) // 소유자 일치
                 .alias("옛날집")
                 .build();
+        ReflectionTestUtils.setField(address, "id", addressId);
         
         given(addressRepository.findByIdAndIsDeletedFalse(addressId)).willReturn(Optional.of(address));
 
         ReqUpdateAddressDtoV1 request = ReqUpdateAddressDtoV1.builder().alias("새로운집").address("서울").build();
 
         // When
-        ResGetAddressDtoV1 response = addressService.updateAddress(addressId, request);
+        ResGetAddressDtoV1 response = addressService.updateAddress(addressId, request, userId);
 
         // Then
         assertThat(response.getAlias()).isEqualTo("새로운집");
     }
 
     @Test
+    @DisplayName("[실패] 배송지 수정 - 타인의 배송지 수정 시 ADDRESS_NOT_OWNER 예외 발생")
+    void updateAddressNotOwnerTest() {
+        // Given
+        UUID ownerId = UUID.randomUUID();
+        UUID otherUserId = UUID.randomUUID();
+        UUID addressId = UUID.randomUUID();
+        AddressEntity address = AddressEntity.builder()
+                .userId(ownerId) // 소유자 다름
+                .build();
+        
+        given(addressRepository.findByIdAndIsDeletedFalse(addressId)).willReturn(Optional.of(address));
+
+        // When
+        CustomException exception = assertThrows(CustomException.class, () -> 
+            addressService.updateAddress(addressId, ReqUpdateAddressDtoV1.builder().address("서울").build(), otherUserId)
+        );
+
+        // Then
+        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.ADDRESS_NOT_OWNER);
+    }
+
+    @Test
     @DisplayName("[실패] 배송지 수정 - 존재하지 않는 ID 조회 시 ADDRESS_NOT_FOUND 예외 발생")
     void updateAddressNotFoundTest() {
         // Given
+        UUID userId = UUID.randomUUID();
         UUID addressId = UUID.randomUUID();
         given(addressRepository.findByIdAndIsDeletedFalse(addressId)).willReturn(Optional.empty());
 
         // When
         CustomException exception = assertThrows(CustomException.class, () -> 
-            addressService.updateAddress(addressId, ReqUpdateAddressDtoV1.builder().build())
+            addressService.updateAddress(addressId, ReqUpdateAddressDtoV1.builder().address("서울").build(), userId)
         );
 
         // Then
@@ -130,14 +157,33 @@ public class AddressServiceTest {
     }
 
     @Test
+    @DisplayName("[실패] 배송지 삭제 - 타인의 배송지 삭제 시 ADDRESS_NOT_OWNER 예외 발생")
+    void deleteAddressNotOwnerTest() {
+        // Given
+        UUID ownerId = UUID.randomUUID();
+        UUID otherUserId = UUID.randomUUID();
+        UUID addressId = UUID.randomUUID();
+        AddressEntity address = AddressEntity.builder().userId(ownerId).build();
+        
+        given(addressRepository.findByIdAndIsDeletedFalse(addressId)).willReturn(Optional.of(address));
+
+        // When
+        CustomException exception = assertThrows(CustomException.class, () -> addressService.deleteAddress(addressId, otherUserId));
+
+        // Then
+        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.ADDRESS_NOT_OWNER);
+    }
+
+    @Test
     @DisplayName("[실패] 배송지 삭제 - 존재하지 않는 ID 조회 시 ADDRESS_NOT_FOUND 예외 발생")
     void deleteAddressNotFoundTest() {
         // Given
+        UUID userId = UUID.randomUUID();
         UUID addressId = UUID.randomUUID();
         given(addressRepository.findByIdAndIsDeletedFalse(addressId)).willReturn(Optional.empty());
 
         // When
-        CustomException exception = assertThrows(CustomException.class, () -> addressService.deleteAddress(addressId));
+        CustomException exception = assertThrows(CustomException.class, () -> addressService.deleteAddress(addressId, userId));
 
         // Then
         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.ADDRESS_NOT_FOUND);

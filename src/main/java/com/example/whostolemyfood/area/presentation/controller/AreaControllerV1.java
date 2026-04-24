@@ -5,10 +5,12 @@ import com.example.whostolemyfood.area.presentation.dto.request.ReqCreateAreaDto
 import com.example.whostolemyfood.area.presentation.dto.request.ReqUpdateAreaDtoV1;
 import com.example.whostolemyfood.area.presentation.dto.response.ResCreateAreaDtoV1;
 import com.example.whostolemyfood.area.presentation.dto.response.ResGetAreaDtoV1;
+import com.example.whostolemyfood.user.application.security.AuthUser;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,11 +24,12 @@ public class AreaControllerV1 {
 	private final AreaServiceV1 areaServiceV1;
 
 	@PostMapping
-	//@PreAuthorize("hasAnyRole('MANAGER', 'MASTER')")
+	@PreAuthorize("hasAnyRole('MANAGER', 'MASTER')")
 	public ResponseEntity<ResCreateAreaDtoV1> createArea(
+		@AuthenticationPrincipal AuthUser loginUser,
 		@Valid @RequestBody ReqCreateAreaDtoV1 reqDto
 	) {
-		return ResponseEntity.ok(areaServiceV1.createArea(reqDto));
+		return ResponseEntity.ok(areaServiceV1.createArea(loginUser, reqDto));
 	}
 
 	@GetMapping
@@ -40,36 +43,37 @@ public class AreaControllerV1 {
 	}
 
 	@GetMapping("/{areaId}")
-	public ResponseEntity<ResGetAreaDtoV1> getArea(
-		@PathVariable UUID areaId
-	) {
+	public ResponseEntity<ResGetAreaDtoV1> getArea(@PathVariable UUID areaId) {
 		return ResponseEntity.ok(areaServiceV1.getArea(areaId));
 	}
 
 	@PutMapping("/{areaId}")
-	//@PreAuthorize("hasAnyRole('MANAGER', 'MASTER')")
+	@PreAuthorize("hasAnyRole('MANAGER', 'MASTER')")
 	public ResponseEntity<ResGetAreaDtoV1> updateArea(
+		@AuthenticationPrincipal AuthUser loginUser,
 		@PathVariable UUID areaId,
 		@Valid @RequestBody ReqUpdateAreaDtoV1 reqDto
 	) {
-		return ResponseEntity.ok(areaServiceV1.updateArea(areaId, reqDto));
+		return ResponseEntity.ok(areaServiceV1.updateArea(loginUser, areaId, reqDto));
 	}
 
 	@PatchMapping("/{areaId}/active")
-	//@PreAuthorize("hasAnyRole('MANAGER', 'MASTER')")
+	@PreAuthorize("hasAnyRole('MANAGER', 'MASTER')")
 	public ResponseEntity<ResGetAreaDtoV1> updateAreaActive(
+		@AuthenticationPrincipal AuthUser loginUser,
 		@PathVariable UUID areaId,
 		@RequestParam Boolean isActive
 	) {
-		return ResponseEntity.ok(areaServiceV1.updateAreaActive(areaId, isActive));
+		return ResponseEntity.ok(areaServiceV1.updateAreaActive(loginUser, areaId, isActive));
 	}
 
 	@DeleteMapping("/{areaId}")
-	//@PreAuthorize("hasAnyRole('MANAGER', 'MASTER')")
+	@PreAuthorize("hasAnyRole('MANAGER', 'MASTER')")
 	public ResponseEntity<Void> deleteArea(
+		@AuthenticationPrincipal AuthUser loginUser,
 		@PathVariable UUID areaId
 	) {
-		areaServiceV1.deleteArea(areaId);
+		areaServiceV1.deleteArea(loginUser, areaId);
 		return ResponseEntity.noContent().build();
 	}
 }

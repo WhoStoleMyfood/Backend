@@ -1,7 +1,7 @@
 package com.example.whostolemyfood.review.infrastructure.repository;
 
 import com.example.whostolemyfood.review.domain.entity.ReviewEntity;
-import com.example.whostolemyfood.review.domain.repository.ReviewRepository;
+import com.example.whostolemyfood.review.domain.repository.ReviewRepositoryCustom;
 import com.example.whostolemyfood.review.presentation.dto.request.ReqGetReviewsDtoV1;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -13,16 +13,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Repository
-public class ReviewRepositoryImpl {
+public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
 
 	@PersistenceContext
 	private EntityManager em;
 
+	@Override
 	public Page<ReviewEntity> search(ReqGetReviewsDtoV1 condition) {
 		StringBuilder jpql = new StringBuilder(
 			"select r from ReviewEntity r " +
 				"join fetch r.user u " +
 				"join fetch r.store s " +
+				"join fetch r.order o " +
 				"where r.isDeleted = false "
 		);
 
@@ -30,13 +32,14 @@ public class ReviewRepositoryImpl {
 			"select count(r) from ReviewEntity r " +
 				"join r.user u " +
 				"join r.store s " +
+				"join r.order o " +
 				"where r.isDeleted = false "
 		);
 
 		List<String> filters = new ArrayList<>();
 
 		if (condition.getStoreId() != null) {
-			filters.add("s.storeId = :storeId");
+			filters.add("s.id = :storeId");
 		}
 
 		if (condition.getRating() != null) {

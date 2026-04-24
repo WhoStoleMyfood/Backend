@@ -1,5 +1,6 @@
 package com.example.whostolemyfood.area.domain.entity;
 
+import com.example.whostolemyfood.global.entity.BaseAuditEntity;
 import com.example.whostolemyfood.global.entity.BaseSoftDeleteEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -16,7 +17,7 @@ import java.util.UUID;
 @Builder
 @SQLDelete(sql = "UPDATE p_areas SET is_deleted = true, deleted_at = now() WHERE area_id = ?")
 @SQLRestriction("is_deleted = false")
-public class AreaEntity extends BaseSoftDeleteEntity {
+public class AreaEntity extends BaseAuditEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)
