@@ -12,19 +12,26 @@ import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+@Repository
 @RequiredArgsConstructor
+@Slf4j
 public class StoreRepositoryCustomImpl implements StoreRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
+    private static final Logger logger = LoggerFactory.getLogger(StoreRepositoryCustomImpl.class);
 
     @Override
     public Page<StoreSearchResponseDtoV1> searchStore(StoreSearchConditionV1 cond, Pageable pageable) {
@@ -34,7 +41,7 @@ public class StoreRepositoryCustomImpl implements StoreRepositoryCustom {
         QAddressEntity address = QAddressEntity.addressEntity;
         QStoreRatingSummaryEntity storeRating = QStoreRatingSummaryEntity.storeRatingSummaryEntity;
 
-        // 1. 데이터 조회 쿼리 (DTO 생성자 파라미터 9개 순서 엄수)
+
         List<StoreSearchResponseDtoV1> content = queryFactory
                 .select(new QStoreSearchResponseDtoV1(
                         store.id,            // 1. storeId
@@ -48,7 +55,7 @@ public class StoreRepositoryCustomImpl implements StoreRepositoryCustom {
                         store.closeTime      // 9. closeTime
                 ))
                 .from(store)
-                .leftJoin(store.category, category)
+                .join(store.category, category)
 //                .leftJoin(store.address, address)
 //                .leftJoin(store.storeRatingId, storeRating)
                 .where(
@@ -61,6 +68,7 @@ public class StoreRepositoryCustomImpl implements StoreRepositoryCustom {
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
+
 
         // 2. Count 쿼리
         Long total = queryFactory
@@ -80,6 +88,7 @@ public class StoreRepositoryCustomImpl implements StoreRepositoryCustom {
 
     private BooleanExpression keywordContains(String keyword) {
         // 가게 이름에 키워드가 포함되어 있는지 확인
+
         return StringUtils.hasText(keyword) ? QStoreEntity.storeEntity.name.contains(keyword) : null;
     }
 
