@@ -65,4 +65,6 @@ WhostolemyfoodApplicatoin.java
 application.yaml
 /resources/application.yml
 
+.DS_Store
+
 .env
