@@ -1,6 +1,7 @@
 package com.example.whostolemyfood.store.infrastructure.repository;
 
 import com.example.whostolemyfood.address.domain.entity.QAddressEntity;
+import com.example.whostolemyfood.area.domain.entity.QAreaEntity;
 import com.example.whostolemyfood.category.domain.entity.QCategoryEntity;
 import com.example.whostolemyfood.store.domain.entity.QStoreEntity;
 import com.example.whostolemyfood.store.domain.entity.QStoreRatingSummaryEntity;
@@ -8,6 +9,7 @@ import com.example.whostolemyfood.store.domain.repository.StoreRepositoryCustom;
 import com.example.whostolemyfood.store.presentation.dto.request.StoreSearchConditionV1;
 import com.example.whostolemyfood.store.presentation.dto.response.QStoreSearchResponseDtoV1;
 import com.example.whostolemyfood.store.presentation.dto.response.StoreSearchResponseDtoV1;
+import com.example.whostolemyfood.user.domain.entity.QUserEntity;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -37,6 +39,7 @@ public class StoreRepositoryCustomImpl implements StoreRepositoryCustom {
     public Page<StoreSearchResponseDtoV1> searchStore(StoreSearchConditionV1 cond, Pageable pageable) {
 
         QStoreEntity store = QStoreEntity.storeEntity;
+        QUserEntity user = QUserEntity.userEntity;
         QCategoryEntity category = QCategoryEntity.categoryEntity;
         QAddressEntity address = QAddressEntity.addressEntity;
         QStoreRatingSummaryEntity storeRating = QStoreRatingSummaryEntity.storeRatingSummaryEntity;
@@ -44,7 +47,7 @@ public class StoreRepositoryCustomImpl implements StoreRepositoryCustom {
 
         List<StoreSearchResponseDtoV1> content = queryFactory
                 .select(new QStoreSearchResponseDtoV1(
-                        store.id,            // 1. storeId
+                        store.storeId,            // 1. storeId
                         store.name,          // 2. storeName
                         store.address,       // 3. storeAddress
                         store.phone,         // 4. storePhone
@@ -56,10 +59,10 @@ public class StoreRepositoryCustomImpl implements StoreRepositoryCustom {
                 ))
                 .from(store)
                 .join(store.category, category)
-//                .leftJoin(store.address, address)
-//                .leftJoin(store.storeRatingId, storeRating)
+                .leftJoin(store.storeRatingSummary, storeRating)
                 .where(
                         keywordContains(cond.getKeyword()),
+                        addressContains(cond.getRegion()),
                         categoryEq(cond.getCategoryId()),
                         minOrderPriceLoe(cond.getMinOrderPrice()),
                         store.isDeleted.isFalse()
@@ -76,7 +79,8 @@ public class StoreRepositoryCustomImpl implements StoreRepositoryCustom {
                 .from(store)
                 .leftJoin(store.category, category)
                 .where(
-                        this.keywordContains(cond.getKeyword()),
+                        keywordContains(cond.getKeyword()),
+                        addressContains(cond.getRegion()),
                         categoryEq(cond.getCategoryId()),
                         minOrderPriceLoe(cond.getMinOrderPrice()),
                         store.isDeleted.isFalse()
@@ -90,6 +94,10 @@ public class StoreRepositoryCustomImpl implements StoreRepositoryCustom {
         // 가게 이름에 키워드가 포함되어 있는지 확인
 
         return StringUtils.hasText(keyword) ? QStoreEntity.storeEntity.name.contains(keyword) : null;
+    }
+
+    private BooleanExpression addressContains(String area) {
+        return StringUtils.hasText(area) ? QStoreEntity.storeEntity.address.contains(area) : null;
     }
 
     private BooleanExpression categoryEq(UUID categoryId) {

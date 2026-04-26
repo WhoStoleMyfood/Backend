@@ -12,7 +12,7 @@ import java.util.UUID;
 public class StoreSearchConditionV1 {
 
     private String keyword;    // 가게명 또는 메뉴명 키워드
-    private UUID categoryId;   // 카테고리명 (또는 UUID로 변경 권장)
+    private UUID categoryId;   // 카테고리 UUID
     private String region;     // 지역명
 
     // Integer로 변경하여 null 체크가 가능하도록 함
