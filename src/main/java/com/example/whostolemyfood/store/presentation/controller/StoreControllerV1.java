@@ -1,7 +1,7 @@
 package com.example.whostolemyfood.store.presentation.controller;
 
 import com.example.whostolemyfood.global.util.PageUtil;
-import com.example.whostolemyfood.store.application.StoreSearchServiceV1;
+import com.example.whostolemyfood.store.application.service.StoreSearchServiceV1;
 import com.example.whostolemyfood.store.application.service.StoreServiceV1;
 import com.example.whostolemyfood.store.presentation.dto.request.ReqCreateStoreDtoV1;
 import com.example.whostolemyfood.store.presentation.dto.request.ReqUpdateStoreDtoV1;
