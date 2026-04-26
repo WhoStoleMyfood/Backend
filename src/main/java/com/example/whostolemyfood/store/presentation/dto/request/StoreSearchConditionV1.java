@@ -12,7 +12,6 @@ import java.util.UUID;
 public class StoreSearchConditionV1 {
 
     private String keyword;    // 가게명 또는 메뉴명 키워드
-    private String storeName;  // 특정 가게명 검색
     private UUID categoryId;   // 카테고리명 (또는 UUID로 변경 권장)
     private String region;     // 지역명
 
