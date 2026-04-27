@@ -9,6 +9,7 @@ import com.example.whostolemyfood.user.domain.entity.UserRole;
 import lombok.*;
 
 @Getter
+@Builder
 @NoArgsConstructor(access = AccessLevel.PRIVATE) // Jackson을 위한 기본 생성자
 @AllArgsConstructor // 전체 생성자
 public class ReqSignUpDtoV1 {
@@ -32,4 +33,5 @@ public class ReqSignUpDtoV1 {
 
     // 관리자 가입을 위한 토큰
     private String adminToken;
+
 }

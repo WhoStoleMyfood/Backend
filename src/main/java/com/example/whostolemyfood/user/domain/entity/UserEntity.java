@@ -1,12 +1,10 @@
 package com.example.whostolemyfood.user.domain.entity;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 import jakarta.persistence.*;
 
-import com.example.whostolemyfood.address.domain.entity.AddressEntity;
 import com.example.whostolemyfood.global.entity.BaseAuditEntity;
+import com.example.whostolemyfood.user.presentation.dto.request.ReqUpdateUserDtoV1;
 
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -28,6 +26,10 @@ public class UserEntity extends BaseAuditEntity {
     @Column(name = "role", nullable = false)
     private UserRole userRole;
 
+//    @Enumerated(EnumType.STRING)
+//    @Column(name = "status", nullable = false)
+//    private UserStatus status = UserStatus.ACTIVE;
+
     @Column(name = "user_email", nullable = false, length = 255, unique = true)
     private String userEmail;
 
@@ -37,35 +39,33 @@ public class UserEntity extends BaseAuditEntity {
     @Column(name = "user_name", nullable = false, length = 255)
     private String userName;
 
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<AddressEntity> addresses = new ArrayList<>();
+    @Column(name = "address", length = 255)
+    private String address;
 
     @Builder
-    public UserEntity(UserRole role, String email, String password, String name) {
+    public UserEntity(UserRole role, String email, String password, String name, String address) {
         this.userRole = role;
         this.userEmail = email;
         this.userPassword = password;
         this.userName = name;
-    }
-
-    /**
-     * 연관관계 편의 메서드
-     * 유저 객체에 주소를 추가할 때, 주소 객체에도 유저를 자동으로 연결해줍니다.
-     */
-    public void addAddress(AddressEntity address) {
-        this.addresses.add(address);
-        // AddressEntity 측에도 유저 정보를 세팅해줘야 양방향 정합성이 맞습니다.
-        // 때문에 AddressEntity에 setUser(this) 같은 메서드가 필요합니다.
+        this.address = address;
+//        this.status = UserStatus.ACTIVE;
     }
 
     // 회원정보 수정 메서드
-    public void updateUserInfo(String name, String password) {
-        if (name != null && !name.isBlank()) {
-            this.userName = name;
+    public void updateUserInfo(ReqUpdateUserDtoV1 dto) {
+        if (dto.getName() != null && !dto.getName().isBlank()) {
+            this.userName = dto.getName();
         }
-        // 비밀번호는 수정용 데이터가 들어왔을 때만 변경하도록 방어 로직 추가
-        if (password != null && !password.isBlank()) {
-            this.userPassword = password;
+        if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
+            this.userPassword = dto.getPassword();
         }
+        if (dto.getAddress() != null && !dto.getAddress().isBlank()) {
+            this.address = dto.getAddress();
+        }
+    }
+
+    public void updateStatus(UserStatus status) {
+//        this.status = status;
     }
 }

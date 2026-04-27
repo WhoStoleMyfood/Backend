@@ -15,6 +15,7 @@ public enum ErrorCode {
 
     // Auth
     ACCESS_DENIED(HttpStatus.FORBIDDEN, "A001", "잘못된 권한입니다."),
+    SELF_RESOURCE_ACCESS_DENIED(HttpStatus.BAD_REQUEST, "A002", "본인의 정보는 이 API로 처리할 수 없습니다."),
 
     // Address
     ADDRESS_NOT_FOUND(HttpStatus.NOT_FOUND, "AD001", "존재하지 않는 배송지입니다."),
