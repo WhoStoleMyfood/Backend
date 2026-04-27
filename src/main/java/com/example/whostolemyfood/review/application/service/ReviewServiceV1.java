@@ -23,6 +23,9 @@ import com.example.whostolemyfood.user.domain.entity.UserRole;
 import com.example.whostolemyfood.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -155,15 +158,30 @@ public class ReviewServiceV1 {
 	}
 
 	public Page<ResGetReviewPageDtoV1> getReviews(ReqGetReviewsDtoV1 request) {
-		return reviewRepository.search(request)
+		int size = validatePageSize(request.getSize());
+
+		Pageable pageable = PageRequest.of(
+			request.getPage(),
+			size,
+			Sort.by(Sort.Direction.DESC, "createdAt")
+		);
+
+		return reviewRepository.search(request, pageable)
 			.map(this::toPageResponse);
+	}
+
+	private int validatePageSize(int size) {
+		if (size == 10 || size == 30 || size == 50) {
+			return size;
+		}
+		return 10;
 	}
 
 	public ResGetStoreRatingSummaryDtoV1 getStoreRatingSummary(UUID storeId) {
 		StoreEntity store = storeRepository.findById(storeId)
 			.orElseThrow(() -> new IllegalArgumentException("가게를 찾을 수 없습니다."));
 
-		UUID storeRatingId = store.getStoreRatingId();
+		UUID storeRatingId = store.getStoreRatingSummary().getId();
 
 		if (storeRatingId == null) {
 			return ResGetStoreRatingSummaryDtoV1.builder()
@@ -228,7 +246,7 @@ public class ReviewServiceV1 {
 		return ResCreateReviewDtoV1.builder()
 			.reviewId(review.getReviewId())
 			.orderId(review.getOrder().getOrderId())
-			.storeId(review.getStore().getId())
+			.storeId(review.getStore().getStoreId())
 			.rating(review.getRating())
 			.content(review.getContent())
 			.createdAt(review.getCreatedAt())
@@ -239,7 +257,7 @@ public class ReviewServiceV1 {
 		return ResGetReviewDtoV1.builder()
 			.reviewId(review.getReviewId())
 			.orderId(review.getOrder().getOrderId())
-			.storeId(review.getStore().getId())
+			.storeId(review.getStore().getStoreId())
 			.userId(review.getUser().getId())
 			.userName(review.getUser().getUserName())
 			.rating(review.getRating())
@@ -253,7 +271,7 @@ public class ReviewServiceV1 {
 		return ResGetReviewPageDtoV1.builder()
 			.reviewId(review.getReviewId())
 			.orderId(review.getOrder().getOrderId())
-			.storeId(review.getStore().getId())
+			.storeId(review.getStore().getStoreId())
 			.userId(review.getUser().getId())
 			.userName(review.getUser().getUserName())
 			.rating(review.getRating())

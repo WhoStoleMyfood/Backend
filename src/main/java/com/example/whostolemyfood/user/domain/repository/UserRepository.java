@@ -9,7 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import com.example.whostolemyfood.user.domain.entity.UserEntity;
 
-public interface UserRepository extends JpaRepository<UserEntity, UUID> {
+public interface UserRepository extends JpaRepository<UserEntity, UUID>, UserRepositoryCustom {
 
     Optional<UserEntity> findByUserEmail(String email);
 

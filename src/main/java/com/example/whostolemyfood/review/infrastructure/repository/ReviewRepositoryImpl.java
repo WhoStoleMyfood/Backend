@@ -19,7 +19,7 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
 	private EntityManager em;
 
 	@Override
-	public Page<ReviewEntity> search(ReqGetReviewsDtoV1 condition) {
+	public Page<ReviewEntity> search(ReqGetReviewsDtoV1 condition, Pageable pageable) {
 		StringBuilder jpql = new StringBuilder(
 			"select r from ReviewEntity r " +
 				"join fetch r.user u " +
@@ -75,7 +75,6 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
 		List<ReviewEntity> content = query.getResultList();
 		Long total = countQuery.getSingleResult();
 
-		Pageable pageable = PageRequest.of(page, size, condition.toSort());
 		return new PageImpl<>(content, pageable, total);
 	}
 }

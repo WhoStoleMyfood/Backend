@@ -3,10 +3,12 @@ package com.example.whostolemyfood.order.domain.entity;
 import com.example.whostolemyfood.global.entity.BaseAuditEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.extern.slf4j.Slf4j; // 추가
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j // 추가
 @Entity
 @Table(name = "p_orders")
 @Getter
@@ -93,6 +95,14 @@ public class OrderEntity extends BaseAuditEntity {
             throw new IllegalStateException(this.status + " 상태에서 " + nextStatus + " 상태로의 변경은 허용되지 않습니다.");
         }
 
+        this.status = nextStatus;
+    }
+
+    /**
+     * [관리자 전용] 상태 강제 변경 (슈퍼 권한)
+     */
+    public void forceUpdateStatus(OrderStatus nextStatus) {
+        log.info("[Order Domain] Force status update by Admin. From: {}, To: {}", this.status, nextStatus);
         this.status = nextStatus;
     }
 }

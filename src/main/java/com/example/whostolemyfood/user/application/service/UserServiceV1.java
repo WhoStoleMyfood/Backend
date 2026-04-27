@@ -5,7 +5,6 @@ import java.util.UUID;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import com.example.whostolemyfood.global.exception.CustomException;
 import com.example.whostolemyfood.global.exception.ErrorCode;
 import com.example.whostolemyfood.user.domain.entity.UserEntity;
@@ -46,7 +45,7 @@ public class UserServiceV1 implements UserService {
         }
 
         // 도메인 모델에 업데이트 위임
-        user.updateUserInfo(requestDto.getUserName(), encodedPassword);
+        user.updateUserInfo(requestDto);
         user.markUpdatedBy(id);
 
         // 서비스 단에서 DTO로 변환하여 반환 (엔티티 유출 방지)
