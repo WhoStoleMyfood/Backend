@@ -34,9 +34,9 @@ public class CategoryServiceV1 {
         }
         CategoryEntity categoryEntity=CategoryEntity
                 .builder()
-                .categoryId(UUID.randomUUID())
                 .name(reqCategoryDto.getName())
                 .build();
+
         categoryEntity.markCreatedBy(loginUser.getId());
         categoryEntity=categoryRepository.save(categoryEntity);
         return ResGetCategoryDtoV1.from(categoryEntity);
@@ -45,14 +45,17 @@ public class CategoryServiceV1 {
     /**
      * 상세 카테고리 조회
      */
-    public ResGetCategoryDtoV1 getCategory(UUID id) {
+    public ResGetCategoryDtoV1 getCategory(UUID id,UUID userId,String Role) {
+        UserEntity loginUser = validateActiveUserAndRole(userId, Role);
         return ResGetCategoryDtoV1.from(getCategoryById(id));
     }
 
     /**
      * 카테고리 목록 조회
      */
-    public List<ResGetCategoryDtoV1> getCategories() {
+    public List<ResGetCategoryDtoV1> getCategories(UUID userId,String Role) {
+        UserEntity loginUser = validateActiveUserAndRole(userId, Role);
+
         return categoryRepository.findAll().stream()
                 .filter(category -> !category.getIsDeleted())
                 .map(ResGetCategoryDtoV1::from) // Entity를 DTO로 변환

@@ -22,13 +22,18 @@ public class CategoryControllerV1 {
     private final CategoryServiceV1 categoryService;
 
     @GetMapping()
-    public ResponseEntity<List<ResGetCategoryDtoV1>> getCategories() {
-        return ResponseEntity.ok(categoryService.getCategories());
+    public ResponseEntity<List<ResGetCategoryDtoV1>> getCategories(
+            @AuthenticationPrincipal AuthUser loginUser
+    ) {
+        return ResponseEntity.ok(categoryService.getCategories(loginUser.getUserId(),loginUser.role().name()));
     }
 
     @GetMapping("/{category_id}")
-    public ResponseEntity<ResGetCategoryDtoV1> getCategory(@PathVariable("category_id") UUID categoryId) {
-        return ResponseEntity.ok(categoryService.getCategory(categoryId));
+    public ResponseEntity<ResGetCategoryDtoV1> getCategory(
+            @PathVariable("category_id") UUID categoryId,
+            @AuthenticationPrincipal AuthUser loginUser
+    ) {
+        return ResponseEntity.ok(categoryService.getCategory(categoryId,loginUser.getUserId(),loginUser.role().name()));
     }
 
     @PostMapping()
