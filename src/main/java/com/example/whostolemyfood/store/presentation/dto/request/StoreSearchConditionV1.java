@@ -21,4 +21,5 @@ public class StoreSearchConditionV1 {
     private String sortBy;     // 정렬 기준 (예: "createdAt", "rating")
 
     private Integer page = 0;
+    private Integer size = 10;
 }

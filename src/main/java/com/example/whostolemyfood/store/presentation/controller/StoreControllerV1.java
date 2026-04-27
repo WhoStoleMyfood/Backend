@@ -99,13 +99,14 @@ public class StoreControllerV1 {
     @GetMapping("/search")
     public ResponseEntity<PageResponse<StoreSearchResponseDtoV1>> search(
             @ModelAttribute StoreSearchConditionV1 condition,
-            @PageableDefault(size = 10, page = 0) Pageable pageable
+            @PageableDefault(size = 10, page = 0) Pageable pageable,
+            @AuthenticationPrincipal AuthUser authUser
     ) {
         // 1. PageUtil을 사용하여 페이지 사이즈 검증 및 보정
         Pageable validatedPageable = PageUtil.validatePageSize(pageable);
 
         // 2. 서비스 호출 및 결과 반환
-        PageResponse<StoreSearchResponseDtoV1> response = storeSearchService.search(condition, validatedPageable);
+        PageResponse<StoreSearchResponseDtoV1> response = storeSearchService.search(condition, validatedPageable,authUser.getUserId(), authUser.role().name());
         return ResponseEntity.ok(response);
     }
 }
