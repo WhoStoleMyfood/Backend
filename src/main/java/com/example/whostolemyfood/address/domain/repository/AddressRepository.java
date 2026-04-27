@@ -11,9 +11,9 @@ import java.util.UUID;
 
 public interface AddressRepository extends JpaRepository<AddressEntity, UUID> {
     
-    Page<AddressEntity> findAllByUserIdAndAliasContainingAndIsDeletedFalse(@Param("userId") UUID userId, @Param("alias") String alias, @Param("pageable") Pageable pageable);
+    Page<AddressEntity> findAllByUserIdAndAliasContainingAndIsDeletedFalse(@Param("userId") UUID userId, @Param("alias") String alias, Pageable pageable);
 
-    Page<AddressEntity> findAllByUserIdAndIsDeletedFalse(@Param("userId") UUID userId, @Param("pageable") Pageable pageable);
+    Page<AddressEntity> findAllByUserIdAndIsDeletedFalse(@Param("userId") UUID userId, Pageable pageable);
 
     Optional<AddressEntity> findByIdAndIsDeletedFalse(@Param("id") UUID id);
 
