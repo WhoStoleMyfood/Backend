@@ -188,6 +188,23 @@ public class OrderServiceTest {
         assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELLED);
     }
 
+    @Test
+    @DisplayName("[실패] 주문 취소 - CUSTOMER가 5분을 초과한 경우 취소 실패 (요구사항)")
+    void cancelOrder_Fail_TimeExceeded() {
+        // Given
+        mockUserCheck(UserRole.CUSTOMER);
+        OrderEntity order = OrderEntity.builder().userId(userId).status(OrderStatus.PENDING).build();
+        // 6분 전으로 강제 설정
+        ReflectionTestUtils.setField(order, "createdAt", LocalDateTime.now().minusMinutes(6)); 
+        
+        given(orderRepository.findById(any())).willReturn(Optional.of(order));
+
+        // When & Then
+        CustomException ex = assertThrows(CustomException.class, () -> 
+            orderService.cancelOrder(UUID.randomUUID(), userId, UserRole.CUSTOMER));
+        assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.ORDER_CANCEL_TIME_EXCEEDED);
+    }
+
     /**
      * [추가 실패 케이스] 가게 운영 정책 위반 시 주문 생성 차단
      */
@@ -227,7 +244,7 @@ public class OrderServiceTest {
     }
 
     /**
-     * 6. [추가 실패 케이스] 권한 없는 제3자의 접근 차단
+     * [추가 실패 케이스] 권한 없는 제3자의 접근 차단
      */
     @Test
     @DisplayName("[보안 실패] 주문 상세 조회 차단 - 본인이나 가게 사장님이 아닌 제3자가 조회 시 예외 발생")
