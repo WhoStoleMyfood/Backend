@@ -91,6 +91,7 @@ public class StoreEntity extends BaseSoftDeleteEntity {
         if (request.getStatus() != null) {
             this.status = request.getStatus();
         }
+        // 상태, 숨김
     }
 
     public void deleteByOwnerAndMaster(UUID deletedBy) {

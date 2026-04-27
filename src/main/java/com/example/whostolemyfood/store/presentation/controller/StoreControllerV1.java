@@ -1,14 +1,17 @@
 package com.example.whostolemyfood.store.presentation.controller;
 
 import com.example.whostolemyfood.global.util.PageUtil;
+import com.example.whostolemyfood.store.application.service.StoreSearchServiceV1;
 import com.example.whostolemyfood.store.application.service.StoreServiceV1;
 import com.example.whostolemyfood.store.presentation.dto.request.ReqCreateStoreDtoV1;
 import com.example.whostolemyfood.store.presentation.dto.request.ReqUpdateStoreDtoV1;
 import com.example.whostolemyfood.global.response.PageResponse;
+import com.example.whostolemyfood.store.presentation.dto.request.StoreSearchConditionV1;
 import com.example.whostolemyfood.store.presentation.dto.response.ResCreateStoreDtoV1;
 import com.example.whostolemyfood.store.presentation.dto.response.ResGetStoreDtoV1;
 import com.example.whostolemyfood.store.presentation.dto.response.ResGetStoreListDtoV1;
 import com.example.whostolemyfood.user.application.security.AuthUser;
+import com.example.whostolemyfood.store.presentation.dto.response.StoreSearchResponseDtoV1;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +32,7 @@ import java.util.UUID;
 public class StoreControllerV1 {
 
     private final StoreServiceV1  storeServiceV1;
+    private final StoreSearchServiceV1 storeSearchService;
 
     // Owner Only
     @Operation(summary = "스토어 생성")
@@ -89,5 +93,19 @@ public class StoreControllerV1 {
             @PathVariable UUID storeId,
             @AuthenticationPrincipal AuthUser authUser) {
         storeServiceV1.deleteStore(storeId, authUser);
+    }
+
+
+    @GetMapping("/search")
+    public ResponseEntity<PageResponse<StoreSearchResponseDtoV1>> search(
+            @ModelAttribute StoreSearchConditionV1 condition,
+            @PageableDefault(size = 10, page = 0) Pageable pageable
+    ) {
+        // 1. PageUtil을 사용하여 페이지 사이즈 검증 및 보정
+        Pageable validatedPageable = PageUtil.validatePageSize(pageable);
+
+        // 2. 서비스 호출 및 결과 반환
+        PageResponse<StoreSearchResponseDtoV1> response = storeSearchService.search(condition, validatedPageable);
+        return ResponseEntity.ok(response);
     }
 }
