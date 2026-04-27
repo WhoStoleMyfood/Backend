@@ -16,16 +16,13 @@ import com.example.whostolemyfood.review.presentation.dto.response.ResGetReviewP
 import com.example.whostolemyfood.review.presentation.dto.response.ResGetStoreRatingSummaryDtoV1;
 import com.example.whostolemyfood.store.domain.entity.StoreEntity;
 import com.example.whostolemyfood.store.domain.entity.StoreRatingSummaryEntity;
-import com.example.whostolemyfood.store.domain.repository.StoreRatingSummaryRepository;
 import com.example.whostolemyfood.store.domain.repository.StoreRepository;
 import com.example.whostolemyfood.user.domain.entity.UserEntity;
 import com.example.whostolemyfood.user.domain.entity.UserRole;
 import com.example.whostolemyfood.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,8 +40,6 @@ public class ReviewServiceV1 {
 	private final UserRepository userRepository;
 	private final StoreRepository storeRepository;
 
-	private final StoreRatingSummaryRepository storeRatingSummaryRepository;
-
 	@Transactional
 	public ResCreateReviewDtoV1 createReview(
 		UUID orderId,
@@ -55,21 +50,21 @@ public class ReviewServiceV1 {
 		UserEntity loginUser = validateActiveUserAndRole(loginUserId, tokenRole);
 
 		if (loginUser.getUserRole() != UserRole.CUSTOMER) {
-			throw new CustomException(ErrorCode.ACCESS_DENIED);
+			throw new CustomException(ErrorCode.REVIEW_ONLY_CUSTOMER);
 		}
 
 		OrderEntity order = orderRepository.findById(orderId)
-			.orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다."));
+			.orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
 
 		validateOrderOwner(order, loginUserId);
 		validateOrderCompleted(order);
 
 		if (reviewRepository.existsByOrder_OrderIdAndIsDeletedFalse(orderId)) {
-			throw new IllegalStateException("이미 리뷰가 작성된 주문입니다.");
+			throw new CustomException(ErrorCode.REVIEW_ALREADY_EXISTS);
 		}
 
 		StoreEntity store = storeRepository.findById(order.getStoreId())
-			.orElseThrow(() -> new IllegalArgumentException("가게를 찾을 수 없습니다."));
+			.orElseThrow(() -> new CustomException(ErrorCode.STORE_NOT_FOUND));
 
 		ReviewEntity deletedReview = reviewRepository.findByOrder_OrderIdAndIsDeletedTrue(orderId)
 			.orElse(null);
@@ -99,7 +94,7 @@ public class ReviewServiceV1 {
 
 	public ResGetReviewDtoV1 getReview(UUID reviewId) {
 		ReviewEntity review = reviewRepository.findByReviewIdAndIsDeletedFalse(reviewId)
-			.orElseThrow(() -> new IllegalArgumentException("리뷰를 찾을 수 없습니다."));
+			.orElseThrow(() -> new CustomException(ErrorCode.REVIEW_NOT_FOUND));
 
 		return toGetResponse(review);
 	}
@@ -114,14 +109,14 @@ public class ReviewServiceV1 {
 		UserEntity loginUser = validateActiveUserAndRole(loginUserId, tokenRole);
 
 		if (loginUser.getUserRole() != UserRole.CUSTOMER) {
-			throw new CustomException(ErrorCode.ACCESS_DENIED);
+			throw new CustomException(ErrorCode.REVIEW_ONLY_CUSTOMER);
 		}
 
 		ReviewEntity review = reviewRepository.findByReviewIdAndIsDeletedFalse(reviewId)
-			.orElseThrow(() -> new IllegalArgumentException("리뷰를 찾을 수 없습니다."));
+			.orElseThrow(() -> new CustomException(ErrorCode.REVIEW_NOT_FOUND));
 
 		if (!review.getUser().getId().equals(loginUserId)) {
-			throw new CustomException(ErrorCode.ACCESS_DENIED);
+			throw new CustomException(ErrorCode.REVIEW_NOT_OWNER);
 		}
 
 		review.updateReview(
@@ -142,13 +137,13 @@ public class ReviewServiceV1 {
 		UserEntity loginUser = validateActiveUserAndRole(loginUserId, tokenRole);
 
 		ReviewEntity review = reviewRepository.findByReviewIdAndIsDeletedFalse(reviewId)
-			.orElseThrow(() -> new IllegalArgumentException("리뷰를 찾을 수 없습니다."));
+			.orElseThrow(() -> new CustomException(ErrorCode.REVIEW_NOT_FOUND));
 
 		UserRole dbRole = loginUser.getUserRole();
 
 		if (dbRole == UserRole.CUSTOMER) {
 			if (!review.getUser().getId().equals(loginUserId)) {
-				throw new CustomException(ErrorCode.ACCESS_DENIED);
+				throw new CustomException(ErrorCode.REVIEW_NOT_OWNER);
 			}
 		} else if (dbRole != UserRole.MANAGER && dbRole != UserRole.MASTER) {
 			throw new CustomException(ErrorCode.ACCESS_DENIED);
@@ -158,32 +153,20 @@ public class ReviewServiceV1 {
 	}
 
 	public Page<ResGetReviewPageDtoV1> getReviews(ReqGetReviewsDtoV1 request) {
-		int size = validatePageSize(request.getSize());
-
-		Pageable pageable = PageRequest.of(
-			request.getPage(),
-			size,
-			Sort.by(Sort.Direction.DESC, "createdAt")
-		);
+		Pageable pageable = request.toPageable();
 
 		return reviewRepository.search(request, pageable)
 			.map(this::toPageResponse);
 	}
 
-	private int validatePageSize(int size) {
-		if (size == 10 || size == 30 || size == 50) {
-			return size;
-		}
-		return 10;
-	}
-
 	public ResGetStoreRatingSummaryDtoV1 getStoreRatingSummary(UUID storeId) {
 		StoreEntity store = storeRepository.findById(storeId)
-			.orElseThrow(() -> new IllegalArgumentException("가게를 찾을 수 없습니다."));
+			.orElseThrow(() -> new CustomException(ErrorCode.STORE_NOT_FOUND));
 
-		UUID storeRatingId = store.getStoreRatingSummary().getId();
+		StoreRatingSummaryEntity summary = store.getStoreRatingSummary();
 
-		if (storeRatingId == null) {
+		//Summary 없을 때 0점으로 반환
+		if (summary == null || Boolean.TRUE.equals(summary.getIsDeleted())) {
 			return ResGetStoreRatingSummaryDtoV1.builder()
 				.storeId(storeId)
 				.reviewCount(0)
@@ -196,10 +179,6 @@ public class ReviewServiceV1 {
 				.rating5Count(0)
 				.build();
 		}
-
-		StoreRatingSummaryEntity summary = storeRatingSummaryRepository
-			.findByIdAndIsDeletedFalse(storeRatingId)
-			.orElseThrow(() -> new IllegalArgumentException("평점 요약 정보를 찾을 수 없습니다."));
 
 		return ResGetStoreRatingSummaryDtoV1.builder()
 			.storeId(storeId)
@@ -232,13 +211,13 @@ public class ReviewServiceV1 {
 
 	private void validateOrderOwner(OrderEntity order, UUID loginUserId) {
 		if (!order.getUserId().equals(loginUserId)) {
-			throw new CustomException(ErrorCode.ACCESS_DENIED);
+			throw new CustomException(ErrorCode.ORDER_NOT_OWNER);
 		}
 	}
 
 	private void validateOrderCompleted(OrderEntity order) {
 		if (order.getStatus() != OrderStatus.COMPLETED) {
-			throw new IllegalStateException("주문 완료 상태에서만 리뷰 작성이 가능합니다.");
+			throw new CustomException(ErrorCode.REVIEW_ORDER_NOT_COMPLETED);
 		}
 	}
 

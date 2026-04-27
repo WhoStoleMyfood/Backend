@@ -68,9 +68,18 @@ public enum ErrorCode {
     // Area
     AREA_NOT_FOUND(HttpStatus.NOT_FOUND, "AR001", "존재하지 않는 지역입니다."),
     AREA_DUPLICATION(HttpStatus.BAD_REQUEST, "AR002", "이미 존재하는 지역명입니다."),
-    AREA_ACCESS_DENIED(HttpStatus.FORBIDDEN, "AR003", "지역 관리 권한이 없습니다.");
+    AREA_ACCESS_DENIED(HttpStatus.FORBIDDEN, "AR003", "지역 관리 권한이 없습니다."),
 
+    // Review
+    REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "R001", "리뷰를 찾을 수 없습니다."),
+    REVIEW_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "R002", "이미 리뷰가 작성된 주문입니다."),
+    REVIEW_ONLY_CUSTOMER(HttpStatus.FORBIDDEN, "R003", "고객만 리뷰를 작성/수정할 수 있습니다."),
+    REVIEW_NOT_OWNER(HttpStatus.FORBIDDEN, "R004", "본인이 작성한 리뷰만 수정/삭제할 수 있습니다."),
+    REVIEW_ORDER_NOT_COMPLETED(HttpStatus.BAD_REQUEST, "R005", "주문 완료 상태에서만 리뷰 작성이 가능합니다."),
 
+    // Rating
+    RATING_SUMMARY_NOT_FOUND(HttpStatus.NOT_FOUND, "RS001", "평점 요약 정보를 찾을 수 없습니다."),
+    RATING_REFRESH_ACCESS_DENIED(HttpStatus.FORBIDDEN, "RS002", "평점 집계 권한이 없습니다.");
 
     private final HttpStatus status;
     private final String code;
