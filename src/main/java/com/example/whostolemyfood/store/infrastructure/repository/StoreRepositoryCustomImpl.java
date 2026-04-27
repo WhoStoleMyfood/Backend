@@ -3,6 +3,7 @@ package com.example.whostolemyfood.store.infrastructure.repository;
 import com.example.whostolemyfood.address.domain.entity.QAddressEntity;
 import com.example.whostolemyfood.area.domain.entity.QAreaEntity;
 import com.example.whostolemyfood.category.domain.entity.QCategoryEntity;
+import com.example.whostolemyfood.menu.domain.entity.QMenuEntity;
 import com.example.whostolemyfood.store.domain.entity.QStoreEntity;
 import com.example.whostolemyfood.store.domain.entity.QStoreRatingSummaryEntity;
 import com.example.whostolemyfood.store.domain.repository.StoreRepositoryCustom;
@@ -10,6 +11,7 @@ import com.example.whostolemyfood.store.presentation.dto.request.StoreSearchCond
 import com.example.whostolemyfood.store.presentation.dto.response.QStoreSearchResponseDtoV1;
 import com.example.whostolemyfood.store.presentation.dto.response.StoreSearchResponseDtoV1;
 import com.example.whostolemyfood.user.domain.entity.QUserEntity;
+import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -35,6 +37,9 @@ public class StoreRepositoryCustomImpl implements StoreRepositoryCustom {
     private final JPAQueryFactory queryFactory;
     private static final Logger logger = LoggerFactory.getLogger(StoreRepositoryCustomImpl.class);
 
+
+    QMenuEntity menu = QMenuEntity.menuEntity;
+
     @Override
     public Page<StoreSearchResponseDtoV1> searchStore(StoreSearchConditionV1 cond, Pageable pageable) {
 
@@ -43,10 +48,21 @@ public class StoreRepositoryCustomImpl implements StoreRepositoryCustom {
         QCategoryEntity category = QCategoryEntity.categoryEntity;
         QAddressEntity address = QAddressEntity.addressEntity;
         QStoreRatingSummaryEntity storeRating = QStoreRatingSummaryEntity.storeRatingSummaryEntity;
+        QAreaEntity area = QAreaEntity.areaEntity;
+        QMenuEntity menu = QMenuEntity.menuEntity;
+
+        BooleanBuilder keywordBuilder = new BooleanBuilder();
+        if (StringUtils.hasText(cond.getKeyword())) {
+            // (가게 이름 포함 OR 메뉴 이름 포함)
+            keywordBuilder.and(
+                    store.name.contains(cond.getKeyword())
+                            .or(menu.name.contains(cond.getKeyword()))
+            );
+        }
 
 
         List<StoreSearchResponseDtoV1> content = queryFactory
-                .select(new QStoreSearchResponseDtoV1(
+                .selectDistinct(new QStoreSearchResponseDtoV1(
                         store.storeId,            // 1. storeId
                         store.name,          // 2. storeName
                         store.address,       // 3. storeAddress
@@ -55,13 +71,15 @@ public class StoreRepositoryCustomImpl implements StoreRepositoryCustom {
                         store.minOrderPrice, // 6. minOrderPrice
                         store.status,        // 7. status
                         store.openTime,      // 8. openTime
-                        store.closeTime      // 9. closeTime
+                        store.closeTime,      // 9. closeTime
+                        store.createdAt //생성일자
                 ))
                 .from(store)
                 .join(store.category, category)
-                .leftJoin(store.storeRatingSummary, storeRating)
+                .join(store.area, area)
+                .leftJoin(menu).on(menu.store.eq(store),menu.isDeleted.isFalse())
                 .where(
-                        keywordContains(cond.getKeyword()),
+                        keywordBuilder,
                         addressContains(cond.getRegion()),
                         categoryEq(cond.getCategoryId()),
                         minOrderPriceLoe(cond.getMinOrderPrice()),
@@ -75,11 +93,13 @@ public class StoreRepositoryCustomImpl implements StoreRepositoryCustom {
 
         // 2. Count 쿼리
         Long total = queryFactory
-                .select(store.count())
+                .selectDistinct(store.count())
                 .from(store)
-                .leftJoin(store.category, category)
+                .join(store.category, category)
+                .join(store.area, area)
+                .leftJoin(menu).on(menu.store.eq(store),menu.isDeleted.isFalse())
                 .where(
-                        keywordContains(cond.getKeyword()),
+                        keywordBuilder,
                         addressContains(cond.getRegion()),
                         categoryEq(cond.getCategoryId()),
                         minOrderPriceLoe(cond.getMinOrderPrice()),
@@ -117,6 +137,10 @@ public class StoreRepositoryCustomImpl implements StoreRepositoryCustom {
         }
         // 예: "rating"이 들어오면 별점순 정렬 등 로직 추가 가능
         return QStoreEntity.storeEntity.createdAt.desc();
+    }
+
+    private BooleanExpression menuNameContains(String menuName) {
+        return menuName != null ? menu.name.contains(menuName) : null;
     }
 
 }

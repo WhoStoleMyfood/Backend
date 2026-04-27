@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.UUID;
 
@@ -21,6 +22,7 @@ public class StoreSearchResponseDtoV1 {
     private StoreStatus status;
     private LocalTime openTime;
     private LocalTime closeTime;
+    private LocalDateTime createdAt;
 
     @QueryProjection
     @Builder
@@ -33,7 +35,8 @@ public class StoreSearchResponseDtoV1 {
             Integer minOrderPrice,
             StoreStatus status,
             LocalTime openTime,
-            LocalTime closeTime
+            LocalTime closeTime,
+            LocalDateTime createdAt
     ) {
         this.storeId = storeId;
         this.storeName = storeName;
@@ -44,5 +47,6 @@ public class StoreSearchResponseDtoV1 {
         this.status = status;
         this.openTime = openTime;
         this.closeTime = closeTime;
+        this.createdAt = createdAt;
     }
 }
