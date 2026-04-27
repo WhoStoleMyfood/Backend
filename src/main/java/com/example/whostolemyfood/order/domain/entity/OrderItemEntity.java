@@ -35,7 +35,7 @@ public class OrderItemEntity {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    private UUID createdBy; // TODO: [인증/인가] 주문자 ID 연동
+    private UUID createdBy; // [인증/인가] 주문자 ID 연동 완료
 
     // 필수 기능 명세에 따라 데이터 저장 전 생성일(createdAt) 자동 기록
     @PrePersist

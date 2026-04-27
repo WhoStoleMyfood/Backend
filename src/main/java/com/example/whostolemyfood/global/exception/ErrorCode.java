@@ -28,11 +28,16 @@ public enum ErrorCode {
     ORDER_CANNOT_DELETE_DELIVERED(HttpStatus.BAD_REQUEST, "O005", "배달이 완료된 주문은 삭제할 수 없습니다."),
     ORDER_REQUEST_UPDATE_FAILED(HttpStatus.BAD_REQUEST, "O006", "주문이 이미 수락되어 요청사항을 수정할 수 없습니다."),
     ORDER_STATUS_UPDATE_FAILED(HttpStatus.BAD_REQUEST, "O007", "허용되지 않은 주문 상태 변경입니다."),
+    ORDER_NOT_OWNER(HttpStatus.FORBIDDEN, "O008", "본인의 주문 정보만 접근할 수 있습니다."),
+    ORDER_FORBIDDEN_FOR_OWNER(HttpStatus.FORBIDDEN, "O009", "해당 주문이 속한 가게의 사장님만 상태 변경이 가능합니다."),
+    ORDER_MIN_PRICE_NOT_MET(HttpStatus.BAD_REQUEST, "O010", "최소 주문 금액을 만족하지 않습니다."),
+    PRICE_MISMATCH(HttpStatus.BAD_REQUEST, "O011", "메뉴 가격이 변동되었습니다. 다시 확인해 주세요."),
 
     // Store
     STORE_NOT_FOUND(HttpStatus.NOT_FOUND, "S001" ,"해당 스토어를 찾을 수 없습니다"),
     STORE_DUPLICATION_NAME(HttpStatus.BAD_REQUEST, "S002", "이미 존재하는 스토어 이름입니다"),
     STORE_NOT_OWNER(HttpStatus.BAD_REQUEST,"S003", "해당 스토어의 소유주가 아닙니다"),
+    STORE_CLOSED(HttpStatus.BAD_REQUEST, "S004", "현재 영업 중인 가게가 아닙니다."),
 
     // Menu
     MENU_NOT_FOUND(HttpStatus.NOT_FOUND, "M001", "해당 메뉴를 찾을 수 없습니다"),
@@ -40,6 +45,7 @@ public enum ErrorCode {
 
     // Global
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "G001", "서버 내부 오류입니다."),
+    VALIDATION_ERROR(HttpStatus.BAD_REQUEST, "G002", "입력값이 올바르지 않습니다."),
 
     // Payment
     PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "P001", "결제를 찾을 수 없습니다."),
