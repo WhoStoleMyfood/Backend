@@ -81,6 +81,10 @@ public class PaymentServiceExtend {
             TossPaymentResponse confirm = confirm(request);
             paymentServiceV1.successPay(paymentId);
         }catch (CustomException e) {
+            if ("ALREADY_PROCESSED_PAYMENT".equals(e.getErrorCode().name())) {
+                paymentServiceV1.successPay(paymentId);
+                throw e;
+            }
             paymentServiceV1.failPay(paymentId);
             throw e;
         }catch (Exception e) {

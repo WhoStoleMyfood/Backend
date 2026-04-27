@@ -2,10 +2,7 @@ package com.example.whostolemyfood.payment.base;
 
 import com.example.whostolemyfood.user.domain.entity.UserEntity;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.data.annotation.CreatedBy;
@@ -23,6 +20,7 @@ import java.util.UUID;
 public abstract class BaseTimeEntity {
 
     @CreationTimestamp
+    @Setter
     private LocalDateTime createdAt;
 
     private UUID createdBy;
