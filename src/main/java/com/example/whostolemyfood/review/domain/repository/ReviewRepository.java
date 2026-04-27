@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface ReviewRepository extends JpaRepository<ReviewEntity, UUID>, ReviewRepositoryCustom {
+
 	Optional<ReviewEntity> findByReviewIdAndIsDeletedFalse(UUID reviewId);
 
 	boolean existsByOrder_OrderIdAndIsDeletedFalse(UUID orderId);
@@ -19,9 +20,6 @@ public interface ReviewRepository extends JpaRepository<ReviewEntity, UUID>, Rev
 	//is_deleted 확인(재작성 로직)
 	Optional<ReviewEntity> findByOrder_OrderIdAndIsDeletedTrue(UUID orderId);
 
-	Page<ReviewEntity> search(ReqGetReviewsDtoV1 condition);
-
 	@EntityGraph(attributePaths = {"user", "store", "order"})
 	Page<ReviewEntity> findAllByIsDeletedFalse(Pageable pageable);
-
 }

@@ -63,7 +63,13 @@ public enum ErrorCode {
 
     // Category
     CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND,"C001","존재하지 않는 카테고리입니다."),
-    CATEGORY_DUPLICATION(HttpStatus.BAD_REQUEST,"C002", "이미 존재하는 카테고리입니다.");
+    CATEGORY_DUPLICATION(HttpStatus.BAD_REQUEST,"C002", "이미 존재하는 카테고리입니다."),
+
+    // Area
+    AREA_NOT_FOUND(HttpStatus.NOT_FOUND, "AR001", "존재하지 않는 지역입니다."),
+    AREA_DUPLICATION(HttpStatus.BAD_REQUEST, "AR002", "이미 존재하는 지역명입니다."),
+    AREA_ACCESS_DENIED(HttpStatus.FORBIDDEN, "AR003", "지역 관리 권한이 없습니다.");
+
 
 
     private final HttpStatus status;
