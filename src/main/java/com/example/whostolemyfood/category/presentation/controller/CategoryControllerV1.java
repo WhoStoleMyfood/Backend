@@ -3,9 +3,12 @@ package com.example.whostolemyfood.category.presentation.controller;
 import com.example.whostolemyfood.category.application.service.CategoryServiceV1;
 import com.example.whostolemyfood.category.presentation.dto.request.ReqCategoryDtoV1;
 import com.example.whostolemyfood.category.presentation.dto.response.ResGetCategoryDtoV1;
+import com.example.whostolemyfood.user.application.security.AuthUser;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -29,22 +32,33 @@ public class CategoryControllerV1 {
     }
 
     @PostMapping()
-    public ResponseEntity<ResGetCategoryDtoV1> createCategory(@Valid @RequestBody ReqCategoryDtoV1 request) {
-        ResGetCategoryDtoV1 response = categoryService.createCategory(request);
+    @PreAuthorize("hasAnyRole('MANAGER','MASTER')")
+    public ResponseEntity<ResGetCategoryDtoV1> createCategory(
+            @Valid @RequestBody ReqCategoryDtoV1 request,
+            @AuthenticationPrincipal AuthUser loginUser
+    ) {
+        ResGetCategoryDtoV1 response = categoryService.createCategory(request, loginUser.getUserId(), loginUser.role().name());
         return ResponseEntity.created(URI.create("/api/v1/categories/"+response.getCategoryId())).body(response);
     }
 
     @PutMapping("/{category_id}")
+    @PreAuthorize("hasAnyRole('MANAGER','MASTER')")
     public ResponseEntity<ResGetCategoryDtoV1> updateCategory(
             @PathVariable("category_id") UUID categoryId,
-            @RequestBody @Valid ReqCategoryDtoV1 request
+            @RequestBody @Valid ReqCategoryDtoV1 request,
+            @AuthenticationPrincipal AuthUser loginUser
     ) {
-        return ResponseEntity.ok(categoryService.updateCategory(categoryId, request));
+        return ResponseEntity.ok(categoryService.updateCategory(categoryId, request,loginUser.getUserId(),loginUser.role().name()));
     }
 
     @DeleteMapping("/{category_id}")
-    public ResponseEntity<Void> deleteCategory(@PathVariable("category_id") UUID categoryId) {
-        categoryService.deleteCategory(categoryId);
+    @PreAuthorize("hasAnyRole('MANAGER','MASTER')")
+    public ResponseEntity<Void> deleteCategory(
+            @PathVariable("category_id") UUID categoryId,
+            @AuthenticationPrincipal AuthUser loginUser
+
+    ) {
+        categoryService.deleteCategory(categoryId,loginUser.getUserId(),loginUser.role().name());
         return ResponseEntity.noContent().build();
     }
 }

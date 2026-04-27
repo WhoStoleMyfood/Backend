@@ -59,7 +59,12 @@ public enum ErrorCode {
     // Payment
     PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "P001", "결제를 찾을 수 없습니다."),
     FAIL_TO_MODIFY_STATUS(HttpStatus.BAD_REQUEST, "P002", "결제 상태를 변경할 수 없습니다."),
-    FAIL_PAY(HttpStatus.BAD_REQUEST, "P003", "결제가 거절되었습니다.");
+    FAIL_PAY(HttpStatus.BAD_REQUEST, "P003", "결제가 거절되었습니다."),
+
+    // Category
+    CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND,"C001","존재하지 않는 카테고리입니다."),
+    CATEGORY_DUPLICATION(HttpStatus.BAD_REQUEST,"C002", "이미 존재하는 카테고리입니다.");
+
 
     private final HttpStatus status;
     private final String code;
