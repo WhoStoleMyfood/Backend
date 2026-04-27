@@ -28,7 +28,8 @@ public class MenuEntity extends BaseSoftDeleteEntity {
     @JoinColumn(name = "store_id", nullable = false, updatable = false)
     private StoreEntity store;
 
-    // ai_log_id
+    @Column(name = "ai_log_id")
+    private UUID aiLogId;
 
     @Column(nullable = false, name = "name")
     private String name;

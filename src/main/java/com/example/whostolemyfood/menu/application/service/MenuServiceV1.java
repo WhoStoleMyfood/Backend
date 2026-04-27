@@ -1,5 +1,7 @@
 package com.example.whostolemyfood.menu.application.service;
 
+import com.example.whostolemyfood.ai.application.service.AiLogServiceV1;
+import com.example.whostolemyfood.ai.presentation.dto.response.ResGetAiLogDtoV1;
 import com.example.whostolemyfood.global.exception.CustomException;
 import com.example.whostolemyfood.global.exception.ErrorCode;
 import com.example.whostolemyfood.menu.domain.entity.MenuEntity;
@@ -26,6 +28,7 @@ public class MenuServiceV1 {
 
     private final MenuRepository menuRepository;
     private final StoreRepository storeRepository;
+    private final AiLogServiceV1 aiLogServiceV1;
 
     // Owner Only
     // 메뉴 생성
@@ -42,11 +45,15 @@ public class MenuServiceV1 {
         if (menuRepository.existsByStore_StoreIdAndNameAndIsDeletedFalse(store.getStoreId(), request.getName())) {
             throw new CustomException(ErrorCode.MENU_DUPLICATION_NAME);
         }
+
+        ResGetAiLogDtoV1 aiLogDto = resolveDescription(request, authUser);
+
         MenuEntity menu = MenuEntity.builder()
                 .store(store)
                 .name(request.getName())
                 .price(request.getPrice())
-                .description(request.getDescription())
+                .description(aiLogDto.description())
+                .aiLogId(aiLogDto.aiLogId())
                 .build();
 
         MenuEntity savedMenu = menuRepository.save(menu);
@@ -131,5 +138,39 @@ public class MenuServiceV1 {
         if (authUser.role() == UserRole.OWNER && !store.getUser().getId().equals(authUser.userId())) {
             throw new CustomException(ErrorCode.STORE_NOT_OWNER);
         }
+    }
+
+    // description 예외처리
+    private ResGetAiLogDtoV1 resolveDescription(ReqCreateMenuDtoV1 request, AuthUser authUser) {
+        boolean useAi = Boolean.TRUE.equals(request.getAiDescription());
+        boolean hasDescription = hasText(request.getDescription());
+        boolean hasAiPrompt = hasText(request.getAiPrompt());
+
+        // 1. 설명 없음 +  AI false + 프롬프트 없음 >> null
+        if (!hasDescription && !useAi && !hasAiPrompt) {
+            return new ResGetAiLogDtoV1(null,null);
+        }
+
+        // 2. AI false + 프롬프트 있음 >> 예외처리
+        if (!useAi && hasAiPrompt) {
+            throw new CustomException(ErrorCode.MENU_AI_PROMPT_NOT_ALLOWED);
+        }
+
+        // 3. 설명 있고 AI true >> 예외
+        if (hasDescription && useAi) {
+            throw new CustomException(ErrorCode.MENU_DESCRIPTION_DUPLICATE);
+        }
+
+        // 4. AI true 면 AI서비스로 이동하여 prompt 검증후 description 생성
+        if (useAi) {
+            return aiLogServiceV1.generateMenuDescription(authUser.userId(), request.getAiPrompt());
+        }
+
+        // 5. AI false + 설명만 있으면 설명 저장
+        return new ResGetAiLogDtoV1(request.getDescription(),null);
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.isBlank();
     }
 }
