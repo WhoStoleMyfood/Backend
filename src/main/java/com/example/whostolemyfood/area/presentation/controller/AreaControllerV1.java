@@ -8,6 +8,8 @@ import com.example.whostolemyfood.area.presentation.dto.response.ResGetAreaDtoV1
 import com.example.whostolemyfood.user.application.security.AuthUser;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -45,6 +47,20 @@ public class AreaControllerV1 {
 	@GetMapping("/{areaId}")
 	public ResponseEntity<ResGetAreaDtoV1> getArea(@PathVariable UUID areaId) {
 		return ResponseEntity.ok(areaServiceV1.getArea(areaId));
+	}
+
+	@GetMapping("/search")
+	public ResponseEntity<Page<ResGetAreaDtoV1>> searchAreas(
+		@RequestParam(required = false) String city,
+		@RequestParam(required = false) String district,
+		@RequestParam(required = false) Boolean isActive,
+		@RequestParam(defaultValue = "0") int page,
+		@RequestParam(defaultValue = "10") int size,
+		@RequestParam(defaultValue = "desc") String sortDir
+	) {
+		return ResponseEntity.ok(
+			areaServiceV1.searchAreas(city, district, isActive, page, size, sortDir)
+		);
 	}
 
 	@PutMapping("/{areaId}")

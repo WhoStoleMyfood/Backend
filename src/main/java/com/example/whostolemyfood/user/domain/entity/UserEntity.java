@@ -23,7 +23,7 @@ public class UserEntity extends BaseAuditEntity {
     private UUID id;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "role", nullable = false)
+    @Column(name = "authority", nullable = false)
     private UserRole userRole;
 
 //    @Enumerated(EnumType.STRING)
