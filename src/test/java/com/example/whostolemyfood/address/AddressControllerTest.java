@@ -150,7 +150,7 @@ public class AddressControllerTest {
     }
 
     @Test
-    @DisplayName("[성공] 배송지 삭제 API - 204 No Content (가이드 3-④)")
+    @DisplayName("[성공] 배송지 삭제 API - 204 No Content")
     void deleteAddress_Success() throws Exception {
         mockMvc.perform(delete("/api/v1/addresses/" + UUID.randomUUID())
                         .with(user(customerUser)))
