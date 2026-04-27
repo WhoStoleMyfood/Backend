@@ -35,14 +35,22 @@ public enum ErrorCode {
     PRICE_MISMATCH(HttpStatus.BAD_REQUEST, "O011", "메뉴 가격이 변동되었습니다. 다시 확인해 주세요."),
 
     // Store
-    STORE_NOT_FOUND(HttpStatus.NOT_FOUND, "S001" ,"해당 스토어를 찾을 수 없습니다"),
-    STORE_DUPLICATION_NAME(HttpStatus.BAD_REQUEST, "S002", "이미 존재하는 스토어 이름입니다"),
-    STORE_NOT_OWNER(HttpStatus.BAD_REQUEST,"S003", "해당 스토어의 소유주가 아닙니다"),
+    STORE_NOT_FOUND(HttpStatus.NOT_FOUND, "S001" ,"해당 스토어를 찾을 수 없습니다."),
+    STORE_DUPLICATION_NAME(HttpStatus.BAD_REQUEST, "S002", "이미 존재하는 스토어 이름입니다."),
+    STORE_NOT_OWNER(HttpStatus.BAD_REQUEST,"S003", "해당 스토어의 소유주가 아닙니다."),
     STORE_CLOSED(HttpStatus.BAD_REQUEST, "S004", "현재 영업 중인 가게가 아닙니다."),
 
     // Menu
-    MENU_NOT_FOUND(HttpStatus.NOT_FOUND, "M001", "해당 메뉴를 찾을 수 없습니다"),
-    MENU_DUPLICATION_NAME(HttpStatus.BAD_REQUEST, "M002", "이미 존재하는 메뉴 이름입니다"),
+    MENU_NOT_FOUND(HttpStatus.NOT_FOUND, "M001", "해당 메뉴를 찾을 수 없습니다."),
+    MENU_DUPLICATION_NAME(HttpStatus.BAD_REQUEST, "M002", "이미 존재하는 메뉴 이름입니다."),
+    MENU_AI_PROMPT_NOT_ALLOWED(HttpStatus.BAD_REQUEST,"M003", "AI 미사용시 프롬프트를 입력할 수 없습니다."),
+    MENU_DESCRIPTION_DUPLICATE(HttpStatus.BAD_REQUEST,"M004", "직접 입력한 설명과 AI 생성 요청은 동시에 처리할 수 없습니다."),
+
+    // Ai
+    AI_PROMPT_REQUIRE(HttpStatus.BAD_REQUEST, "I001","AI 프롬프트는 필수 입력사항입니다."),
+    AI_PROMPT_TOO_LONG(HttpStatus.BAD_REQUEST, "I002", "프롬프트 길이는 100자 이내로 작성해주세요."),
+    AI_RESPONSE_EMPTY(HttpStatus.INTERNAL_SERVER_ERROR,"I003", "AI 응답 결과가 비어 있습니다. 다시 시도해주세요."),
+
 
     // Global
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "G001", "서버 내부 오류입니다."),
