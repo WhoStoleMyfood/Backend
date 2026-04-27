@@ -1,24 +1,16 @@
 package com.example.whostolemyfood.user.presentation.controller;
 
-import java.util.UUID;
+import jakarta.validation.Valid;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
+import org.springframework.web.bind.annotation.*;
 import com.example.whostolemyfood.user.application.security.AuthUser;
 import com.example.whostolemyfood.user.application.service.UserService;
-import com.example.whostolemyfood.user.domain.entity.UserEntity;
 import com.example.whostolemyfood.user.presentation.dto.request.ReqUpdateUserDtoV1;
 import com.example.whostolemyfood.user.presentation.dto.response.ResGetUserByIdDtoV1;
 import com.example.whostolemyfood.user.presentation.dto.response.ResUpdateUserDtoV1;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
