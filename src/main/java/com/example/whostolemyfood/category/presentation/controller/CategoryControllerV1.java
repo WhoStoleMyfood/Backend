@@ -3,9 +3,13 @@ package com.example.whostolemyfood.category.presentation.controller;
 import com.example.whostolemyfood.category.application.service.CategoryServiceV1;
 import com.example.whostolemyfood.category.presentation.dto.request.ReqCategoryDtoV1;
 import com.example.whostolemyfood.category.presentation.dto.response.ResGetCategoryDtoV1;
+import com.example.whostolemyfood.global.response.PageResponse;
 import com.example.whostolemyfood.user.application.security.AuthUser;
+import com.example.whostolemyfood.global.util.PageUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -22,10 +26,14 @@ public class CategoryControllerV1 {
     private final CategoryServiceV1 categoryService;
 
     @GetMapping()
-    public ResponseEntity<List<ResGetCategoryDtoV1>> getCategories(
-            @AuthenticationPrincipal AuthUser loginUser
+    public ResponseEntity<PageResponse<ResGetCategoryDtoV1>> getCategories(
+            @AuthenticationPrincipal AuthUser loginUser,
+            @PageableDefault(size = 10, page = 0) Pageable pageable
     ) {
-        return ResponseEntity.ok(categoryService.getCategories(loginUser.getUserId(),loginUser.role().name()));
+
+        Pageable validatedPageable = PageUtil.validatePageSize(pageable);
+
+        return ResponseEntity.ok(categoryService.getCategories(loginUser.getUserId(),loginUser.role().name(),validatedPageable));
     }
 
     @GetMapping("/{category_id}")

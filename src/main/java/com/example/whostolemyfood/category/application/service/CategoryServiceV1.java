@@ -6,10 +6,13 @@ import com.example.whostolemyfood.category.presentation.dto.request.ReqCategoryD
 import com.example.whostolemyfood.category.presentation.dto.response.ResGetCategoryDtoV1;
 import com.example.whostolemyfood.global.exception.CustomException;
 import com.example.whostolemyfood.global.exception.ErrorCode;
+import com.example.whostolemyfood.global.response.PageResponse;
 import com.example.whostolemyfood.user.domain.entity.UserEntity;
 import com.example.whostolemyfood.user.domain.entity.UserRole;
 import com.example.whostolemyfood.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,13 +56,13 @@ public class CategoryServiceV1 {
     /**
      * 카테고리 목록 조회
      */
-    public List<ResGetCategoryDtoV1> getCategories(UUID userId,String Role) {
+    public PageResponse<ResGetCategoryDtoV1> getCategories(UUID userId, String Role, Pageable pageable) {
         UserEntity loginUser = validateActiveUserAndRole(userId, Role);
+        Page<CategoryEntity> categoryPage = categoryRepository.findByIsDeletedFalse(pageable);
 
-        return categoryRepository.findAll().stream()
-                .filter(category -> !category.getIsDeleted())
-                .map(ResGetCategoryDtoV1::from) // Entity를 DTO로 변환
-                .toList();
+        return new PageResponse<>(
+                categoryPage.map(ResGetCategoryDtoV1::from)
+        );
     }
 
     /**

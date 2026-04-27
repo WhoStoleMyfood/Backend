@@ -7,6 +7,7 @@ import com.example.whostolemyfood.category.presentation.dto.request.ReqCategoryD
 import com.example.whostolemyfood.category.presentation.dto.response.ResGetCategoryDtoV1;
 import com.example.whostolemyfood.global.exception.CustomException;
 import com.example.whostolemyfood.global.exception.ErrorCode;
+import com.example.whostolemyfood.global.response.PageResponse;
 import com.example.whostolemyfood.user.domain.entity.UserEntity;
 import com.example.whostolemyfood.user.domain.entity.UserRole;
 import com.example.whostolemyfood.user.domain.repository.UserRepository;
@@ -17,6 +18,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
@@ -33,7 +38,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("CategoryServiceV1 테스트")
+@DisplayName("Category Service 단위 테스트 (Pageable 적용)")
 class CategoryServiceV1Test {
 
     @Mock
@@ -50,6 +55,7 @@ class CategoryServiceV1Test {
     private UserEntity testUser;
     private UserEntity managerUser;
     private UserEntity masterUser;
+    private Pageable pageable;
 
     @BeforeEach
     void setUp() {
@@ -81,6 +87,7 @@ class CategoryServiceV1Test {
                 .role(UserRole.MASTER)
                 .build();
         ReflectionTestUtils.setField(masterUser, "id", masterId);
+        pageable = PageRequest.of(0, 10);
     }
 
     // ============ createCategory ============
@@ -336,21 +343,29 @@ class CategoryServiceV1Test {
 
         given(userRepository.findById(managerUser.getId()))
                 .willReturn(Optional.of(managerUser));
-        given(categoryRepository.findAll())
-                .willReturn(List.of(category1, category2, category3));
+        given(categoryRepository.findByIsDeletedFalse(any(Pageable.class)))
+                .willReturn(new PageImpl<>(
+                        List.of(category1, category2, category3),
+                        pageable,
+                        3
+                ));
 
         // when
-        List<ResGetCategoryDtoV1> result = categoryService.getCategories(
+        PageResponse<ResGetCategoryDtoV1> result = categoryService.getCategories(
                 managerUser.getId(),
-                UserRole.MANAGER.name()
+                UserRole.MANAGER.name(),
+                pageable
         );
 
         // then
-        assertThat(result).hasSize(3);
-        assertThat(result.get(0).getName()).isEqualTo("한식");
-        assertThat(result.get(1).getName()).isEqualTo("일식");
-        assertThat(result.get(2).getName()).isEqualTo("중식");
-        verify(categoryRepository, times(1)).findAll();
+        // ✅ 수정 (PageResponse 기준)
+        assertThat(result.getContent()).hasSize(3);
+        assertThat(result.getContent().get(0).getName()).isEqualTo("한식");
+        assertThat(result.getContent().get(1).getName()).isEqualTo("일식");
+        assertThat(result.getContent().get(2).getName()).isEqualTo("중식");
+        assertThat(result.getTotalElements()).isEqualTo(3);
+        assertThat(result.getTotalPages()).isEqualTo(1);
+        verify(categoryRepository, times(1)).findByIsDeletedFalse(any(Pageable.class));
     }
 
     @Test
@@ -359,17 +374,25 @@ class CategoryServiceV1Test {
         // given
         given(userRepository.findById(managerUser.getId()))
                 .willReturn(Optional.of(managerUser));
-        given(categoryRepository.findAll())
-                .willReturn(List.of());
+        given(categoryRepository.findByIsDeletedFalse(any(Pageable.class)))
+                .willReturn(new PageImpl<>(
+                        List.of(),
+                        pageable,
+                        0
+                ));
 
         // when
-        List<ResGetCategoryDtoV1> result = categoryService.getCategories(
+        PageResponse<ResGetCategoryDtoV1> result = categoryService.getCategories(
                 managerUser.getId(),
-                UserRole.MANAGER.name()
+                UserRole.MANAGER.name(),
+                pageable
         );
 
         // then
-        assertThat(result).isEmpty();
+        // ✅ 수정 (PageResponse 기준)
+        assertThat(result.getContent()).isEmpty();
+        assertThat(result.getTotalElements()).isEqualTo(0);
+        assertThat(result.getTotalPages()).isEqualTo(0);
     }
 
     // ============ updateCategory ============
