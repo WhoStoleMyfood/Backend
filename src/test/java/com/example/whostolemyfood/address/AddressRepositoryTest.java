@@ -1,11 +1,5 @@
 package com.example.whostolemyfood.address;
 
-/*
- * TODO: 타 도메인(Payment 등)의 Schema Migration 오류(PostgreSQL UUID 변환 실패)로 인해 임시 주석 처리.
- * 도메인 간 ERD 정합성 문제 해결 후 주석을 해제하여 테스트를 활성화해야 함.
- */
-
-/*
 import com.example.whostolemyfood.address.domain.entity.AddressEntity;
 import com.example.whostolemyfood.address.domain.repository.AddressRepository;
 import com.example.whostolemyfood.global.config.JpaAuditingConfig;
@@ -21,6 +15,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.UUID;
 
@@ -30,15 +25,66 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ActiveProfiles("test")
 @Import(JpaAuditingConfig.class)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@org.springframework.data.jpa.repository.config.EnableJpaRepositories(basePackageClasses = AddressRepository.class)
 @EntityScan(basePackageClasses = {AddressEntity.class, UserEntity.class})
 public class AddressRepositoryTest {
 
     @Autowired
     private AddressRepository addressRepository;
 
+    @Autowired
+    private jakarta.persistence.EntityManager entityManager; // 영속성 컨텍스트 수동 제어를 위해 주입
+
     @BeforeEach
     void setUp() {
         addressRepository.deleteAll();
+    }
+
+    @Test
+    @DisplayName("삭제 시 softDelete를 호출하면 Soft Delete가 적용되어야 함")
+    void softDeleteTest() {
+        // Given
+        AddressEntity address = addressRepository.save(createAddress(UUID.randomUUID(), "집"));
+        addressRepository.saveAndFlush(address);
+
+        // When
+        address.softDelete(UUID.randomUUID());
+        addressRepository.saveAndFlush(address); // DB에 UPDATE 쿼리 강제 실행
+        
+        entityManager.clear(); // 1차 캐시를 비워 다시 DB에서 조회하도록 강제함
+
+        // Then
+        AddressEntity found = addressRepository.findById(address.getId()).orElseThrow();
+        assertThat(found.getIsDeleted()).isTrue();
+        assertThat(found.getDeletedAt()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("단건 조회 시 삭제되지 않은 배송지면 정상 조회되어야 함")
+    void findByIdAndIsDeletedFalse_Success() {
+        // Given
+        AddressEntity address = addressRepository.save(createAddress(UUID.randomUUID(), "우리집"));
+
+        // When
+        AddressEntity found = addressRepository.findByIdAndIsDeletedFalse(address.getId()).orElseThrow();
+
+        // Then
+        assertThat(found.getAlias()).isEqualTo("우리집");
+    }
+
+    @Test
+    @DisplayName("단건 조회 시 삭제된 배송지면 Optional.empty()를 반환해야 함")
+    void findByIdAndIsDeletedFalse_Fail_Deleted() {
+        // Given
+        AddressEntity address = addressRepository.save(createAddress(UUID.randomUUID(), "삭제될집"));
+        address.softDelete(UUID.randomUUID());
+        addressRepository.saveAndFlush(address);
+
+        // When
+        java.util.Optional<AddressEntity> result = addressRepository.findByIdAndIsDeletedFalse(address.getId());
+
+        // Then
+        assertThat(result).isEmpty();
     }
 
     @Test
@@ -93,22 +139,6 @@ public class AddressRepositoryTest {
         assertThat(defaultAddress.getIsDefault()).isTrue();
     }
 
-    @Test
-    @DisplayName("삭제 시 softDelete를 호출하면 Soft Delete가 적용되어야 함")
-    void softDeleteTest() {
-        // Given
-        AddressEntity address = addressRepository.save(createAddress(UUID.randomUUID(), "집"));
-
-        // When
-        address.softDelete(UUID.randomUUID());
-        addressRepository.saveAndFlush(address);
-
-        // Then
-        AddressEntity found = addressRepository.findById(address.getId()).orElseThrow();
-        assertThat(found.getIsDeleted()).isTrue();
-        assertThat(found.getDeletedAt()).isNotNull();
-    }
-
     private AddressEntity createAddress(UUID userId, String alias) {
         return AddressEntity.builder()
                 .userId(userId)
@@ -118,4 +148,3 @@ public class AddressRepositoryTest {
                 .build();
     }
 }
-*/
