@@ -1,6 +1,8 @@
 package com.example.whostolemyfood.global.exception;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -71,6 +73,34 @@ public class GlobalExceptionHandler {
                         .status(errorCode.getStatus().value())
                         .code(errorCode.getCode())
                         .message(errorCode.getMessage())
+                        .build());
+    }
+
+    /**
+     * 접근 권한이 없을 때 발생하는 예외 처리 (403 Forbidden)
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    protected ResponseEntity<ErrorResponse> handleAccessDeniedException(AccessDeniedException ex) {
+        ErrorCode errorCode = ErrorCode.ACCESS_DENIED;
+        return ResponseEntity.status(errorCode.getStatus())
+                .body(ErrorResponse.builder()
+                        .status(errorCode.getStatus().value())
+                        .code(errorCode.getCode())
+                        .message(errorCode.getMessage())
+                        .build());
+    }
+
+    /**
+     * 잘못된 형식의 JSON 데이터나 타입 불일치 발생 시 처리 (예: 잘못된 Enum 값)
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    protected ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
+        ErrorCode errorCode = ErrorCode.VALIDATION_ERROR;
+        return ResponseEntity.status(errorCode.getStatus())
+                .body(ErrorResponse.builder()
+                        .status(errorCode.getStatus().value())
+                        .code(errorCode.getCode())
+                        .message("입력 형식이 잘못되었습니다. (예: 존재하지 않는 주문 상태값)")
                         .build());
     }
 
