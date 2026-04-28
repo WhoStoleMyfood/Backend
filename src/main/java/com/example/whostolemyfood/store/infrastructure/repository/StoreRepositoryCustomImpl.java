@@ -148,7 +148,7 @@ public class StoreRepositoryCustomImpl implements StoreRepositoryCustom {
             return QStoreEntity.storeEntity.createdAt.desc(); // 기본 정렬: 최신순
         }
         if (sortBy.equals("rating")) {
-            return QStoreEntity.storeEntity.storeRatingSummary.averageRating.asc();
+            return QStoreEntity.storeEntity.storeRatingSummary.averageRating.desc();
         }
         return QStoreEntity.storeEntity.createdAt.desc();
     }
