@@ -1,5 +1,6 @@
 package com.example.whostolemyfood.review.presentation.controller;
 
+import com.example.whostolemyfood.global.response.PageResponse;
 import com.example.whostolemyfood.review.application.service.ReviewRatingBatchService;
 import com.example.whostolemyfood.review.application.service.ReviewServiceV1;
 import com.example.whostolemyfood.review.presentation.dto.request.ReqCreateReviewDtoV1;
@@ -12,7 +13,6 @@ import com.example.whostolemyfood.review.presentation.dto.response.ResGetStoreRa
 import com.example.whostolemyfood.user.application.security.AuthUser;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -91,10 +91,12 @@ public class ReviewControllerV1 {
 	}
 
 	@GetMapping("/reviews")
-	public ResponseEntity<Page<ResGetReviewPageDtoV1>> getReviews(
+	public ResponseEntity<PageResponse<ResGetReviewPageDtoV1>> getReviews(
 		@ModelAttribute ReqGetReviewsDtoV1 request
 	) {
-		Page<ResGetReviewPageDtoV1> response = reviewServiceV1.getReviews(request);
+		PageResponse<ResGetReviewPageDtoV1> response =
+			new PageResponse<>(reviewServiceV1.getReviews(request));
+
 		return ResponseEntity.ok(response);
 	}
 

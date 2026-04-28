@@ -17,7 +17,9 @@ import com.example.whostolemyfood.order.presentation.dto.response.ResGetOrderLis
 import com.example.whostolemyfood.store.domain.entity.StoreEntity;
 import com.example.whostolemyfood.store.domain.entity.StoreStatus;
 import com.example.whostolemyfood.store.domain.repository.StoreRepository;
+import com.example.whostolemyfood.user.domain.entity.UserEntity;
 import com.example.whostolemyfood.user.domain.entity.UserRole;
+import com.example.whostolemyfood.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -41,15 +43,31 @@ public class OrderServiceV1 {
     private final StoreRepository storeRepository;
     private final MenuRepository menuRepository;
     private final AddressRepository addressRepository;
+    private final UserRepository userRepository; // (1) DB 재검증을 위해 유저 레포지토리 주입
+
+    // 매 요청 시 DB 권한 재검증
+    private void validateUserRoleFromDB(UUID userId, UserRole tokenRole) {
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        if (user.getIsDeleted()) {
+            log.warn("[Security] Deleted user access attempt. User: {}", userId);
+            throw new CustomException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        if (user.getUserRole() != tokenRole) {
+            log.warn("[Security] Role mismatch detected! User: {}, TokenRole: {}, DBRole: {}", 
+                     userId, tokenRole, user.getUserRole());
+            throw new CustomException(ErrorCode.ACCESS_DENIED); // 실시간 권한 변경 시 차단
+        }
+    }
 
     /**
      * 주문 생성 (CUSTOMER 전용)
      */
     @Transactional
     public ResCreateOrderDtoV1 createOrder(ReqCreateOrderDtoV1 request, UUID userId, UserRole role) {
-        if (role != UserRole.CUSTOMER) {
-            throw new CustomException(ErrorCode.ACCESS_DENIED);
-        }
+        validateUserRoleFromDB(userId, role); // DB 권한 재검증 실행
 
         log.info("[Order] Creating order. User: {}, Store: {}", userId, request.getStoreId());
 
@@ -126,6 +144,8 @@ public class OrderServiceV1 {
      * 주문 상세 조회
      */
     public ResGetOrderDtoV1 getOrder(UUID orderId, UUID userId, UserRole role) {
+        validateUserRoleFromDB(userId, role); // DB 권한 재검증 실행
+
         OrderEntity order = orderRepository.findById(orderId)
                 .filter(o -> !o.getIsDeleted())
                 .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
@@ -154,6 +174,8 @@ public class OrderServiceV1 {
      * 주문 목록 조회
      */
     public Page<ResGetOrderListDtoV1> getOrders(UUID storeId, Boolean isHidden, Pageable pageable, UUID userId, UserRole role) {
+        validateUserRoleFromDB(userId, role); // DB 권한 재검증 실행
+
         if (role == UserRole.CUSTOMER) {
             return orderRepository.findAllByUserIdAndIsDeletedFalse(userId, pageable).map(ResGetOrderListDtoV1::from);
         }
@@ -183,6 +205,8 @@ public class OrderServiceV1 {
      */
     @Transactional
     public ResGetOrderDtoV1 cancelOrder(UUID orderId, UUID userId, UserRole role) {
+        validateUserRoleFromDB(userId, role); // DB 권한 재검증 실행
+
         OrderEntity order = orderRepository.findById(orderId)
                 .filter(o -> !o.getIsDeleted())
                 .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
@@ -215,9 +239,7 @@ public class OrderServiceV1 {
      */
     @Transactional
     public ResGetOrderDtoV1 updateOrderRequest(UUID orderId, String newRequest, UUID userId, UserRole role) {
-        if (role != UserRole.CUSTOMER) {
-            throw new CustomException(ErrorCode.ACCESS_DENIED);
-        }
+        validateUserRoleFromDB(userId, role); // DB 권한 재검증 실행
 
         OrderEntity order = orderRepository.findById(orderId)
                 .filter(o -> !o.getIsDeleted())
@@ -242,6 +264,8 @@ public class OrderServiceV1 {
      */
     @Transactional
     public ResGetOrderDtoV1 updateOrderStatus(UUID orderId, OrderStatus nextStatus, UUID userId, UserRole role) {
+        validateUserRoleFromDB(userId, role); // DB 권한 재검증 실행
+
         OrderEntity order = orderRepository.findById(orderId)
                 .filter(o -> !o.getIsDeleted())
                 .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
@@ -252,16 +276,13 @@ public class OrderServiceV1 {
             if (store.getUser() == null || !store.getUser().getId().equals(userId)) {
                 throw new CustomException(ErrorCode.ORDER_FORBIDDEN_FOR_OWNER);
             }
-        } else if (role == UserRole.CUSTOMER) {
-            throw new CustomException(ErrorCode.ACCESS_DENIED);
         }
 
         try {
-            // 🚨 리플렉션 대신 엔티티의 전용 메서드 호출
             if (role == UserRole.MASTER || role == UserRole.MANAGER) {
-                order.forceUpdateStatus(nextStatus); // 관리자는 슈퍼 권한으로 강제 변경
+                order.forceUpdateStatus(nextStatus); 
             } else {
-                order.updateStatus(nextStatus); // 사장님은 정해진 순서 엄수
+                order.updateStatus(nextStatus); 
             }
             order.markUpdatedBy(userId);
         } catch (IllegalStateException e) {
@@ -276,9 +297,7 @@ public class OrderServiceV1 {
      */
     @Transactional
     public void deleteOrder(UUID orderId, UUID userId, UserRole role) {
-        if (role != UserRole.MASTER) {
-            throw new CustomException(ErrorCode.ACCESS_DENIED);
-        }
+        validateUserRoleFromDB(userId, role); // DB 권한 재검증 실행
 
         OrderEntity order = orderRepository.findById(orderId)
                 .filter(o -> !o.getIsDeleted())

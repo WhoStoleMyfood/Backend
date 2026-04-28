@@ -3,6 +3,7 @@ package com.example.whostolemyfood.global.entity;
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.util.UUID;
 

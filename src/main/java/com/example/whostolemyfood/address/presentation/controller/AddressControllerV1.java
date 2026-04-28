@@ -17,6 +17,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -34,41 +35,44 @@ public class AddressControllerV1 {
 
     @Operation(summary = "배송지 생성", description = "로그인한 사용자의 새로운 배송지를 생성합니다.")
     @PostMapping
+    @PreAuthorize("hasAnyRole('CUSTOMER')")
     public ResponseEntity<ResCreateAddressDtoV1> createAddress(
             @Valid @RequestBody ReqCreateAddressDtoV1 request,
             @AuthenticationPrincipal AuthUser authUser) {
-        return ResponseEntity.ok(addressService.createAddress(request, authUser.userId()));
+        return ResponseEntity.ok(addressService.createAddress(request, authUser.userId(), authUser.role()));
     }
 
     @Operation(summary = "본인 배송지 목록 조회", description = "로그인한 사용자의 배송지 목록을 조회합니다. 별칭으로 검색이 가능합니다.")
     @GetMapping
+    @PreAuthorize("hasAnyRole('CUSTOMER')")
     public ResponseEntity<PageResponse<ResGetAddressDtoV1>> getMyAddresses(
             @RequestParam(name = "alias", required = false) String alias,
             @AuthenticationPrincipal AuthUser authUser,
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         
         Pageable validatedPageable = PageUtil.validatePageSize(pageable);
-        Page<ResGetAddressDtoV1> addresses = addressService.getMyAddresses(authUser.userId(), alias, validatedPageable);
+        Page<ResGetAddressDtoV1> addresses = addressService.getMyAddresses(authUser.userId(), authUser.role(), alias, validatedPageable);
         
-        // 🚨 SA 문서 규격에 맞는 PageResponse로 감싸서 반환
         return ResponseEntity.ok(new PageResponse<>(addresses));
     }
 
     @Operation(summary = "배송지 수정", description = "특정 배송지의 정보를 수정합니다. 본인의 배송지만 수정 가능합니다.")
     @PutMapping("/{addressId}")
+    @PreAuthorize("hasAnyRole('CUSTOMER')")
     public ResponseEntity<ResGetAddressDtoV1> updateAddress(
             @PathVariable("addressId") UUID addressId,
             @Valid @RequestBody ReqUpdateAddressDtoV1 request,
             @AuthenticationPrincipal AuthUser authUser) {
-        return ResponseEntity.ok(addressService.updateAddress(addressId, request, authUser.userId()));
+        return ResponseEntity.ok(addressService.updateAddress(addressId, request, authUser.userId(), authUser.role()));
     }
 
     @Operation(summary = "배송지 삭제", description = "특정 배송지를 삭제(Soft Delete) 처리합니다. 본인의 배송지만 삭제 가능합니다.")
     @DeleteMapping("/{addressId}")
+    @PreAuthorize("hasAnyRole('CUSTOMER')")
     public ResponseEntity<Void> deleteAddress(
             @PathVariable("addressId") UUID addressId,
             @AuthenticationPrincipal AuthUser authUser) {
-        addressService.deleteAddress(addressId, authUser.userId());
+        addressService.deleteAddress(addressId, authUser.userId(), authUser.role());
         return ResponseEntity.noContent().build();
     }
 }

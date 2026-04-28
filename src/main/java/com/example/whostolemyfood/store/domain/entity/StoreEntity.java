@@ -28,10 +28,6 @@ public class StoreEntity extends BaseSoftDeleteEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID storeId;
 
-    // store_rating_id
-    @Column(name = "store_rating_id")
-    private UUID storeRatingId;
-
     // user_id
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
@@ -45,8 +41,9 @@ public class StoreEntity extends BaseSoftDeleteEntity {
     @JoinColumn(name = "area_id")
     private AreaEntity area;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "store_rating_summary_id")
+    //store_rating_id 이걸로 통일
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "store_rating_id")
     private StoreRatingSummaryEntity storeRatingSummary;
 
     @Column(nullable = false, unique = true)
@@ -100,8 +97,8 @@ public class StoreEntity extends BaseSoftDeleteEntity {
         this.status = StoreStatus.SHUTDOWN;
     }
 
-    public void updateStoreRatingId(UUID storeRatingId) {
-        this.storeRatingId = storeRatingId;
+    public void updateStoreRatingSummary(StoreRatingSummaryEntity storeRatingSummary) {
+        this.storeRatingSummary = storeRatingSummary;
     }
 
     public void toggleIsHidden() {

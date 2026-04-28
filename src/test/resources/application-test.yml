@@ -1,0 +1,49 @@
+spring:
+  application:
+    name: Backend
+
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: ${DB_TEST_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+  jpa:
+    database: postgresql
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    generate-ddl: true
+    hibernate:
+      ddl-auto: update
+    show_sql: true
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+logging:
+  level:
+    org.hibernate.SQL: debug
+
+jwt:
+  secret: ${JWT_SECRET}
+  token:
+    access:
+      minute: ${JWT_ACCESS_MINUTE}
+    refresh:
+      minute: ${JWT_REFRESH_MINUTE}
+
+auth:
+  admin-token: ${ADMIN_SIGNUP_TOKEN}
+
+gemini:
+  api-key: ${AI_API_KEY}
+  base-url: ${BASE_URL}
+  model: ${MODEL}
+
+payment:
+  key: ${PAYMENT_KEY}
