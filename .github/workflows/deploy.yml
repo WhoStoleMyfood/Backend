@@ -1,8 +1,8 @@
-name : Project1 CD/CD
+name: Project1 CI/CD
 
 on:
   push:
-    branches: ["develop"] #main을 기준으로 배포
+    branches: ["develop"]
 
 jobs:
   build:
@@ -11,7 +11,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Set up JDK 17
-        uses: actions/setup-java@3
+        uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'temurin'
@@ -22,14 +22,18 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
+
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
-            
+
       - name: Generate application.yml from Secrets
         run: |
           mkdir -p ./src/main/resources
           echo "${{ secrets.APPLICATION_PROD_YML }}" > ./src/main/resources/application.yml
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
 
       - name: Build with Gradle
         run: ./gradlew build -x test
@@ -44,7 +48,7 @@ jobs:
         run: |
           docker build -t duddnr08/sparta1:latest .
           docker push duddnr08/sparta1:latest
-          
+
   deploy:
     needs: build
     runs-on: ubuntu-latest
