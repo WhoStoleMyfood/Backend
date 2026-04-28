@@ -85,18 +85,4 @@ public class StoreRatingSummaryEntity extends BaseSoftDeleteEntity {
 		this.rating4Count = rating4Count;
 		this.rating5Count = rating5Count;
 	}
-
-	public static StoreRatingSummaryEntity createDefault() {
-		return StoreRatingSummaryEntity.builder()
-				.reviewCount(0)
-				.totalRatingSum(0)
-				.averageRating(BigDecimal.ZERO.setScale(1, RoundingMode.HALF_UP))
-				.rating1Count(0)
-				.rating2Count(0)
-				.rating3Count(0)
-				.rating4Count(0)
-				.rating5Count(0)
-				.isDeleted(false)
-				.build();
-	}
 }

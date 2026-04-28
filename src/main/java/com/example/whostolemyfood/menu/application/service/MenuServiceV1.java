@@ -92,13 +92,18 @@ public class MenuServiceV1 {
                 .orElseThrow(()-> new CustomException(ErrorCode.MENU_NOT_FOUND));
         // 유저 권한 확인
         validateMenuAccess(store, authUser);
+
         // 이름이 변경될때만 체크
         if(!menu.getName().equals(request.getName())) {
             if (menuRepository.existsByStore_StoreIdAndNameAndIsDeletedFalse(storeId, request.getName())) {
                 throw new CustomException(ErrorCode.MENU_DUPLICATION_NAME);
             }
         }
-        menu.updateMenu(request);
+
+        // 설명 변경 처리
+        ResGetAiLogDtoV1 aiResult = resolveDescription(request, authUser);
+
+        menu.updateMenu(request, aiResult);
 
         return ResGetMenuDtoV1.from(menu);
     }
@@ -142,9 +147,17 @@ public class MenuServiceV1 {
 
     // description 예외처리
     private ResGetAiLogDtoV1 resolveDescription(ReqCreateMenuDtoV1 request, AuthUser authUser) {
-        boolean useAi = Boolean.TRUE.equals(request.getAiDescription());
-        boolean hasDescription = hasText(request.getDescription());
-        boolean hasAiPrompt = hasText(request.getAiPrompt());
+        return resolveDescriptionLogic(request.getDescription(),request.getAiDescription(), request.getAiPrompt(), authUser);
+    }
+
+    private ResGetAiLogDtoV1 resolveDescription(ReqUpdateMenuDtoV1 request, AuthUser authUser) {
+        return resolveDescriptionLogic(request.getDescription(),request.getAiDescription(),request.getAiPrompt(), authUser);
+    }
+
+    private ResGetAiLogDtoV1 resolveDescriptionLogic(String description, Boolean aiDescription, String aiPrompt, AuthUser authUser) {
+        boolean useAi = Boolean.TRUE.equals(aiDescription);
+        boolean hasDescription = hasText(description);
+        boolean hasAiPrompt = hasText(aiPrompt);
 
         // 1. 설명 없음 +  AI false + 프롬프트 없음 >> null
         if (!hasDescription && !useAi && !hasAiPrompt) {
@@ -163,11 +176,11 @@ public class MenuServiceV1 {
 
         // 4. AI true 면 AI서비스로 이동하여 prompt 검증후 description 생성
         if (useAi) {
-            return aiLogServiceV1.generateMenuDescription(authUser.userId(), request.getAiPrompt());
+            return aiLogServiceV1.generateMenuDescription(authUser.userId(), aiPrompt);
         }
 
         // 5. AI false + 설명만 있으면 설명 저장
-        return new ResGetAiLogDtoV1(request.getDescription(),null);
+        return new ResGetAiLogDtoV1(description,null);
     }
 
     private boolean hasText(String value) {

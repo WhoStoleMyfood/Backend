@@ -38,7 +38,7 @@ public class OrderControllerV1 {
     /**
      * 주문 생성 API (CUSTOMER 전용)
      */
-    @Operation(summary = "주문 생성", description = "새로운 주문을 생성합니다. (CUSTOMER 전용)")
+    @Operation(summary = "주문 생성", description = "[CUSTOMER] 새로운 주문을 생성합니다.")
     @PostMapping
     @PreAuthorize("hasAnyRole('CUSTOMER')")
     public ResponseEntity<ResCreateOrderDtoV1> createOrder(
@@ -50,7 +50,7 @@ public class OrderControllerV1 {
     /**
      * 주문 상세 조회 API
      */
-    @Operation(summary = "주문 상세 조회", description = "본인의 주문 또는 내 가게 주문, 관리자 권한으로 조회합니다.")
+    @Operation(summary = "주문 상세 조회", description = "[ALL] 본인의 주문 또는 내 가게 주문, 관리자 권한으로 조회합니다.")
     @GetMapping("/{orderId}")
     @PreAuthorize("hasAnyRole('CUSTOMER', 'OWNER', 'MANAGER', 'MASTER')")
     public ResponseEntity<ResGetOrderDtoV1> getOrder(
@@ -62,7 +62,7 @@ public class OrderControllerV1 {
     /**
      * 주문 목록 조회 및 검색 API
      */
-    @Operation(summary = "주문 목록 조회 및 검색", description = "권한에 따라 접근 가능한 주문 목록을 필터링하여 조회합니다.")
+    @Operation(summary = "주문 목록 조회 및 검색", description = "[ALL] 권한에 따라 접근 가능한 주문 목록을 필터링하여 조회합니다.")
     @GetMapping
     @PreAuthorize("hasAnyRole('CUSTOMER', 'OWNER', 'MANAGER', 'MASTER')")
     public ResponseEntity<PageResponse<ResGetOrderListDtoV1>> getOrders(
@@ -80,7 +80,7 @@ public class OrderControllerV1 {
     /**
      * 주문 요청사항 수정 API (CUSTOMER 전용)
      */
-    @Operation(summary = "주문 요청사항 수정", description = "본인의 주문 중 수락 전(PENDING) 상태에서만 수정 가능합니다.")
+    @Operation(summary = "주문 요청사항 수정", description = "[CUSTOMER] 본인의 주문 중 수락 전(PENDING) 상태에서만 수정 가능합니다.")
     @PutMapping("/{orderId}")
     @PreAuthorize("hasAnyRole('CUSTOMER')")
     public ResponseEntity<ResGetOrderDtoV1> updateOrderRequest(
@@ -93,7 +93,7 @@ public class OrderControllerV1 {
     /**
      * 주문 취소 API (CUSTOMER, MASTER 전용)
      */
-    @Operation(summary = "주문 취소", description = "본인의 주문(5분 이내) 또는 MASTER 권한으로 취소 가능합니다.")
+    @Operation(summary = "주문 취소", description = "[CUSTOMER / MASTER] 본인의 주문(5분 이내) 또는 MASTER 권한으로 취소 가능합니다.")
     @PatchMapping("/{orderId}/cancel")
     @PreAuthorize("hasAnyRole('CUSTOMER', 'MASTER')")
     public ResponseEntity<ResGetOrderDtoV1> cancelOrder(
@@ -105,7 +105,7 @@ public class OrderControllerV1 {
     /**
      * 주문 상태 변경 API (OWNER, MANAGER, MASTER 전용)
      */
-    @Operation(summary = "주문 상태 변경", description = "가게 사장님(내 가게 한정) 또는 관리자만 상태를 단계별로 변경할 수 있습니다.")
+    @Operation(summary = "주문 상태 변경", description = "[OWNER / MANAGER / MASTER] 가게 사장님(내 가게 한정) 또는 관리자만 상태를 단계별로 변경할 수 있습니다.")
     @PatchMapping("/{orderId}/status")
     @PreAuthorize("hasAnyRole('OWNER', 'MANAGER', 'MASTER')")
     public ResponseEntity<ResGetOrderDtoV1> updateOrderStatus(
@@ -118,7 +118,7 @@ public class OrderControllerV1 {
     /**
      * 주문 삭제 API (MASTER 전용 🚨)
      */
-    @Operation(summary = "주문 삭제", description = "오직 MASTER 권한으로만 주문 내역을 Soft Delete 처리합니다.")
+    @Operation(summary = "주문 삭제", description = "[MASTER] MASTER 권한으로만 주문 내역을 Soft Delete 처리합니다.")
     @DeleteMapping("/{orderId}")
     @PreAuthorize("hasAnyRole('MASTER')")
     public ResponseEntity<Void> deleteOrder(
