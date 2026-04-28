@@ -9,6 +9,7 @@ import jakarta.validation.constraints.Pattern;
 import lombok.Getter;
 
 import java.time.LocalTime;
+import java.util.UUID;
 
 @Getter
 public class ReqUpdateStoreDtoV1 {
@@ -23,6 +24,10 @@ public class ReqUpdateStoreDtoV1 {
     private String phone;
 
     private String content;
+
+    private UUID categoryId;
+
+    private UUID areaId;
 
     @Min(value = 0, message = "최소 주문 금액은 0원 이상이어야 합니다")
     private Integer minOrderPrice;

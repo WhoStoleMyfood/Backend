@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalTime;
+import java.util.UUID;
 
 @Getter
 @NoArgsConstructor
@@ -24,6 +25,10 @@ public class ReqCreateStoreDtoV1 {
     private String phone;
 
     private String content;
+
+    private UUID categoryId;
+
+    private UUID areaId;
 
     @Min(value = 0, message = "최소 주문 금액은 0원 이상이어야 합니다")
     private Integer minOrderPrice;

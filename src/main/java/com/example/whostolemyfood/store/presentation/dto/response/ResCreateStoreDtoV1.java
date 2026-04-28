@@ -18,6 +18,8 @@ public class ResCreateStoreDtoV1 {
     private String address;
     private String phone;
     private String content;
+    private String category;
+    private String ukName;
     private Integer minOrderPrice;
     private StoreStatus storeStatus;
     private LocalTime openTime;
@@ -42,6 +44,8 @@ public class ResCreateStoreDtoV1 {
                 store.getAddress(),
                 store.getPhone(),
                 store.getContent(),
+                store.getCategory().getName(),
+                store.getArea().getUkName(),
                 store.getMinOrderPrice(),
                 currentStatus,
                 store.getOpenTime(),
