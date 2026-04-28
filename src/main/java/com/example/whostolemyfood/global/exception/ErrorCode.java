@@ -69,6 +69,7 @@ public enum ErrorCode {
     AREA_NOT_FOUND(HttpStatus.NOT_FOUND, "AR001", "존재하지 않는 지역입니다."),
     AREA_DUPLICATION(HttpStatus.BAD_REQUEST, "AR002", "이미 존재하는 지역명입니다."),
     AREA_ACCESS_DENIED(HttpStatus.FORBIDDEN, "AR003", "지역 관리 권한이 없습니다."),
+    AREA_NOT_ACTIVE(HttpStatus.BAD_REQUEST, "AR004", "활성화된 지역이 아닙니다");
 
     // Review
     REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "R001", "리뷰를 찾을 수 없습니다."),

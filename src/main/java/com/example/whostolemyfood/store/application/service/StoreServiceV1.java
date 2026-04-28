@@ -1,9 +1,15 @@
 package com.example.whostolemyfood.store.application.service;
 
+import com.example.whostolemyfood.area.domain.entity.AreaEntity;
+import com.example.whostolemyfood.area.domain.repository.AreaRepository;
+import com.example.whostolemyfood.category.domain.entity.CategoryEntity;
+import com.example.whostolemyfood.category.domain.repository.CategoryRepository;
 import com.example.whostolemyfood.global.exception.CustomException;
 import com.example.whostolemyfood.global.exception.ErrorCode;
 import com.example.whostolemyfood.store.domain.entity.StoreEntity;
+import com.example.whostolemyfood.store.domain.entity.StoreRatingSummaryEntity;
 import com.example.whostolemyfood.store.domain.entity.StoreStatus;
+import com.example.whostolemyfood.store.domain.repository.StoreRatingSummaryRepository;
 import com.example.whostolemyfood.store.domain.repository.StoreRepository;
 import com.example.whostolemyfood.store.presentation.dto.request.ReqCreateStoreDtoV1;
 import com.example.whostolemyfood.store.presentation.dto.request.ReqUpdateStoreDtoV1;
@@ -27,7 +33,10 @@ import java.util.UUID;
 public class StoreServiceV1 {
 
     private final StoreRepository storeRepository;
+    private final StoreRatingSummaryRepository storeRatingSummaryRepository;
     private final UserRepository userRepository;
+    private final CategoryRepository categoryRepository;
+    private final AreaRepository areaRepository;
 
     // Owner Only
     // 스토어 생성
@@ -45,12 +54,30 @@ public class StoreServiceV1 {
             throw new CustomException(ErrorCode.STORE_DUPLICATION_NAME);
         }
 
+        // 카테고리 존재 확인
+        CategoryEntity category = categoryRepository.findById(request.getCategoryId())
+                .orElseThrow(()-> new CustomException(ErrorCode.CATEGORY_NOT_FOUND));
+
+        // 기본적으로 스토어 생성시 평점은 0.0
+        StoreRatingSummaryEntity summary = StoreRatingSummaryEntity.builder().build();
+        storeRatingSummaryRepository.save(summary);
+
+        AreaEntity area = areaRepository.findByAreaId(request.getAreaId())
+                .orElseThrow(()-> new CustomException(ErrorCode.AREA_NOT_FOUND));
+
+        if (!area.getIsActive()) {
+            throw new CustomException(ErrorCode.AREA_NOT_ACTIVE);
+        }
+
         StoreEntity store = StoreEntity.builder()
                 .user(owner)
                 .name(request.getName())
                 .address(request.getAddress())
                 .phone(request.getPhone())
                 .content(request.getContent())
+                .category(category)
+                .storeRatingSummary(summary)
+                .area(area)
                 .minOrderPrice(request.getMinOrderPrice())
                 .status(StoreStatus.OPEN)
                 .openTime(request.getOpenTime())
@@ -95,8 +122,10 @@ public class StoreServiceV1 {
                 throw new CustomException(ErrorCode.STORE_DUPLICATION_NAME);
             }
         }
+        CategoryEntity newCategory = categoryRepository.findByCategoryIdAndIsDeletedFalse(request.getCategoryId())
+                        .orElseThrow(()-> new CustomException(ErrorCode.CATEGORY_NOT_FOUND));
 
-        store.updateStore(request);
+        store.updateStore(request, newCategory);
 
         return ResGetStoreDtoV1.from(store);
     }

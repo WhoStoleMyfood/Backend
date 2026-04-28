@@ -21,6 +21,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -35,8 +36,9 @@ public class StoreControllerV1 {
     private final StoreSearchServiceV1 storeSearchService;
 
     // Owner Only
-    @Operation(summary = "스토어 생성")
+    @Operation(summary = "스토어 생성", description = "Owner Only")
     @PostMapping
+    @PreAuthorize("hasAnyRole('OWNER')")
     public ResponseEntity<ResCreateStoreDtoV1> createStore(
             @Valid
             @RequestBody ReqCreateStoreDtoV1 request,
@@ -46,14 +48,14 @@ public class StoreControllerV1 {
     }
 
     // ALL
-    @Operation(summary = "스토어 조회")
+    @Operation(summary = "스토어 조회", description = "All")
     @GetMapping("/{storeId}")
     public ResponseEntity<ResGetStoreDtoV1> getStore(@PathVariable UUID storeId) {
         ResGetStoreDtoV1 response = storeServiceV1.getStore(storeId);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @Operation(summary = "스토어 목록조회")
+    @Operation(summary = "스토어 목록조회", description = "All")
     @GetMapping
     public ResponseEntity<PageResponse<ResGetStoreListDtoV1>> getStores(
             @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC)Pageable pageable) {
@@ -65,8 +67,9 @@ public class StoreControllerV1 {
     }
 
     // Owner, manager, master
-    @Operation(summary = "스토어 수정")
+    @Operation(summary = "스토어 수정", description = "Owner, Manager, Master")
     @PutMapping("/{storeId}")
+    @PreAuthorize("hasAnyRole('OWNER','MANAGER','MASTER')")
     public ResponseEntity<ResGetStoreDtoV1> updateStore(
             @Valid
             @PathVariable UUID storeId,
@@ -76,8 +79,9 @@ public class StoreControllerV1 {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @Operation(summary = "스토어 숨김 / 노출")
+    @Operation(summary = "스토어 숨김 / 노출", description = "Owner, Manager, Master")
     @PatchMapping("/{storeId}/hide")
+    @PreAuthorize("hasAnyRole('OWNER','MANAGER','MASTER')")
     public ResponseEntity<Void> hideStore(
             @Valid
             @PathVariable UUID storeId,
@@ -86,8 +90,9 @@ public class StoreControllerV1 {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
-    @Operation(summary = "스토어 삭제")
+    @Operation(summary = "스토어 삭제", description = "Owner, Manager, Master")
     @DeleteMapping("/{storeId}")
+    @PreAuthorize("hasAnyRole('OWNER','MANAGER','MASTER')")
     public void deleteStore(
             @Valid
             @PathVariable UUID storeId,
@@ -95,7 +100,7 @@ public class StoreControllerV1 {
         storeServiceV1.deleteStore(storeId, authUser);
     }
 
-
+    @Operation(summary = "조건별 조회", description = "가계명,카테고라,지역명으로 조회 가능")
     @GetMapping("/search")
     public ResponseEntity<PageResponse<StoreSearchResponseDtoV1>> search(
             @ModelAttribute StoreSearchConditionV1 condition,

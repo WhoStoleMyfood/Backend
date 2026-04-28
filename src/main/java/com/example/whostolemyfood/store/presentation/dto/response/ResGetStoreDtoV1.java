@@ -5,6 +5,7 @@ import com.example.whostolemyfood.store.domain.entity.StoreStatus;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.math.BigDecimal;
 import java.time.LocalTime;
 import java.util.UUID;
 
@@ -17,6 +18,9 @@ public class ResGetStoreDtoV1 {
     private String address;
     private String phone;
     private String content;
+    private String category;
+    private BigDecimal averageRating;
+    private String ukName;
     private Integer minOrderPrice;
     private StoreStatus status;
     private LocalTime openTime;
@@ -42,6 +46,9 @@ public class ResGetStoreDtoV1 {
                 store.getAddress(),
                 store.getPhone(),
                 store.getContent(),
+                store.getCategory().getName(),
+                store.getStoreRatingSummary().getAverageRating(),
+                store.getArea().getUkName(),
                 store.getMinOrderPrice(),
                 currentStatus,
                 store.getOpenTime(),
