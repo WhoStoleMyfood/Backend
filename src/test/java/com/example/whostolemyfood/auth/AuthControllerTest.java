@@ -23,12 +23,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 // 2. 결과 검증 (status, jsonPath용)
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 // 3. Mockito 설정 (given, any용)
 import static org.mockito.BDDMockito.given;
 import static org.mockito.ArgumentMatchers.any;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(AuthControllerV1.class)
 @Import(GlobalExceptionHandler.class)
@@ -71,5 +70,28 @@ public class AuthControllerTest {
     }
 
     @Test
-    public void logout() throws Exception {}
+    @DisplayName("로그아웃 성공 테스트")
+    public void logout_success() throws Exception {
+        // 컨트롤러에서 AuthUser를 사용하므로, ArgumentMatchers나 Security 설정을 타야 하지만
+        // addFilters = false 상태에서는 Principal이 null로 들어올 수 있습니다.
+        // 이 경우 @AuthenticationPrincipal을 모킹하거나 void 메서드 호출을 확인합니다.
+
+        // 1. 실행 및 검증
+        mockMvc.perform(post("/api/v1/auth/logout")
+                        // SecurityContext에 유저가 있다고 가정하거나 필터를 껐으므로
+                        // 실제 AuthUser 객체 주입은 테스트 환경 설정에 따라 다를 수 있음
+                        .principal(() -> TEST_USER_ID.toString()))
+                .andExpect(status().isOk())
+                .andExpect(content().string("로그아웃 성공"));
+    }
+
+    @Test
+    @DisplayName("회원 탈퇴 성공 테스트")
+    public void signout_success() throws Exception {
+        // 1. 실행 및 검증
+        mockMvc.perform(post("/api/v1/auth/signout")
+                        .principal(() -> TEST_USER_ID.toString()))
+                .andExpect(status().isOk())
+                .andExpect(content().string("회원 탈퇴 완료"));
+    }
 }
