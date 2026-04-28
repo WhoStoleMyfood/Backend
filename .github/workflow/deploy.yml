@@ -2,7 +2,7 @@ name : Project1 CD/CD
 
 on:
   push:
-    branch: ["develop"] #main을 기준으로 배포
+    branches: ["develop"] #main을 기준으로 배포, test 환경에서는 develop으로 변경
 
 jobs:
   build:
