@@ -32,6 +32,10 @@ public class CategoryServiceV1 {
     public ResGetCategoryDtoV1 createCategory(ReqCategoryDtoV1 reqCategoryDto,UUID userId,String Role) {
         UserEntity loginUser = validateActiveUserAndRole(userId, Role);
 
+        if (loginUser.getUserRole() != UserRole.MANAGER && loginUser.getUserRole() != UserRole.MASTER){
+            throw new CustomException(ErrorCode.ACCESS_DENIED);
+        }
+
         if (categoryRepository.existsByNameAndIsDeletedFalse(reqCategoryDto.getName())) {
             throw new CustomException(ErrorCode.CATEGORY_DUPLICATION);
         }
@@ -71,6 +75,9 @@ public class CategoryServiceV1 {
     @Transactional
     public ResGetCategoryDtoV1 updateCategory(UUID id, ReqCategoryDtoV1 reqCategoryDto,UUID userId,String Role) {
         UserEntity loginUser = validateActiveUserAndRole(userId, Role);
+        if (loginUser.getUserRole() != UserRole.MANAGER && loginUser.getUserRole() != UserRole.MASTER){
+            throw new CustomException(ErrorCode.ACCESS_DENIED);
+        }
 
         CategoryEntity categoryEntity = getCategoryById(id);
 
@@ -86,6 +93,10 @@ public class CategoryServiceV1 {
     public void deleteCategory(UUID id,UUID userId,String Role) {
 
         UserEntity loginUser = validateActiveUserAndRole(userId, Role);
+
+        if (loginUser.getUserRole() != UserRole.MANAGER && loginUser.getUserRole() != UserRole.MASTER){
+            throw new CustomException(ErrorCode.ACCESS_DENIED);
+        }
 
         CategoryEntity categoryEntity = getCategoryById(id);
 
@@ -116,9 +127,6 @@ public class CategoryServiceV1 {
             throw new CustomException(ErrorCode.ACCESS_DENIED);
         }
 
-        if (user.getUserRole() != UserRole.MANAGER && user.getUserRole() != UserRole.MASTER){
-            throw new CustomException(ErrorCode.ACCESS_DENIED);
-        }
 
         return user;
     }
