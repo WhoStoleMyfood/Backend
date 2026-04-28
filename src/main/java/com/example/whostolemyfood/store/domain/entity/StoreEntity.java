@@ -38,7 +38,7 @@ public class StoreEntity extends BaseSoftDeleteEntity {
     private UserEntity user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id")
+    @JoinColumn(name = "category_id", nullable = false)
     private CategoryEntity category;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -79,11 +79,12 @@ public class StoreEntity extends BaseSoftDeleteEntity {
     private Boolean isDeleted = false;
 
     // 스토어 수정
-    public void updateStore(ReqUpdateStoreDtoV1 request) {
+    public void updateStore(ReqUpdateStoreDtoV1 request, CategoryEntity category) {
         this.name = request.getName();
         this.address = request.getAddress();
         this.phone = request.getPhone();
         this.content = request.getContent();
+        this.category = category;
         this.minOrderPrice = request.getMinOrderPrice();
         this.openTime = request.getOpenTime();
         this.closeTime = request.getCloseTime();
@@ -91,7 +92,6 @@ public class StoreEntity extends BaseSoftDeleteEntity {
         if (request.getStatus() != null) {
             this.status = request.getStatus();
         }
-        // 상태, 숨김
     }
 
     public void deleteByOwnerAndMaster(UUID deletedBy) {

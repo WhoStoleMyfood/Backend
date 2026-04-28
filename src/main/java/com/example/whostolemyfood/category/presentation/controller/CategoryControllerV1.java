@@ -21,16 +21,19 @@ import java.util.UUID;
 public class CategoryControllerV1 {
     private final CategoryServiceV1 categoryService;
 
+    // 카테고리 목록 조회
     @GetMapping()
     public ResponseEntity<List<ResGetCategoryDtoV1>> getCategories() {
         return ResponseEntity.ok(categoryService.getCategories());
     }
 
+    // 카테고리 단일 조회
     @GetMapping("/{category_id}")
     public ResponseEntity<ResGetCategoryDtoV1> getCategory(@PathVariable("category_id") UUID categoryId) {
         return ResponseEntity.ok(categoryService.getCategory(categoryId));
     }
 
+    // 카테고리 추가
     @PostMapping()
     @PreAuthorize("hasAnyRole('MANAGER','MASTER')")
     public ResponseEntity<ResGetCategoryDtoV1> createCategory(
@@ -41,6 +44,7 @@ public class CategoryControllerV1 {
         return ResponseEntity.created(URI.create("/api/v1/categories/"+response.getCategoryId())).body(response);
     }
 
+    // 카테고리 수정
     @PutMapping("/{category_id}")
     @PreAuthorize("hasAnyRole('MANAGER','MASTER')")
     public ResponseEntity<ResGetCategoryDtoV1> updateCategory(
@@ -51,6 +55,7 @@ public class CategoryControllerV1 {
         return ResponseEntity.ok(categoryService.updateCategory(categoryId, request,loginUser.getUserId(),loginUser.role().name()));
     }
 
+    // 카테고리 삭제
     @DeleteMapping("/{category_id}")
     @PreAuthorize("hasAnyRole('MANAGER','MASTER')")
     public ResponseEntity<Void> deleteCategory(

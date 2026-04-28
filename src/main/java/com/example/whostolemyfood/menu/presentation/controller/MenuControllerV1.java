@@ -17,6 +17,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,8 +31,9 @@ public class MenuControllerV1 {
 
     private final MenuServiceV1 menuServiceV1;
 
-    @Operation(summary = "메뉴 생성")
+    @Operation(summary = "메뉴 생성", description = "Owner only")
     @PostMapping
+    @PreAuthorize("hasAnyRole('OWNER')")
     public ResponseEntity<ResCreateMenuDtoV1> addMenu(
             @Valid
             @PathVariable UUID storeId,
@@ -41,7 +43,7 @@ public class MenuControllerV1 {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @Operation(summary = "메뉴 조회")
+    @Operation(summary = "메뉴 조회", description = "All")
     @GetMapping("/{menuId}")
     public ResponseEntity<ResGetMenuDtoV1> getMenu(
             @Valid
@@ -51,7 +53,7 @@ public class MenuControllerV1 {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @Operation(summary = "메뉴 목록 조회")
+    @Operation(summary = "메뉴 목록 조회", description = "All")
     @GetMapping
     public ResponseEntity<PageResponse<ResGetMenuDtoV1>> getMenus(
             @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
@@ -61,8 +63,9 @@ public class MenuControllerV1 {
         return ResponseEntity.status(HttpStatus.OK).body(new PageResponse<>(menus));
     }
 
-    @Operation(summary = "메뉴 수정")
+    @Operation(summary = "메뉴 수정", description = "Owner, Manager, Master")
     @PutMapping("/{menuId}")
+    @PreAuthorize("hasAnyRole('OWNER','MANAGER','MASTER')")
     public ResponseEntity<ResGetMenuDtoV1> updateMenu(
             @Valid
             @PathVariable UUID storeId ,
@@ -73,8 +76,9 @@ public class MenuControllerV1 {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @Operation(summary = "메뉴 숨김 / 해제")
+    @Operation(summary = "메뉴 숨김 / 해제", description = "Owner, Manager, Master")
     @PatchMapping("/{menuId}/hide")
+    @PreAuthorize("hasAnyRole('OWNER','MANAGER','MASTER')")
     public ResponseEntity<Void> hideMenu(
             @Valid
             @PathVariable UUID storeId,
@@ -84,8 +88,9 @@ public class MenuControllerV1 {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
-    @Operation(summary = "메뉴 삭제")
+    @Operation(summary = "메뉴 삭제", description = "Owner, Manager, Master")
     @DeleteMapping("/{menuId}")
+    @PreAuthorize("hasAnyRole('OWNER','MANAGER','MASTER')")
     public void deleteMenu(
             @Valid
             @PathVariable UUID storeId,
