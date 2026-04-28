@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.UUID;
@@ -23,6 +24,7 @@ public class StoreSearchResponseDtoV1 {
     private LocalTime openTime;
     private LocalTime closeTime;
     private LocalDateTime createdAt;
+    private BigDecimal averageRating;
 
     @QueryProjection
     @Builder
@@ -36,7 +38,8 @@ public class StoreSearchResponseDtoV1 {
             StoreStatus status,
             LocalTime openTime,
             LocalTime closeTime,
-            LocalDateTime createdAt
+            LocalDateTime createdAt,
+            BigDecimal averageRating
     ) {
         this.storeId = storeId;
         this.storeName = storeName;
@@ -48,5 +51,6 @@ public class StoreSearchResponseDtoV1 {
         this.openTime = openTime;
         this.closeTime = closeTime;
         this.createdAt = createdAt;
+        this.averageRating = averageRating;
     }
 }
