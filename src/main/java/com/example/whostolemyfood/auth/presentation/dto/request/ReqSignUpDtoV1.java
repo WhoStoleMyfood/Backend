@@ -25,15 +25,15 @@ public class ReqSignUpDtoV1 {
     @Schema(description = "비밀번호", example = "1234Asdf!")
     @NotBlank(message = "비밀번호는 필수 입력값입니다.")
     @Pattern(
-            regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()_+\\-={}:\";'<>?,./]).{8,}$",
-            message = "비밀번호는 대소문자, 숫자, 특수문자를 최소 1자 이상 포함하고 8자 이상이어야 합니다."
+            regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()_+\\-={}:\";'<>?,./]).{8,15}$",
+            message = "비밀번호는 대소문자, 숫자, 특수문자를 포함하여 8~15자로 입력해주세요."
     )
     private String password;
 
     @Schema(description = "사용자 이름", example = "오너테스터")
     @NotBlank(message = "이름은 필수 입력값입니다.")
     @Size(min = 4, max = 10, message = "이름은 4자 이상 10자 이하로 입력해주세요.")
-    @Pattern(regexp = "^[a-zA-Z가-힣]+$", message = "이름은 한글 또는 영문만 가능합니다.")
+    @Pattern(regexp = "^[a-z0-9]+$", message = "이름은 알파벳 소문자와 숫자만 사용 가능합니다.")
     private String userName;
 
     @Schema(description = "유저 권한", example = "OWNER")
