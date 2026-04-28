@@ -9,8 +9,10 @@ import com.example.whostolemyfood.menu.presentation.dto.response.ResCreateMenuDt
 import com.example.whostolemyfood.menu.presentation.dto.response.ResGetMenuDtoV1;
 import com.example.whostolemyfood.user.application.security.AuthUser;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.converters.models.PageableAsQueryParam;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -23,15 +25,15 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
-
+@Tag(name = "Menu API", description = "메뉴 관리 API")
 @RestController
-@RequestMapping("/api/stores/{storeId}/menus")
+@RequestMapping("/api/v1/stores/{storeId}/menus")
 @RequiredArgsConstructor
 public class MenuControllerV1 {
 
     private final MenuServiceV1 menuServiceV1;
 
-    @Operation(summary = "메뉴 생성", description = "Owner only")
+    @Operation(summary = "메뉴 추가", description = "[OWNER] 메뉴를 추가합니다.")
     @PostMapping
     @PreAuthorize("hasAnyRole('OWNER')")
     public ResponseEntity<ResCreateMenuDtoV1> addMenu(
@@ -43,7 +45,7 @@ public class MenuControllerV1 {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @Operation(summary = "메뉴 조회", description = "All")
+    @Operation(summary = "메뉴 조회", description = "[ALL] 특정 매뉴를 조회합니다.")
     @GetMapping("/{menuId}")
     public ResponseEntity<ResGetMenuDtoV1> getMenu(
             @Valid
@@ -53,7 +55,8 @@ public class MenuControllerV1 {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @Operation(summary = "메뉴 목록 조회", description = "All")
+    @Operation(summary = "메뉴 목록 조회", description = "[ALL] 메뉴 목록을 조회합니다.")
+    @PageableAsQueryParam
     @GetMapping
     public ResponseEntity<PageResponse<ResGetMenuDtoV1>> getMenus(
             @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
@@ -63,7 +66,7 @@ public class MenuControllerV1 {
         return ResponseEntity.status(HttpStatus.OK).body(new PageResponse<>(menus));
     }
 
-    @Operation(summary = "메뉴 수정", description = "Owner, Manager, Master")
+    @Operation(summary = "메뉴 수정", description = "[OWNER / MANAGER / MASTER] 특정 메뉴를 수정합니다.")
     @PutMapping("/{menuId}")
     @PreAuthorize("hasAnyRole('OWNER','MANAGER','MASTER')")
     public ResponseEntity<ResGetMenuDtoV1> updateMenu(
@@ -76,7 +79,7 @@ public class MenuControllerV1 {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @Operation(summary = "메뉴 숨김 / 해제", description = "Owner, Manager, Master")
+    @Operation(summary = "메뉴 숨김 / 해제", description = "[OWNER / MANAGER / MASTER] 특정 메뉴를 숨기거나 노출시킵니다.")
     @PatchMapping("/{menuId}/hide")
     @PreAuthorize("hasAnyRole('OWNER','MANAGER','MASTER')")
     public ResponseEntity<Void> hideMenu(
@@ -88,7 +91,7 @@ public class MenuControllerV1 {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
-    @Operation(summary = "메뉴 삭제", description = "Owner, Manager, Master")
+    @Operation(summary = "메뉴 삭제", description = "[OWNER / MANAGER / MASTER] 특정 메뉴를 삭제합니다.")
     @DeleteMapping("/{menuId}")
     @PreAuthorize("hasAnyRole('OWNER','MANAGER','MASTER')")
     public void deleteMenu(

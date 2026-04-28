@@ -1,5 +1,6 @@
 package com.example.whostolemyfood.review.presentation.dto.request;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.Getter;
@@ -12,10 +13,10 @@ import java.util.UUID;
 
 @Getter
 @Setter
+@Schema(description = "리뷰 조회 요청 객체")
 public class ReqGetReviewsDtoV1 {
 
 	private UUID storeId;
-
 	@Min(value = 1, message = "평점은 1 이상이어야 합니다.")
 	@Max(value = 5, message = "평점은 5 이하여야 합니다.")
 	private Integer rating;

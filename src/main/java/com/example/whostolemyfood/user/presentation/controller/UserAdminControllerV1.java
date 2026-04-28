@@ -1,6 +1,10 @@
 package com.example.whostolemyfood.user.presentation.controller;
 
 import java.util.UUID;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 import org.springframework.data.domain.Page;
@@ -22,6 +26,7 @@ import com.example.whostolemyfood.user.application.security.AuthUser;
 
 import lombok.RequiredArgsConstructor;
 
+@Tag(name = "UserAdmin API", description = "관리자 유저 관리 API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/admin/users")
@@ -30,6 +35,7 @@ public class UserAdminControllerV1 {
     private final UserAdminServiceV1 userAdminService;
 
     //1. 전체 사용자 목록 조회 (본인 제외)
+    @Operation(summary = "사용자 전체 조회(본인 제외)", description = "[MANAGER / MASTER] 관리자가 전체 사용자 목록을 조회합니다.")
     @GetMapping
     @PreAuthorize("hasAnyRole('MASTER', 'MANAGER')")
     public ResponseEntity<PageResponse<ResGetUserByIdDtoV1>> getAllUsers(
@@ -44,6 +50,7 @@ public class UserAdminControllerV1 {
     }
 
     // 2. 특정 사용자 상세 정보 조회
+    @Operation(summary = "특정 사용자 조회", description =  "[MANAGER / MASTER] 관리자가 특정 사용자를 조회합니다.")
     @GetMapping("/{userId}")
     @PreAuthorize("hasAnyRole('MASTER', 'MANAGER')")
     public ResponseEntity<ResGetUserByIdDtoV1> getUserDetail(@PathVariable UUID userId) {
@@ -68,6 +75,7 @@ public class UserAdminControllerV1 {
 //    }
 
     // 4. [MASTER 전용] 매니저 생성
+    @Operation(summary = "매니저 임명", description = "[MASTER] 관리자가 매니저를 임명합니다.")
     @PostMapping("/managers")
     @PreAuthorize("hasRole('MASTER')")
     public ResponseEntity<ResGetUserByIdDtoV1> createManager(
@@ -77,6 +85,7 @@ public class UserAdminControllerV1 {
     }
 
     // 5. [MASTER 전용] 매니저 삭제
+    @Operation(summary = "매니저 권한 삭제", description = "[MASTER] 관리자가 매니저의 권한을 삭제합니다.")
     @DeleteMapping("/managers/{userId}")
     @PreAuthorize("hasRole('MASTER')")
     public ResponseEntity<Void> deleteManager(

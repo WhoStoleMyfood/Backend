@@ -13,8 +13,10 @@ import com.example.whostolemyfood.store.presentation.dto.response.ResGetStoreLis
 import com.example.whostolemyfood.user.application.security.AuthUser;
 import com.example.whostolemyfood.store.presentation.dto.response.StoreSearchResponseDtoV1;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.converters.models.PageableAsQueryParam;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -27,8 +29,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
+@Tag(name = "Store API", description = "가게 관리 API")
 @RestController
-@RequestMapping("/api/stores")
+@RequestMapping("/api/v1/stores")
 @RequiredArgsConstructor
 public class StoreControllerV1 {
 
@@ -36,7 +39,7 @@ public class StoreControllerV1 {
     private final StoreSearchServiceV1 storeSearchService;
 
     // Owner Only
-    @Operation(summary = "스토어 생성", description = "Owner Only")
+    @Operation(summary = "가게 생성", description = "[OWNER] 가게를 등록합니다.")
     @PostMapping
     @PreAuthorize("hasAnyRole('OWNER')")
     public ResponseEntity<ResCreateStoreDtoV1> createStore(
@@ -48,14 +51,15 @@ public class StoreControllerV1 {
     }
 
     // ALL
-    @Operation(summary = "스토어 조회", description = "All")
+    @Operation(summary = "가게 조회", description = "[ALL] 특정 가게를 조회합니다.")
     @GetMapping("/{storeId}")
     public ResponseEntity<ResGetStoreDtoV1> getStore(@PathVariable UUID storeId) {
         ResGetStoreDtoV1 response = storeServiceV1.getStore(storeId);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @Operation(summary = "스토어 목록조회", description = "All")
+    @Operation(summary = "가게 목록조회", description = "[ALL] 모든 가게 목록을 조회합니다.")
+    @PageableAsQueryParam
     @GetMapping
     public ResponseEntity<PageResponse<ResGetStoreListDtoV1>> getStores(
             @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC)Pageable pageable) {
@@ -67,7 +71,7 @@ public class StoreControllerV1 {
     }
 
     // Owner, manager, master
-    @Operation(summary = "스토어 수정", description = "Owner, Manager, Master")
+    @Operation(summary = "가게 수정", description = "[OWNER / MANAGER / MASTER] 가게의 정보를 수정합니다.")
     @PutMapping("/{storeId}")
     @PreAuthorize("hasAnyRole('OWNER','MANAGER','MASTER')")
     public ResponseEntity<ResGetStoreDtoV1> updateStore(
@@ -79,7 +83,7 @@ public class StoreControllerV1 {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @Operation(summary = "스토어 숨김 / 노출", description = "Owner, Manager, Master")
+    @Operation(summary = "가게 숨김 / 노출", description = "[OWNER / MANAGER / MASTER] 가게를 숨기거나 노출시킬 수 있습니다.")
     @PatchMapping("/{storeId}/hide")
     @PreAuthorize("hasAnyRole('OWNER','MANAGER','MASTER')")
     public ResponseEntity<Void> hideStore(
@@ -90,7 +94,7 @@ public class StoreControllerV1 {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
-    @Operation(summary = "스토어 삭제", description = "Owner, Manager, Master")
+    @Operation(summary = "가게 삭제", description = "[OWNER / MANAGER / MASTER]] 가게를 삭제시킵니다.")
     @DeleteMapping("/{storeId}")
     @PreAuthorize("hasAnyRole('OWNER','MANAGER','MASTER')")
     public void deleteStore(
@@ -100,7 +104,8 @@ public class StoreControllerV1 {
         storeServiceV1.deleteStore(storeId, authUser);
     }
 
-    @Operation(summary = "조건별 조회", description = "가계명,카테고라,지역명으로 조회 가능")
+    @Operation(summary = "조건별 조회", description = "[ALL] 가게명,카테고리,지역명으로 가게를 조회합니다.")
+    @PageableAsQueryParam
     @GetMapping("/search")
     public ResponseEntity<PageResponse<StoreSearchResponseDtoV1>> search(
             @ModelAttribute StoreSearchConditionV1 condition,
