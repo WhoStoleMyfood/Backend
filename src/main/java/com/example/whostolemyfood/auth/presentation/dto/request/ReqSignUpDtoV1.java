@@ -3,6 +3,7 @@ package com.example.whostolemyfood.auth.presentation.dto.request;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 import com.example.whostolemyfood.user.domain.entity.UserRole;
 
@@ -26,6 +27,8 @@ public class ReqSignUpDtoV1 {
     private String password;
 
     @NotBlank(message = "이름은 필수 입력값입니다.")
+    @Size(min = 4, max = 10, message = "이름은 4자 이상 10자 이하로 입력해주세요.")
+    @Pattern(regexp = "^[a-zA-Z가-힣]+$", message = "이름은 한글 또는 영문만 가능합니다.")
     private String userName;
 
     @NotNull(message = "유저 타입은 필수입니다.")

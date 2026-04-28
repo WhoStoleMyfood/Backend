@@ -36,7 +36,7 @@ public class UserEntity extends BaseAuditEntity {
     @Column(name = "user_password", nullable = false, length = 255)
     private String userPassword;
 
-    @Column(name = "user_name", nullable = false, length = 255)
+    @Column(name = "user_name", nullable = false, length = 10)
     private String userName;
 
     @Column(name = "address", length = 255)
