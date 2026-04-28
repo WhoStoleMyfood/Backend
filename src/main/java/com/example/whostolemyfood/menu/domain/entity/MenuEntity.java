@@ -1,5 +1,6 @@
 package com.example.whostolemyfood.menu.domain.entity;
 
+import com.example.whostolemyfood.ai.presentation.dto.response.ResGetAiLogDtoV1;
 import com.example.whostolemyfood.global.entity.BaseSoftDeleteEntity;
 import com.example.whostolemyfood.menu.presentation.dto.request.ReqUpdateMenuDtoV1;
 import com.example.whostolemyfood.store.domain.entity.StoreEntity;
@@ -45,10 +46,11 @@ public class MenuEntity extends BaseSoftDeleteEntity {
     @Builder.Default
     private Boolean isDeleted = false;
 
-    public void updateMenu(ReqUpdateMenuDtoV1 request) {
+    public void updateMenu(ReqUpdateMenuDtoV1 request, ResGetAiLogDtoV1 aiResult) {
         this.name = request.getName();
         this.price = request.getPrice();
-        this.description = request.getDescription();
+        this.description = aiResult.description();
+        this.aiLogId = aiResult.aiLogId();
     }
 
     public void deleteMenu(UUID deletedBy) {

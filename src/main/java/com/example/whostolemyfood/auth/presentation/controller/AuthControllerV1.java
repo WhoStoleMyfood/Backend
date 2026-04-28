@@ -1,5 +1,7 @@
 package com.example.whostolemyfood.auth.presentation.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
@@ -19,6 +21,7 @@ import com.example.whostolemyfood.user.domain.entity.UserEntity;
 
 import lombok.RequiredArgsConstructor;
 
+@Tag(name = "Auth API", description = "계정 권한 관련 API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
@@ -27,18 +30,21 @@ public class AuthControllerV1 {
     private final AuthServiceV1 authServiceV1;
 
     // 회원가입
+    @Operation(summary = "회원가입",description = "계정을 생성하고 시스템 이용 권한을 부여합니다")
     @PostMapping("/signup")
     public ResponseEntity<ResSignUpDtoV1> signUp(@Valid @RequestBody ReqSignUpDtoV1 requestDto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(authServiceV1.signup(requestDto));
     }
 
     // 로그인
+    @Operation(summary = "로그인",description = "Access 토큰을 발급합니다")
     @PostMapping("/login")
     public ResponseEntity<ResLoginDtoV1> login(@Valid @RequestBody ReqLoginDtoV1 requestDto) {
         return ResponseEntity.ok(authServiceV1.login(requestDto));
     }
 
     // 로그아웃
+    @Operation(summary = "로그아웃",description = "로그아웃합니다")
     @PostMapping("/logout")
     public ResponseEntity<String> logout(@AuthenticationPrincipal AuthUser loginUser) { // UserEntity -> AuthUser
         authServiceV1.logout(loginUser.userId());
@@ -46,6 +52,7 @@ public class AuthControllerV1 {
     }
 
     // 회원 탈퇴
+    @Operation(summary = "회원탈퇴",description = "계정을 삭제(isDelete)합니다")
     @PostMapping("/signout")
     public ResponseEntity<String> signout(@AuthenticationPrincipal AuthUser loginUser) { // UserEntity -> AuthUser
         authServiceV1.signout(loginUser.userId());
