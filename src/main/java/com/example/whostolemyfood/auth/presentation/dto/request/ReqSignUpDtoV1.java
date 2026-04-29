@@ -40,6 +40,8 @@ public class ReqSignUpDtoV1 {
     @NotNull(message = "유저 타입은 필수입니다.")
     private UserRole userRole;
 
+    //private String address;
+
     // 관리자 가입을 위한 토큰
     @Schema(description = "관리자 가입 토큰")
     private String adminToken;

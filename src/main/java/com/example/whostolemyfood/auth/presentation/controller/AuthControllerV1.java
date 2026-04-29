@@ -1,7 +1,5 @@
 package com.example.whostolemyfood.auth.presentation.controller;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
@@ -13,12 +11,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.example.whostolemyfood.auth.application.service.AuthServiceV1;
 import com.example.whostolemyfood.auth.presentation.dto.request.ReqLoginDtoV1;
+import com.example.whostolemyfood.auth.presentation.dto.request.ReqReissueDtoV1;
 import com.example.whostolemyfood.auth.presentation.dto.request.ReqSignUpDtoV1;
 import com.example.whostolemyfood.auth.presentation.dto.response.ResLoginDtoV1;
 import com.example.whostolemyfood.auth.presentation.dto.response.ResSignUpDtoV1;
 import com.example.whostolemyfood.user.application.security.AuthUser;
-import com.example.whostolemyfood.user.domain.entity.UserEntity;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
 @Tag(name = "Auth API", description = "계정 권한 관련 API")
@@ -57,5 +57,13 @@ public class AuthControllerV1 {
     public ResponseEntity<String> signout(@AuthenticationPrincipal AuthUser loginUser) { // UserEntity -> AuthUser
         authServiceV1.signout(loginUser.userId());
         return ResponseEntity.ok("회원 탈퇴 완료");
+    }
+
+    @PostMapping("/reissue")
+    public ResponseEntity<ResLoginDtoV1> reissue(@RequestBody ReqReissueDtoV1 requestDto) {
+        // 서비스가 ID, AccessToken, RefreshToken이 다 담긴 DTO를 넘겨줌
+        ResLoginDtoV1 response = authServiceV1.reissue(requestDto.getRefreshToken());
+
+        return ResponseEntity.ok(response);
     }
 }

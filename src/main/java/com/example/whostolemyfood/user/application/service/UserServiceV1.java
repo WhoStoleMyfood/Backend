@@ -2,6 +2,8 @@ package com.example.whostolemyfood.user.application.service;
 
 import java.util.UUID;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +26,7 @@ public class UserServiceV1 implements UserService {
     private final PasswordEncoder passwordEncoder;
 
     @Override
+    @Cacheable(cacheNames = "userCache", key = "#id")
     public ResGetUserByIdDtoV1 getUserById(UUID id) {
         UserEntity user = findActiveUser(id);
         return new ResGetUserByIdDtoV1(
@@ -35,6 +38,7 @@ public class UserServiceV1 implements UserService {
 
     @Override
     @Transactional
+    @CacheEvict(cacheNames = "userCache", key = "#id")
     public ResUpdateUserDtoV1 updateUser(UUID id, ReqUpdateUserDtoV1 requestDto) {
         UserEntity user = findActiveUser(id);
 

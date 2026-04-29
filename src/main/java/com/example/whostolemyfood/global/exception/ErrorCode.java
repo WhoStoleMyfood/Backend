@@ -12,10 +12,11 @@ public enum ErrorCode {
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "U001", "사용자를 찾을 수 없습니다."),
     USER_DUPLICATION_EMAIL(HttpStatus.BAD_REQUEST, "U002", "이미 존재하는 이메일입니다."),
     USER_WRONG_PW(HttpStatus.UNAUTHORIZED, "U003", "비밀번호가 일치하지 않습니다."),
-
+    USER_ACCESS_DENIED(HttpStatus.FORBIDDEN, "A001", "잘못된 유저 권한입니다."),
     // Auth
     ACCESS_DENIED(HttpStatus.FORBIDDEN, "A001", "잘못된 권한입니다."),
     SELF_RESOURCE_ACCESS_DENIED(HttpStatus.BAD_REQUEST, "A002", "본인의 정보는 이 API로 처리할 수 없습니다."),
+    INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "A003", "유효하지 않거나 만료된 토큰입니다."),
 
     // Address
     ADDRESS_NOT_FOUND(HttpStatus.NOT_FOUND, "AD001", "존재하지 않는 배송지입니다."),
