@@ -20,6 +20,9 @@ public class StoreSearchConditionV1 {
     @Schema(description = "지역명", example = "종로")
     private String region;     // 지역명
 
+    @Schema(description = "지역ID" , example ="")
+    private UUID areaId;
+
     // Integer로 변경하여 null 체크가 가능하도록 함
     @Schema(description = "최소 주문 금액", example = "20000")
     private Integer minOrderPrice;

@@ -4,10 +4,7 @@ package com.example.whostolemyfood.category.domain.entity;
 import com.example.whostolemyfood.global.entity.BaseAuditEntity;
 import com.example.whostolemyfood.global.entity.BaseSoftDeleteEntity;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.UUID;
 
@@ -15,7 +12,8 @@ import java.util.UUID;
 @Table(name = "p_categories")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-
+@Builder
+@AllArgsConstructor
 public class CategoryEntity extends BaseAuditEntity {
 
     // 카테고리 id
@@ -28,10 +26,10 @@ public class CategoryEntity extends BaseAuditEntity {
     @Column(name="name")
     private String name;
 
-    @Builder
-    public CategoryEntity(String name) {
-        this.name = name;
-    }
+//    @Builder
+//    public CategoryEntity(String name) {
+//        this.name = name;
+//    }
 
     public void updateName(String name) {
         this.name = name;

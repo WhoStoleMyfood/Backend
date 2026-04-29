@@ -89,7 +89,7 @@ public class ReviewControllerV1 {
 		return ResponseEntity.ok("리뷰 삭제가 완료되었습니다.");
 	}
 
-	@Operation(summary = "평점 조회", description = "가게 리뷰 평점을 조회 합니다.")
+	@Operation(summary = "평점 조회", description = "[ALL] 가게 리뷰 평점을 조회 합니다.")
 	@GetMapping("/stores/{storeId}/rating-summary")
 	public ResponseEntity<ResGetStoreRatingSummaryDtoV1> getStoreRatingSummary(
 		@PathVariable UUID storeId
@@ -98,7 +98,7 @@ public class ReviewControllerV1 {
 		return ResponseEntity.ok(response);
 	}
 
-	@Operation(summary = "리뷰 목록 조회", description = "리뷰 목록을 조회합니다.")
+	@Operation(summary = "리뷰 목록 조회", description = "[ALL] 리뷰 목록을 조회합니다.")
 	@GetMapping("/reviews")
 	public ResponseEntity<PageResponse<ResGetReviewPageDtoV1>> getReviews(
 		@ModelAttribute ReqGetReviewsDtoV1 request

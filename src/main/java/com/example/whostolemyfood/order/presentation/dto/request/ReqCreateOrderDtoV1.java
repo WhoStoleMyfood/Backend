@@ -16,11 +16,11 @@ import java.util.UUID;
 @Builder
 public class ReqCreateOrderDtoV1 {
 
-    @Schema(description = "가게 정보", example = "")
+    @Schema(description = "가게 정보")
     @NotNull(message = "가게 정보는 필수입니다.")
     private UUID storeId;
 
-    @Schema(description = "배송지 정보", example = "")
+    @Schema(description = "배송지 정보")
     @NotNull(message = "배송지 정보는 필수입니다.")
     private UUID addressId;
 

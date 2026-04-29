@@ -7,11 +7,8 @@ import com.example.whostolemyfood.store.presentation.dto.request.ReqCreateStoreD
 import com.example.whostolemyfood.store.presentation.dto.request.ReqUpdateStoreDtoV1;
 import com.example.whostolemyfood.global.response.PageResponse;
 import com.example.whostolemyfood.store.presentation.dto.request.StoreSearchConditionV1;
-import com.example.whostolemyfood.store.presentation.dto.response.ResCreateStoreDtoV1;
-import com.example.whostolemyfood.store.presentation.dto.response.ResGetStoreDtoV1;
-import com.example.whostolemyfood.store.presentation.dto.response.ResGetStoreListDtoV1;
+import com.example.whostolemyfood.store.presentation.dto.response.*;
 import com.example.whostolemyfood.user.application.security.AuthUser;
-import com.example.whostolemyfood.store.presentation.dto.response.StoreSearchResponseDtoV1;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -43,8 +40,7 @@ public class StoreControllerV1 {
     @PostMapping
     @PreAuthorize("hasAnyRole('OWNER')")
     public ResponseEntity<ResCreateStoreDtoV1> createStore(
-            @Valid
-            @RequestBody ReqCreateStoreDtoV1 request,
+            @Valid @RequestBody ReqCreateStoreDtoV1 request,
             @AuthenticationPrincipal AuthUser authUser) {
         ResCreateStoreDtoV1 response = storeServiceV1.createStore(request, authUser);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -75,9 +71,8 @@ public class StoreControllerV1 {
     @PutMapping("/{storeId}")
     @PreAuthorize("hasAnyRole('OWNER','MANAGER','MASTER')")
     public ResponseEntity<ResGetStoreDtoV1> updateStore(
-            @Valid
             @PathVariable UUID storeId,
-            @RequestBody ReqUpdateStoreDtoV1 request,
+            @Valid @RequestBody ReqUpdateStoreDtoV1 request,
             @AuthenticationPrincipal AuthUser authUser) {
         ResGetStoreDtoV1 response = storeServiceV1.updateStore(storeId, request, authUser);
         return ResponseEntity.status(HttpStatus.OK).body(response);
@@ -87,18 +82,28 @@ public class StoreControllerV1 {
     @PatchMapping("/{storeId}/hide")
     @PreAuthorize("hasAnyRole('OWNER','MANAGER','MASTER')")
     public ResponseEntity<Void> hideStore(
-            @Valid
             @PathVariable UUID storeId,
             @AuthenticationPrincipal AuthUser authUser) {
         storeServiceV1.hiddenStore(storeId, authUser);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
+    @Operation(summary = "숨겨지거나 삭제된 가게 조회", description = "[OWNER / MANAGER / MASTER] 숨겨지거나 삭제된 가게를 조회할 수 있습니다.")
+    @GetMapping("/inactive")
+    @PreAuthorize("hasAnyRole('OWNER','MANAGER','MASTER')")
+    public ResponseEntity<PageResponse<ResGetInActiveStoreDtoV1>> getInactiveStores(
+            @AuthenticationPrincipal AuthUser authUser,
+            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC)Pageable pageable) {
+        Pageable validatePageable = PageUtil.validatePageSize(pageable);
+
+        Page<ResGetInActiveStoreDtoV1> stores = storeServiceV1.getInActiveStores(authUser, validatePageable);
+        return ResponseEntity.status(HttpStatus.OK).body(new PageResponse<>(stores));
+    }
+
     @Operation(summary = "가게 삭제", description = "[OWNER / MANAGER / MASTER]] 가게를 삭제시킵니다.")
     @DeleteMapping("/{storeId}")
     @PreAuthorize("hasAnyRole('OWNER','MANAGER','MASTER')")
     public void deleteStore(
-            @Valid
             @PathVariable UUID storeId,
             @AuthenticationPrincipal AuthUser authUser) {
         storeServiceV1.deleteStore(storeId, authUser);

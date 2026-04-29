@@ -48,9 +48,11 @@ public enum ErrorCode {
     MENU_DESCRIPTION_DUPLICATE(HttpStatus.BAD_REQUEST,"M004", "직접 입력한 설명과 AI 생성 요청은 동시에 처리할 수 없습니다."),
 
     // Ai
-    AI_PROMPT_REQUIRE(HttpStatus.BAD_REQUEST, "I001","AI 프롬프트는 필수 입력사항입니다."),
-    AI_PROMPT_TOO_LONG(HttpStatus.BAD_REQUEST, "I002", "프롬프트 길이는 100자 이내로 작성해주세요."),
-    AI_RESPONSE_EMPTY(HttpStatus.INTERNAL_SERVER_ERROR,"I003", "AI 응답 결과가 비어 있습니다. 다시 시도해주세요."),
+    AI_PROMPT_REQUIRE(HttpStatus.BAD_REQUEST, "AI001","AI 프롬프트는 필수 입력사항입니다."),
+    AI_PROMPT_TOO_LONG(HttpStatus.BAD_REQUEST, "AI002", "프롬프트 길이는 100자 이내로 작성해주세요."),
+    AI_RESPONSE_EMPTY(HttpStatus.INTERNAL_SERVER_ERROR,"AI003", "AI 응답 결과가 비어 있습니다. 다시 시도해주세요."),
+    AI_TEMPORARILY_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "AI004","AI 설명 생성이 일시적으로 불가능합니다. 직접 설명을 입력해주세요."),
+    AI_REQUEST_FAILED(HttpStatus.BAD_GATEWAY, "AI005","AI 설명 생성 중 오류가 발생했습니다. 직접 설명을 입력해주세요."),
 
 
     // Global

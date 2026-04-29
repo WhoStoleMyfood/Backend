@@ -9,6 +9,7 @@ import com.example.whostolemyfood.menu.domain.repository.MenuRepository;
 import com.example.whostolemyfood.menu.presentation.dto.request.ReqCreateMenuDtoV1;
 import com.example.whostolemyfood.menu.presentation.dto.request.ReqUpdateMenuDtoV1;
 import com.example.whostolemyfood.menu.presentation.dto.response.ResCreateMenuDtoV1;
+import com.example.whostolemyfood.menu.presentation.dto.response.ResGetInActiveMenuDtoV1;
 import com.example.whostolemyfood.menu.presentation.dto.response.ResGetMenuDtoV1;
 import com.example.whostolemyfood.store.domain.entity.StoreEntity;
 import com.example.whostolemyfood.store.domain.repository.StoreRepository;
@@ -35,7 +36,7 @@ public class MenuServiceV1 {
     @Transactional
     public ResCreateMenuDtoV1 addMenu(UUID storeId, ReqCreateMenuDtoV1 request, AuthUser authUser) {
         // 스토어 존재 확인
-        StoreEntity store = storeRepository.findById(storeId).orElseThrow(
+        StoreEntity store = storeRepository.findByStoreIdAndIsHiddenFalseAndIsDeletedFalse(storeId).orElseThrow(
                 ()-> new CustomException(ErrorCode.STORE_NOT_FOUND));
 
         // 권한 확인
@@ -118,7 +119,7 @@ public class MenuServiceV1 {
                 .orElseThrow(()-> new CustomException(ErrorCode.MENU_NOT_FOUND));
 
         validateMenuAccess(store, authUser);
-        menu.deleteMenu(storeId);
+        menu.deleteMenu(authUser.userId());
     }
 
     // Owner, Manager, Master
@@ -133,6 +134,17 @@ public class MenuServiceV1 {
 
         validateMenuAccess(store, authUser);
         menu.toggleIsHidden();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ResGetInActiveMenuDtoV1> getInActiveMenus(UUID storeId, AuthUser authUser, Pageable pageable) {
+        StoreEntity store = storeRepository.findByStoreIdAndIsDeletedFalse(storeId)
+                .orElseThrow(()-> new CustomException(ErrorCode.STORE_NOT_FOUND));
+
+        validateMenuAccess(store, authUser);
+
+        Page<MenuEntity> menus =  menuRepository.findAllInactiveMenusByStoreId(storeId, pageable);
+        return menus.map(ResGetInActiveMenuDtoV1::from);
     }
 
     // 권한 확인
@@ -186,4 +198,6 @@ public class MenuServiceV1 {
     private boolean hasText(String value) {
         return value != null && !value.isBlank();
     }
+
+
 }

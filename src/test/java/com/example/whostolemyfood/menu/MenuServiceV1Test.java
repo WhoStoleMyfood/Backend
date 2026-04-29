@@ -43,7 +43,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 
 @ExtendWith(MockitoExtension.class)
-public class MenuServiceTest {
+public class MenuServiceV1Test {
 
     @InjectMocks
     private MenuServiceV1 menuServiceV1;
@@ -76,8 +76,6 @@ public class MenuServiceTest {
                 .minOrderPrice(20000)
                 .openTime(LocalTime.of(10,0))
                 .closeTime(LocalTime.of(23,0))
-                .isHidden(false)
-                .isDeleted(false)
                 .build();
 
         ReflectionTestUtils.setField(store, "storeId", storeId);
@@ -92,8 +90,6 @@ public class MenuServiceTest {
                 .price(price)
                 .description(description)
                 .aiLogId(null)
-                .isHidden(false)
-                .isDeleted(false)
                 .build();
         ReflectionTestUtils.setField(menu, "menuId", menuId);
         return menu;
