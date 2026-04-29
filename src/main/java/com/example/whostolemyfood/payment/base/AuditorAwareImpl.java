@@ -1,5 +1,6 @@
 package com.example.whostolemyfood.payment.base;
 
+import com.example.whostolemyfood.user.application.security.AuthUser;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -15,19 +16,17 @@ public class AuditorAwareImpl implements AuditorAware<UUID> {
     @Override
     public Optional<UUID> getCurrentAuditor() {
 
-        return Optional.of(UUID.fromString("550e8400-e29b-41d4-a716-446655440000"));
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-//        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-//
-//        if (authentication == null || !authentication.isAuthenticated()) {
-//            return Optional.empty();
-//        }
-//
-//        if (authentication.getPrincipal() instanceof UserDetails userDetails) {
-//
-//            return Optional.of(UUID.fromString(userDetails.getUsername()));
-//        }
-//
-//        return Optional.empty();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return Optional.empty();
+        }
+
+        if (authentication.getPrincipal() instanceof AuthUser userDetails) {
+
+            return Optional.of(userDetails.getUserId());
+        }
+
+        return Optional.empty();
     }
 }

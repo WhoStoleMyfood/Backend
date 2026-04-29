@@ -1,4 +1,6 @@
 package com.example.whostolemyfood.ai.presentation.dto.response;
 
-public class ResGetAiLogDtoV1 {
+import java.util.UUID;
+
+public record ResGetAiLogDtoV1(String description, UUID aiLogId) {
 }

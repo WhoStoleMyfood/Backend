@@ -2,29 +2,26 @@ package com.example.whostolemyfood.store.presentation.dto.response;
 
 import com.example.whostolemyfood.store.domain.entity.StoreEntity;
 import com.example.whostolemyfood.store.domain.entity.StoreStatus;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.math.BigDecimal;
 import java.time.LocalTime;
 import java.util.UUID;
 
 @Getter
+@AllArgsConstructor
 public class ResGetStoreListDtoV1 {
 
     private UUID storeId;
-    private String storeName;
+    private String name;
+    private String category;
+    private BigDecimal averageRating;
+    private String ukName;
     private Integer minOrderPrice;
     private StoreStatus storeStatus;
     private LocalTime openTime;
     private LocalTime closeTime;
-
-    public ResGetStoreListDtoV1(UUID storeId,String storeName, Integer minOrderPrice, StoreStatus storeStatus, LocalTime openTime, LocalTime closeTime) {
-        this.storeId = storeId;
-        this.storeName = storeName;
-        this.minOrderPrice = minOrderPrice;
-        this.storeStatus = storeStatus;
-        this.openTime = openTime;
-        this.closeTime = closeTime;
-    }
 
     public static ResGetStoreListDtoV1 from(StoreEntity store) {
         StoreStatus currentStatus;
@@ -39,8 +36,11 @@ public class ResGetStoreListDtoV1 {
             );
         }
         return new ResGetStoreListDtoV1(
-                store.getId(),
+                store.getStoreId(),
                 store.getName(),
+                store.getCategory().getName(),
+                store.getStoreRatingSummary().getAverageRating(),
+                store.getArea().getUkName(),
                 store.getMinOrderPrice(),
                 currentStatus,
                 store.getOpenTime(),

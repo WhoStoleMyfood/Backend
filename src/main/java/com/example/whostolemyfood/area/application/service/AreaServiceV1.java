@@ -16,6 +16,10 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.util.List;
 import java.util.UUID;
@@ -106,12 +110,12 @@ public class AreaServiceV1 {
 
 	private AreaEntity findAreaById(UUID areaId) {
 		return areaRepository.findByAreaId(areaId)
-			.orElseThrow(() -> new EntityNotFoundException("해당 지역을 찾을 수 없습니다. id=" + areaId));
+			.orElseThrow(() -> new CustomException(ErrorCode.AREA_NOT_FOUND));
 	}
 
 	private void validateDuplicateUkName(String ukName) {
 		if (areaRepository.existsByUkName(ukName)) {
-			throw new IllegalArgumentException("이미 존재하는 지역명입니다.");
+			throw new CustomException(ErrorCode.AREA_DUPLICATION);
 		}
 	}
 
@@ -124,11 +128,42 @@ public class AreaServiceV1 {
 		}
 
 		if (user.getUserRole() != loginUser.role()) {
-			throw new CustomException(ErrorCode.ACCESS_DENIED);
+			throw new CustomException(ErrorCode.AREA_ACCESS_DENIED);
 		}
 
 		if (user.getUserRole() != UserRole.MANAGER && user.getUserRole() != UserRole.MASTER) {
-			throw new CustomException(ErrorCode.ACCESS_DENIED);
+			throw new CustomException(ErrorCode.AREA_ACCESS_DENIED);
 		}
+	}
+
+	public Page<ResGetAreaDtoV1> searchAreas(
+		String city,
+		String district,
+		Boolean isActive,
+		int page,
+		int size,
+		String sortDir
+	) {
+		int validSize = validatePageSize(size);
+
+		Sort.Direction direction = "asc".equalsIgnoreCase(sortDir)
+			? Sort.Direction.ASC
+			: Sort.Direction.DESC;
+
+		Pageable pageable = PageRequest.of(
+			page,
+			validSize,
+			Sort.by(direction, "createdAt")
+		);
+
+		return areaRepository.searchAreas(city, district, isActive, pageable)
+			.map(ResGetAreaDtoV1::from);
+	}
+
+	private int validatePageSize(int size) {
+		if (size == 10 || size == 30 || size == 50) {
+			return size;
+		}
+		return 10;
 	}
 }

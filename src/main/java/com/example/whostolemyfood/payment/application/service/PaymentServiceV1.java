@@ -1,10 +1,14 @@
 package com.example.whostolemyfood.payment.application.service;
 
+import com.example.whostolemyfood.global.exception.CustomException;
+import com.example.whostolemyfood.global.exception.ErrorCode;
 import com.example.whostolemyfood.order.domain.entity.OrderEntity;
 import com.example.whostolemyfood.order.domain.repository.OrderRepository;
 import com.example.whostolemyfood.payment.base.AuditorAwareImpl;
 import com.example.whostolemyfood.payment.domain.PaymentEntity;
+import com.example.whostolemyfood.payment.domain.PaymentStatus;
 import com.example.whostolemyfood.payment.infrastructure.PaymentRepository;
+import com.example.whostolemyfood.payment.presentation.dto.request.ReqConfirmDto;
 import com.example.whostolemyfood.payment.presentation.dto.request.ReqMakePay;
 import com.example.whostolemyfood.payment.presentation.dto.request.ReqModifyPay;
 import com.example.whostolemyfood.payment.presentation.dto.response.*;
@@ -13,6 +17,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -28,7 +33,7 @@ public class PaymentServiceV1 {
 
     public PageRes getPayments(Pageable pageable) {
 
-        UUID currentAuditor = auditor.getCurrentAuditor().orElseThrow(()-> new RuntimeException("존재하지 않는 유저입니다."));
+        UUID currentAuditor = getCurrentAuditor();
         if(pageable.getPageSize()>50){
             pageable = PageRequest.of(pageable.getPageNumber(), 50, pageable.getSort());
         }
@@ -40,8 +45,8 @@ public class PaymentServiceV1 {
 
     public ResGetPayById getPaymentById(UUID id) {
 
-        UUID currentAuditor = auditor.getCurrentAuditor().orElseThrow(()-> new RuntimeException("존재하지 않는 유저입니다."));
-        PaymentEntity allByCreatedByAndId = paymentRepository.findAllByCreatedByAndId(currentAuditor, id).orElseThrow(()-> new RuntimeException("존재하지 않는 결제 내역입니다."));
+        UUID currentAuditor = getCurrentAuditor();
+        PaymentEntity allByCreatedByAndId = paymentRepository.findAllByCreatedByAndId(currentAuditor, id).orElseThrow(()-> new CustomException(ErrorCode.PAYMENT_NOT_FOUND));
         return new ResGetPayById(allByCreatedByAndId);
 
     }
@@ -49,8 +54,8 @@ public class PaymentServiceV1 {
     @Transactional
     public ResMakePay postPayment(ReqMakePay reqMakePay) {
 
-        UUID currentAuditor = auditor.getCurrentAuditor().orElseThrow(()-> new RuntimeException("존재하지 않는 유저입니다."));
-        OrderEntity orderEntity = orderRepository.findByOrderIdAndUserId(UUID.fromString(reqMakePay.getOrderId()), currentAuditor).orElseThrow(() -> new RuntimeException("존재하지 않는 주문입니다."));
+        UUID currentAuditor = getCurrentAuditor();
+        OrderEntity orderEntity = orderRepository.findByOrderIdAndUserId(UUID.fromString(reqMakePay.getOrderId()), currentAuditor).orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
         PaymentEntity paymentEntity = new PaymentEntity(reqMakePay, orderEntity, currentAuditor);
         paymentRepository.save(paymentEntity);
         return new ResMakePay(paymentEntity.getId(), paymentEntity.getPaymentKey());
@@ -60,10 +65,36 @@ public class PaymentServiceV1 {
     @Transactional
     public ResModifyPay updatePayment(ReqModifyPay reqModifyPay) {
 
-        UUID currentAuditor = auditor.getCurrentAuditor().orElseThrow(()-> new RuntimeException("존재하지 않는 유저입니다."));
+        UUID currentAuditor = getCurrentAuditor();
         PaymentEntity allByCreatedByAndId = paymentRepository.findAllByCreatedByAndId(currentAuditor, UUID.fromString(reqModifyPay.getPaymentId())).orElseThrow(()-> new RuntimeException("존재하지 않는 결제 내역입니다."));
         allByCreatedByAndId.payCancel(currentAuditor);
         return new ResModifyPay(allByCreatedByAndId.getId(), LocalDateTime.now());
 
     }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public UUID makePayment (ReqConfirmDto reqConfirmDto) {
+        UUID currentAuditor = getCurrentAuditor();
+        OrderEntity byOrderIdAndUserId = orderRepository.findByOrderIdAndUserId(UUID.fromString(reqConfirmDto.getOrderId()), currentAuditor).orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
+        PaymentEntity paymentEntity = new PaymentEntity(reqConfirmDto, byOrderIdAndUserId, currentAuditor);
+        PaymentEntity save = paymentRepository.save(paymentEntity);
+        return save.getId();
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void successPay (UUID paymentId) {
+        PaymentEntity paymentEntity = paymentRepository.findById(paymentId).orElseThrow(() -> new CustomException(ErrorCode.PAYMENT_NOT_FOUND));
+        paymentEntity.setPayStatus(PaymentStatus.DONE);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void failPay (UUID paymentId) {
+        PaymentEntity paymentEntity = paymentRepository.findById(paymentId).orElseThrow(() -> new CustomException(ErrorCode.PAYMENT_NOT_FOUND));
+        paymentEntity.setPayStatus(PaymentStatus.FAIL);
+    }
+
+    private UUID getCurrentAuditor() {
+        return auditor.getCurrentAuditor().orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+    }
+
 }

@@ -31,11 +31,13 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         // 1. 누구나 접근 가능한 경로
-                        .requestMatchers("/api/v1/auth/signup",
+                        .requestMatchers(
+                                "/api/v1/auth/signup",
                                 "/api/v1/auth/login",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
-                                "/swagger-ui.html").permitAll()
+                                "/swagger-ui.html"
+                        ).permitAll()
 
                         // 2. 인증이 반드시 필요한 경로들
                         .requestMatchers("/api/v1/auth/logout").authenticated() // 로그아웃

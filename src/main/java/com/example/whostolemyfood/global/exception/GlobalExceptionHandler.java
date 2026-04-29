@@ -1,11 +1,11 @@
 package com.example.whostolemyfood.global.exception;
 
-import java.util.List;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.util.List;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -58,7 +58,6 @@ public class GlobalExceptionHandler {
                 .build();
         return ResponseEntity.badRequest().body(response);
     }
-
     /**
      * (추가) 도메인별 상세 에러 처리를 위한 공통 핸들러
      * 제가 작업하면서 상세 에러 코드가 필요해서 추가해 뒀어요!
