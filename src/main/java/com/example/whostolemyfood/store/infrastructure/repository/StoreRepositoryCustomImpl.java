@@ -72,18 +72,22 @@ public class StoreRepositoryCustomImpl implements StoreRepositoryCustom {
                         store.status,        // 7. status
                         store.openTime,      // 8. openTime
                         store.closeTime,      // 9. closeTime
-                        store.createdAt //생성일자
+                        store.createdAt,//생성일자
+                        storeRating.averageRating //평균 평점
                 ))
                 .from(store)
                 .join(store.category, category)
                 .join(store.area, area)
-                .leftJoin(menu).on(menu.store.eq(store),menu.isDeleted.isFalse())
+                .join(store.storeRatingSummary, storeRating)
+                .leftJoin(menu).on(menu.store.eq(store),menu.isDeleted.isFalse(),menu.isHidden.isFalse())
                 .where(
                         keywordBuilder,
                         addressContains(cond.getRegion()),
+                        areaEq(cond.getAreaId()),
                         categoryEq(cond.getCategoryId()),
                         minOrderPriceLoe(cond.getMinOrderPrice()),
-                        store.isDeleted.isFalse()
+                        store.isDeleted.isFalse(),
+                        store.isHidden.isFalse()
                 )
                 .orderBy(getOrderBy(cond.getSortBy()))
                 .offset(pageable.getOffset())
@@ -93,17 +97,20 @@ public class StoreRepositoryCustomImpl implements StoreRepositoryCustom {
 
         // 2. Count 쿼리
         Long total = queryFactory
-                .selectDistinct(store.count())
+                .select(store.countDistinct())
                 .from(store)
                 .join(store.category, category)
                 .join(store.area, area)
-                .leftJoin(menu).on(menu.store.eq(store),menu.isDeleted.isFalse())
+                .join(store.storeRatingSummary, storeRating)
+                .leftJoin(menu).on(menu.store.eq(store),menu.isDeleted.isFalse(),menu.isHidden.isFalse())
                 .where(
                         keywordBuilder,
                         addressContains(cond.getRegion()),
+                        areaEq(cond.getAreaId()),
                         categoryEq(cond.getCategoryId()),
                         minOrderPriceLoe(cond.getMinOrderPrice()),
-                        store.isDeleted.isFalse()
+                        store.isDeleted.isFalse(),
+                        store.isHidden.isFalse()
                 )
                 .fetchOne();
 
@@ -125,6 +132,11 @@ public class StoreRepositoryCustomImpl implements StoreRepositoryCustom {
         return categoryId != null ? QStoreEntity.storeEntity.category.categoryId.eq(categoryId) : null;
     }
 
+    private BooleanExpression areaEq(UUID areaId) {
+        // 카테고리 ID가 일치하는지 확인
+        return areaId != null ? QStoreEntity.storeEntity.area.areaId.eq(areaId) : null;
+    }
+
     private BooleanExpression minOrderPriceLoe(Integer minOrderPrice) {
         // 입력받은 금액보다 '가게의 최소주문금액'이 작거나 같은 경우 (Loe: Less or Equal)
         return minOrderPrice != null ? QStoreEntity.storeEntity.minOrderPrice.loe(minOrderPrice) : null;
@@ -135,7 +147,9 @@ public class StoreRepositoryCustomImpl implements StoreRepositoryCustom {
         if (!StringUtils.hasText(sortBy)) {
             return QStoreEntity.storeEntity.createdAt.desc(); // 기본 정렬: 최신순
         }
-        // 예: "rating"이 들어오면 별점순 정렬 등 로직 추가 가능
+        if (sortBy.equals("rating")) {
+            return QStoreEntity.storeEntity.storeRatingSummary.averageRating.desc();
+        }
         return QStoreEntity.storeEntity.createdAt.desc();
     }
 
