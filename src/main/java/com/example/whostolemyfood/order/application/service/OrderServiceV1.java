@@ -89,6 +89,11 @@ public class OrderServiceV1 {
 
         AddressEntity address = addressRepository.findByIdAndIsDeletedFalse(request.getAddressId())
                 .orElseThrow(() -> new CustomException(ErrorCode.ADDRESS_NOT_FOUND));
+        
+        if (Boolean.TRUE.equals(address.getIsDeleted())) {
+            throw new CustomException(ErrorCode.ADDRESS_NOT_FOUND);
+        }
+
         if (!address.getUserId().equals(userId)) {
             throw new CustomException(ErrorCode.ADDRESS_NOT_OWNER);
         }
@@ -98,6 +103,10 @@ public class OrderServiceV1 {
             MenuEntity menu = menuRepository.findById(itemRequest.getMenuId())
                     .orElseThrow(() -> new CustomException(ErrorCode.MENU_NOT_FOUND));
             
+            if (Boolean.TRUE.equals(menu.getIsDeleted()) || Boolean.TRUE.equals(menu.getIsHidden())) {
+                throw new CustomException(ErrorCode.MENU_NOT_FOUND);
+            }
+
             if (!menu.getPrice().equals(itemRequest.getPriceAtOrder())) {
                 throw new CustomException(ErrorCode.PRICE_MISMATCH);
             }
