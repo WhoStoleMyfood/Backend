@@ -42,8 +42,9 @@ public class UserAdminControllerV1 {
     ) {
         Pageable validatedPageable = PageUtil.validatePageSize(pageable);
 
-        // 서비스의 findAllUsers가 이제 loginUser.userId()를 인자로 받아야 합니다.
-        Page<ResGetUserByIdDtoV1> userPage = userAdminService.findAllUsers(validatedPageable, loginUser.userId());
+        // role 정보를 함께 넘겨줍니다.
+        Page<ResGetUserByIdDtoV1> userPage = userAdminService.findAllUsers(
+                validatedPageable, loginUser.userId(), loginUser.role());
         return ResponseEntity.ok(new PageResponse<>(userPage));
     }
 
@@ -51,8 +52,12 @@ public class UserAdminControllerV1 {
     @Operation(summary = "특정 사용자 조회", description =  "[MANAGER / MASTER] 관리자가 특정 사용자를 조회합니다.")
     @GetMapping("/{userId}")
     @PreAuthorize("hasAnyRole('MASTER', 'MANAGER')")
-    public ResponseEntity<ResGetUserByIdDtoV1> getUserDetail(@PathVariable UUID userId) {
-        return ResponseEntity.ok(userAdminService.getUserById(userId));
+    public ResponseEntity<ResGetUserByIdDtoV1> getUserDetail(
+            @PathVariable UUID userId,
+            @AuthenticationPrincipal AuthUser loginUser // 👈 추가
+    ) {
+        // role 정보를 함께 넘겨줍니다.
+        return ResponseEntity.ok(userAdminService.getUserById(userId, loginUser.role()));
     }
 
 //    //3. 사용자 상태 관리-API 호출로 직접 본인을 변경하는 것을 방지하는 2중 보안

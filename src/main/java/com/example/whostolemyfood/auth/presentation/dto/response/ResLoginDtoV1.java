@@ -10,5 +10,4 @@ import lombok.RequiredArgsConstructor;
 public class ResLoginDtoV1 {
     private final UUID userId;
     private final String accessToken;
-    private final String refreshToken;
 }

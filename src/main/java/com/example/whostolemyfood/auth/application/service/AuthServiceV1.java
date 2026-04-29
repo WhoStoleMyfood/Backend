@@ -12,11 +12,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.whostolemyfood.auth.presentation.dto.request.ReqLoginDtoV1;
 import com.example.whostolemyfood.auth.presentation.dto.request.ReqSignUpDtoV1;
-import com.example.whostolemyfood.auth.presentation.dto.response.ResLoginDtoV1;
 import com.example.whostolemyfood.auth.presentation.dto.response.ResSignUpDtoV1;
 import com.example.whostolemyfood.global.config.security.jwt.JwtUtil;
 import com.example.whostolemyfood.global.exception.CustomException;
 import com.example.whostolemyfood.global.exception.ErrorCode;
+import com.example.whostolemyfood.user.application.security.TokenResult;
 import com.example.whostolemyfood.user.domain.entity.UserEntity;
 import com.example.whostolemyfood.user.domain.entity.UserRole;
 import com.example.whostolemyfood.user.domain.repository.UserRepository;
@@ -76,31 +76,23 @@ public class AuthServiceV1 implements AuthService {
         return new ResSignUpDtoV1(user.getUserEmail(), user.getUserName());
     }
 
-    @Override
     @Transactional
-    public ResLoginDtoV1 login(ReqLoginDtoV1 requestDto) {
+    @Override
+    public TokenResult login(ReqLoginDtoV1 requestDto) {
         UserEntity user = userRepository.findByUserEmail(requestDto.getEmail())
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        if (Boolean.TRUE.equals(user.getIsDeleted())) {
-            throw new CustomException(ErrorCode.USER_NOT_FOUND);
-        }
-
-        // [추가] 비밀번호 검증 로직 (이게 빠져있으면 아무나 로그인됩니다!)
         if (!passwordEncoder.matches(requestDto.getPassword(), user.getUserPassword())) {
             throw new CustomException(ErrorCode.USER_WRONG_PW);
         }
 
-        // 1. 토큰 생성
+        // 토큰 생성 및 Redis 저장
         String accessToken = jwtUtil.createToken(user.getId(), user.getUserRole());
         String refreshToken = jwtUtil.generateRefreshToken(user.getId());
 
-        // 2. Redis에 Refresh Token 저장 (7일 TTL)
-        String redisKey = "RT:" + user.getId().toString();
-        redisTemplate.opsForValue().set(redisKey, refreshToken, 7, TimeUnit.DAYS);
+        redisTemplate.opsForValue().set("RT:" + user.getId(), refreshToken, 14, TimeUnit.DAYS); // 2주 설정
 
-        // [수정] DTO 생성 시 세 번째 인자로 refreshToken 전달
-        return new ResLoginDtoV1(user.getId(), accessToken, refreshToken);
+        return new TokenResult(user.getId(), accessToken, refreshToken);
     }
 
     @Override
@@ -125,35 +117,28 @@ public class AuthServiceV1 implements AuthService {
 
     @Transactional
     @Override
-    public ResLoginDtoV1 reissue(String refreshToken) { // 반환 타입을 DTO로 변경
-        // 1. 유효성 검증
+    public TokenResult reissue(String refreshToken) {
         if (!jwtUtil.validateToken(refreshToken)) {
             throw new CustomException(ErrorCode.INVALID_TOKEN);
         }
 
-        // 2. 사용자 ID 추출
-        String userIdString = jwtUtil.extractSubject(refreshToken);
-        UUID userId = UUID.fromString(userIdString);
+        UUID userId = UUID.fromString(jwtUtil.extractSubject(refreshToken));
+        String redisKey = "RT:" + userId;
+        String savedToken = (String) redisTemplate.opsForValue().get(redisKey);
 
-        // 3. Redis 대조 (생략 가능하지만 보안상 유지)
-        String redisKey = "RT:" + userIdString;
-        String savedRefreshToken = (String) redisTemplate.opsForValue().get(redisKey);
-
-        if (savedRefreshToken == null || !savedRefreshToken.equals(refreshToken)) {
+        if (savedToken == null || !savedToken.equals(refreshToken)) {
             throw new CustomException(ErrorCode.INVALID_TOKEN);
         }
 
-        // 4. 유저 상태 확인 (여기서 엔티티를 어차피 조회함!)
         UserEntity user = userRepository.findByIdOrElseThrow(userId);
-        if (Boolean.TRUE.equals(user.getIsDeleted())) {
-            throw new CustomException(ErrorCode.USER_NOT_FOUND);
-        }
 
-        // 5. 새 액세스 토큰 생성
+        // RTR 적용: 새 리프레시 토큰 생성 및 Redis 갱신
         String newAccessToken = jwtUtil.createToken(user.getId(), user.getUserRole());
+        String newRefreshToken = jwtUtil.generateRefreshToken(user.getId());
 
-        // 서비스에서 DTO를 완성해서 보냄 (엔티티의 ID를 바로 사용)
-        return new ResLoginDtoV1(user.getId(), newAccessToken, refreshToken);
+        redisTemplate.opsForValue().set(redisKey, newRefreshToken, 14, TimeUnit.DAYS);
+
+        return new TokenResult(user.getId(), newAccessToken, newRefreshToken);
     }
 
     @Override

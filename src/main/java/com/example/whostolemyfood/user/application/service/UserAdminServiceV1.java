@@ -20,7 +20,9 @@ import com.example.whostolemyfood.user.presentation.dto.request.ReqManagerCreate
 import com.example.whostolemyfood.user.presentation.dto.response.ResGetUserByIdDtoV1;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -64,18 +66,30 @@ public class UserAdminServiceV1 implements UserAdminService {
 
     // [MASTER/MANAGER] 단일 사용자 상세 조회
     @Override
-    @Cacheable(cacheNames = "userCache", key = "#id")// 조회 시 캐시 적용
-    public ResGetUserByIdDtoV1 getUserById(UUID id) {
+    @Cacheable(cacheNames = "userCache", key = "#id")
+    public ResGetUserByIdDtoV1 getUserById(UUID id, UserRole loginUserRole) {
+
+        // 현재 진입한 유저의 권한을 명확히 확인하기 위한 로그 (디버깅용)
+        log.info("[getUserById] 조회 시도 - 대상 ID: {}, 로그인 유저 권한: {}", id, loginUserRole);
+
+        // [인가 체크] CUSTOMER 권한은 다른 유저의 상세 정보를 볼 수 없음
+        if (loginUserRole == UserRole.CUSTOMER) {
+            log.warn("[getUserById] 접근 거부 - CUSTOMER 권한은 상세 조회가 불가능합니다. 요청 유저 ID: {}", id);
+            throw new CustomException(ErrorCode.USER_ACCESS_DENIED); // A001 대신 U004로 명확히 던지기
+        }
+
         UserEntity user = findActiveUser(id);
         return new ResGetUserByIdDtoV1(user.getUserEmail(), user.getUserName(), user.getUserRole());
     }
 
     // [MASTER] 전체 사용자 목록 조회 (본인 제외 페이징)
-
-    @Override
-    @Transactional
     @Cacheable(cacheNames = "userListCache", key = "#validatedPageable.pageNumber + '_' + #myId")
-    public Page<ResGetUserByIdDtoV1> findAllUsers(Pageable validatedPageable, UUID myId) { // 👈 UUID myId 파라미터 추가!
+    @Override
+    public Page<ResGetUserByIdDtoV1> findAllUsers(Pageable validatedPageable, UUID myId, UserRole loginUserRole) {
+
+        if (loginUserRole == UserRole.CUSTOMER) {
+            throw new CustomException(ErrorCode.ACCESS_DENIED);
+        }
 
         Page<UserEntity> userPage = userRepository.findAllExceptMe(validatedPageable, myId);
         return userPage.map(ResGetUserByIdDtoV1::new);
