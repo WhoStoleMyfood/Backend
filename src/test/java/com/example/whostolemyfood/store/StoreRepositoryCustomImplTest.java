@@ -48,7 +48,6 @@ class StoreRepositoryCustomImplTest {
     void searchStore_KeywordTest() {
         // given: 가게 및 메뉴 세팅 (가게 1개에 메뉴 3개)
         CategoryEntity category = CategoryEntity.builder()
-                .categoryId(UUID.randomUUID())
                 .name("중식")
                 .build();
         em.persist(category);
