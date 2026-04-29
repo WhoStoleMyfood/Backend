@@ -9,16 +9,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
 import com.example.whostolemyfood.global.exception.CustomException;
 import com.example.whostolemyfood.global.exception.ErrorCode;
 import com.example.whostolemyfood.global.response.PageResponse;
 import com.example.whostolemyfood.global.util.PageUtil;
+import com.example.whostolemyfood.user.application.security.AuthUser;
 import com.example.whostolemyfood.user.application.service.UserAdminServiceV1;
 import com.example.whostolemyfood.user.presentation.dto.request.ReqManagerCreateDtoV1;
-import com.example.whostolemyfood.user.presentation.dto.request.ReqUpdateUserStatusDtoV1;
 import com.example.whostolemyfood.user.presentation.dto.response.ResGetUserByIdDtoV1;
-import com.example.whostolemyfood.user.application.security.AuthUser;
 
 import lombok.RequiredArgsConstructor;
 

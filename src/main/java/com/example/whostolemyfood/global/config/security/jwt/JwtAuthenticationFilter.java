@@ -30,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
+    private final org.springframework.data.redis.core.RedisTemplate<String, Object> redisTemplate; // 주입 추가
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -39,11 +40,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (StringUtils.hasText(token) && jwtUtil.validateToken(token)) {
             try {
-                // 토큰에서 사용자 정보 추출
                 String userIdString = jwtUtil.extractSubject(token);
+
+
+                String redisKey = "logout:" + userIdString;
+                if (Boolean.TRUE.equals(redisTemplate.hasKey(redisKey))) {
+                    log.warn("이미 로그아웃된 토큰입니다: userId={}", userIdString);
+                    filterChain.doFilter(request, response);
+                    return;
+                }
+
                 String roleName = jwtUtil.extractRole(token);
                 UUID userId = UUID.fromString(userIdString);
-                UserRole role = UserRole.valueOf(roleName); // String을 Enum으로 변환
+                UserRole role = UserRole.valueOf(roleName);
 
                 log.info("인증 성공: userId={}, role={}", userId, role);
 
