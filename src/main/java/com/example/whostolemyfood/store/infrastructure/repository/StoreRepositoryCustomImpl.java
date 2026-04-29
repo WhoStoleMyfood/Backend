@@ -76,8 +76,8 @@ public class StoreRepositoryCustomImpl implements StoreRepositoryCustom {
                         storeRating.averageRating //평균 평점
                 ))
                 .from(store)
-                .join(store.category, category)
-                .join(store.area, area)
+                .leftJoin(store.category, category)
+                .leftJoin(store.area, area)
                 .join(store.storeRatingSummary, storeRating)
                 .leftJoin(menu).on(menu.store.eq(store),menu.isDeleted.isFalse(),menu.isHidden.isFalse())
                 .where(
@@ -99,8 +99,8 @@ public class StoreRepositoryCustomImpl implements StoreRepositoryCustom {
         Long total = queryFactory
                 .select(store.countDistinct())
                 .from(store)
-                .join(store.category, category)
-                .join(store.area, area)
+                .leftJoin(store.category, category)
+                .leftJoin(store.area, area)
                 .join(store.storeRatingSummary, storeRating)
                 .leftJoin(menu).on(menu.store.eq(store),menu.isDeleted.isFalse(),menu.isHidden.isFalse())
                 .where(
