@@ -14,6 +14,7 @@ import com.example.whostolemyfood.user.domain.entity.QUserEntity;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -59,9 +60,9 @@ public class StoreRepositoryCustomImpl implements StoreRepositoryCustom {
                             .or(menu.name.contains(cond.getKeyword()))
             );
         }
+        long start = System.currentTimeMillis();
 
-
-        List<StoreSearchResponseDtoV1> content = queryFactory
+        JPAQuery<StoreSearchResponseDtoV1> query = queryFactory
                 .selectDistinct(new QStoreSearchResponseDtoV1(
                         store.storeId,            // 1. storeId
                         store.name,          // 2. storeName
@@ -78,8 +79,16 @@ public class StoreRepositoryCustomImpl implements StoreRepositoryCustom {
                 .from(store)
                 .leftJoin(store.category, category)
                 .leftJoin(store.area, area)
-                .join(store.storeRatingSummary, storeRating)
-                .leftJoin(menu).on(menu.store.eq(store),menu.isDeleted.isFalse(),menu.isHidden.isFalse())
+                .join(store.storeRatingSummary, storeRating);
+
+        if (StringUtils.hasText(cond.getKeyword())) {
+            query.leftJoin(menu).on(
+                    menu.store.eq(store),
+                    menu.isDeleted.isFalse(),
+                    menu.isHidden.isFalse()
+            );
+        }
+        List<StoreSearchResponseDtoV1> content=query
                 .where(
                         keywordBuilder,
                         addressContains(cond.getRegion()),
@@ -94,15 +103,27 @@ public class StoreRepositoryCustomImpl implements StoreRepositoryCustom {
                 .limit(pageable.getPageSize())
                 .fetch();
 
+        log.info("[content 쿼리] {}ms", System.currentTimeMillis() - start);
 
+
+        long countStart = System.currentTimeMillis();
         // 2. Count 쿼리
-        Long total = queryFactory
+        JPAQuery<Long> countquery = queryFactory
                 .select(store.countDistinct())
                 .from(store)
                 .leftJoin(store.category, category)
                 .leftJoin(store.area, area)
-                .join(store.storeRatingSummary, storeRating)
-                .leftJoin(menu).on(menu.store.eq(store),menu.isDeleted.isFalse(),menu.isHidden.isFalse())
+                .join(store.storeRatingSummary, storeRating);
+
+        if (StringUtils.hasText(cond.getKeyword())) {
+            countquery.leftJoin(menu).on(
+                    menu.store.eq(store),
+                    menu.isDeleted.isFalse(),
+                    menu.isHidden.isFalse()
+            );
+        }
+
+        Long total = countquery
                 .where(
                         keywordBuilder,
                         addressContains(cond.getRegion()),
@@ -113,6 +134,9 @@ public class StoreRepositoryCustomImpl implements StoreRepositoryCustom {
                         store.isHidden.isFalse()
                 )
                 .fetchOne();
+
+
+        log.info("[count 쿼리] {}ms", System.currentTimeMillis() - countStart);
 
         return new PageImpl<>(content, pageable, total != null ? total : 0L);
     }
