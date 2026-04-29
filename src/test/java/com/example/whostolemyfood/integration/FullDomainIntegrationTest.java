@@ -417,7 +417,7 @@ public class FullDomainIntegrationTest {
         // Then: DB 상태 검증
         assertThat(menuRepository.findById(menuId).orElseThrow().getIsHidden()).isTrue();
         
-        // Then: 고객 메뉴 목록 조회 시 제외 검증 (MockMvc - 주원님 피드백 반영)
+        // Then: 고객 메뉴 목록 조회 시 제외 검증 (MockMvc)
         mockMvc.perform(get(STORE_BASE_URL + "/" + store.getStoreId() + "/menus")
                 .header("Authorization", customerToken))
                 .andExpect(status().isOk())
