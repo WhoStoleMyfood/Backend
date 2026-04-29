@@ -394,7 +394,6 @@ public class FullDomainIntegrationTest {
         StoreEntity hiddenStore = storeRepository.findById(store.getStoreId()).orElseThrow();
         assertThat(hiddenStore.getIsHidden()).isTrue();
 
-        /*
         // Then: 검색 결과 검증
         mockMvc.perform(get(STORE_BASE_URL + "/search")
                         .header("Authorization", customerToken)
@@ -402,7 +401,7 @@ public class FullDomainIntegrationTest {
                         .param("categoryId", store.getCategory().getCategoryId().toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isEmpty()); // 숨겨진 가게는 결과에 노출되면 안 됨
-        */
+
     }
 
     @Test
