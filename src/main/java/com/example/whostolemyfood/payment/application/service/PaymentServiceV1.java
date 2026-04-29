@@ -34,8 +34,8 @@ public class PaymentServiceV1 {
     public PageRes getPayments(Pageable pageable) {
 
         UUID currentAuditor = getCurrentAuditor();
-        if(pageable.getPageSize()>50){
-            pageable = PageRequest.of(pageable.getPageNumber(), 50, pageable.getSort());
+        if(pageable.getPageSize()!=10&&pageable.getPageSize()!=30&&pageable.getPageSize()!=50){
+            pageable = PageRequest.of(pageable.getPageNumber(), 10, pageable.getSort());
         }
         Page<PaymentEntity> allByCreatedBy = paymentRepository.findAllByCreatedBy(currentAuditor, pageable);
         Page<ResPayList> map = allByCreatedBy.map(ResPayList::new);
@@ -56,6 +56,9 @@ public class PaymentServiceV1 {
 
         UUID currentAuditor = getCurrentAuditor();
         OrderEntity orderEntity = orderRepository.findByOrderIdAndUserId(UUID.fromString(reqMakePay.getOrderId()), currentAuditor).orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
+        if (orderEntity.getTotalPrice().longValue()!=reqMakePay.getAmount()){
+            throw new CustomException(ErrorCode.DIFFERENT_PRICE);
+        }
         PaymentEntity paymentEntity = new PaymentEntity(reqMakePay, orderEntity, currentAuditor);
         paymentRepository.save(paymentEntity);
         return new ResMakePay(paymentEntity.getId(), paymentEntity.getPaymentKey());
