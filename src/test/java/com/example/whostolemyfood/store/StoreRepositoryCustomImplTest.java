@@ -7,6 +7,7 @@ import com.example.whostolemyfood.global.config.JpaAuditingConfig;
 import com.example.whostolemyfood.global.config.search.QueryDSLConfig;
 import com.example.whostolemyfood.menu.domain.entity.MenuEntity;
 import com.example.whostolemyfood.store.domain.entity.StoreEntity;
+import com.example.whostolemyfood.store.domain.entity.StoreRatingSummaryEntity;
 import com.example.whostolemyfood.store.domain.repository.StoreRepositoryCustom;
 import com.example.whostolemyfood.store.infrastructure.repository.StoreRepositoryCustomImpl;
 import com.example.whostolemyfood.store.presentation.dto.request.StoreSearchConditionV1;
@@ -24,6 +25,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalTime;
 import java.util.UUID;
 
@@ -66,11 +68,20 @@ class StoreRepositoryCustomImplTest {
                 .isDefault(false)
                 .build();
 
+        StoreRatingSummaryEntity ratingSummary = StoreRatingSummaryEntity.builder()
+                .averageRating(BigDecimal.ZERO)
+                .reviewCount(0)
+                .totalRatingSum(0)
+                .build();
+        em.persist(ratingSummary);
+
+
         StoreEntity store = StoreEntity.builder()
                 .name("짜장백개")
                 .address("대구 중구 종로 100")
                 .phone("053-123-4567")
                 .content("정통 중식 전문점")
+                .storeRatingSummary(ratingSummary)
                 .category(category)
                 .area(area)
                 .openTime(LocalTime.of(11, 0))
