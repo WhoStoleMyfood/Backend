@@ -38,6 +38,7 @@ public class AuthControllerV1 {
     }
 
     // 로그인
+    @Operation(summary = "로그인",description = "Access 토큰을 발급합니다")
     @PostMapping("/login")
     public ResponseEntity<ResLoginDtoV1> login(
             @RequestBody ReqLoginDtoV1 requestDto,
