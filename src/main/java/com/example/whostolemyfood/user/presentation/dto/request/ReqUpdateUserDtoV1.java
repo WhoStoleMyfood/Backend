@@ -1,5 +1,6 @@
 package com.example.whostolemyfood.user.presentation.dto.request;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
@@ -7,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
+@Schema(description = "유저 수정 요청 객체")
 @NoArgsConstructor
 public class ReqUpdateUserDtoV1 {
 

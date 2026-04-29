@@ -18,8 +18,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UserRepositoryImpl implements UserRepositoryCustom {
 
+    //final 지울게요 - 테스트돌리는데 jpa가 이 파일 인식을 못해요(final이라 초기화를 못해서 jpa가 이 필드에 값 주입을 못해서 터짐)
     @PersistenceContext
-    private final EntityManager em;
+    private EntityManager em;
 
     @Override
     public Page<UserEntity> findAllExceptMe(Pageable pageable, UUID myId) {

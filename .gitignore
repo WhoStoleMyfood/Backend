@@ -42,6 +42,7 @@ out/
 .gradle
 **/build/
 !**/src/**/build/
+src/test/resources
 
 # Ignore Gradle GUI config
 gradle-app.setting
@@ -60,4 +61,11 @@ gradle-app.setting
 .project
 # JDT-specific (Eclipse Java Development Tools)
 .classpath
+
+WhostolemyfoodApplicatoin.java
+application.yaml
 /resources/application.yml
+
+.DS_Store
+
+.env

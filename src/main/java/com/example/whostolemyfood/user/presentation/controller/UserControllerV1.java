@@ -1,5 +1,7 @@
 package com.example.whostolemyfood.user.presentation.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 import org.springframework.http.ResponseEntity;
@@ -13,6 +15,7 @@ import com.example.whostolemyfood.user.presentation.dto.response.ResUpdateUserDt
 
 import lombok.RequiredArgsConstructor;
 
+@Tag(name = "User API",description = "유저 관리 API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/user")
@@ -21,6 +24,7 @@ public class UserControllerV1 {
     private final UserService userService;
 
     // 내 정보 조회
+    @Operation(summary = "내 정보 조회", description = "유저가 자신의 정보를 조회합니다.")
     @GetMapping("/me")
     public ResponseEntity<ResGetUserByIdDtoV1> getMyInfo(
             @AuthenticationPrincipal AuthUser loginUser // 1. 타입 변경!
@@ -30,7 +34,7 @@ public class UserControllerV1 {
     }
 
     //
-
+    @Operation(summary = "내 정보 수정", description = "유저가 자신의 정보를 수정합니다.")
     @PatchMapping("/me")
     public ResponseEntity<ResUpdateUserDtoV1> updateMyInfo(
             @AuthenticationPrincipal AuthUser loginUser,

@@ -10,7 +10,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 //@EnableJpaAuditing
 @EnableCaching
 @SpringBootApplication
-@EntityListeners(AuditingEntityListener.class)
+//@EntityListeners(AuditingEntityListener.class)
 public class WhostolemyfoodApplication {
 
 	public static void main(String[] args) {

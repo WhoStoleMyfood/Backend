@@ -30,7 +30,7 @@ public class ReviewRatingBatchService {
 		List<StoreEntity> stores = storeRepository.findAll();
 
 		for (StoreEntity store : stores) {
-			UUID storeId = store.getId();
+			UUID storeId = store.getStoreId();
 
 			int reviewCount = getReviewCount(storeId);
 			int totalRatingSum = getTotalRatingSum(storeId);
@@ -46,13 +46,7 @@ public class ReviewRatingBatchService {
 				: BigDecimal.valueOf((double) totalRatingSum / reviewCount)
 				.setScale(1, RoundingMode.HALF_UP);
 
-			StoreRatingSummaryEntity summary = null;
-
-			if (store.getStoreRatingId() != null) {
-				summary = storeRatingSummaryRepository
-					.findByIdAndIsDeletedFalse(store.getStoreRatingId())
-					.orElse(null);
-			}
+			StoreRatingSummaryEntity summary = store.getStoreRatingSummary();
 
 			if (summary == null) {
 				summary = StoreRatingSummaryEntity.builder()
@@ -68,8 +62,7 @@ public class ReviewRatingBatchService {
 
 				StoreRatingSummaryEntity savedSummary = storeRatingSummaryRepository.save(summary);
 
-				store.updateStoreRatingId(savedSummary.getId());
-				storeRepository.save(store);
+				store.updateStoreRatingSummary(savedSummary);
 			} else {
 				summary.refresh(
 					reviewCount,
@@ -88,7 +81,7 @@ public class ReviewRatingBatchService {
 	private int getReviewCount(UUID storeId) {
 		Long count = em.createQuery(
 				"select count(r) from ReviewEntity r " +
-					"where r.store.id = :storeId and r.isDeleted = false",
+					"where r.store.storeId = :storeId and r.isDeleted = false",
 				Long.class
 			)
 			.setParameter("storeId", storeId)
@@ -100,7 +93,7 @@ public class ReviewRatingBatchService {
 	private int getTotalRatingSum(UUID storeId) {
 		Long sum = em.createQuery(
 				"select coalesce(sum(r.rating), 0) from ReviewEntity r " +
-					"where r.store.id = :storeId and r.isDeleted = false",
+					"where r.store.storeId = :storeId and r.isDeleted = false",
 				Long.class
 			)
 			.setParameter("storeId", storeId)
@@ -112,7 +105,9 @@ public class ReviewRatingBatchService {
 	private int getCountByRating(UUID storeId, int rating) {
 		Long count = em.createQuery(
 				"select count(r) from ReviewEntity r " +
-					"where r.store.id = :storeId and r.rating = :rating and r.isDeleted = false",
+					"where r.store.storeId = :storeId " +
+					"and r.rating = :rating " +
+					"and r.isDeleted = false",
 				Long.class
 			)
 			.setParameter("storeId", storeId)

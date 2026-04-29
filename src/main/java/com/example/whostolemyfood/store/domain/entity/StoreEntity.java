@@ -1,7 +1,10 @@
 package com.example.whostolemyfood.store.domain.entity;
 
+import com.example.whostolemyfood.area.domain.entity.AreaEntity;
+import com.example.whostolemyfood.category.domain.entity.CategoryEntity;
 import com.example.whostolemyfood.global.entity.BaseSoftDeleteEntity;
 import com.example.whostolemyfood.store.presentation.dto.request.ReqUpdateStoreDtoV1;
+import com.example.whostolemyfood.user.domain.entity.UserEntity;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.*;
@@ -23,21 +26,25 @@ public class StoreEntity extends BaseSoftDeleteEntity {
     @Id
     @Column(name = "store_id")
     @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
-
-    // store_rating_id
-    @Column(name = "store_rating_id")
-    private UUID storeRatingId;
+    private UUID storeId;
 
     // user_id
-//    @ManyToOne
-//    @JoinColumn(name = "category_id")
-//    private Category category;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private UserEntity user;
 
-//    @ManyToOne
-//    @Column(name = "area_id")
-//    private Area area;
-    // store_status_id
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = false)
+    private CategoryEntity category;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "area_id")
+    private AreaEntity area;
+
+    //store_rating_id 이걸로 통일
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "store_rating_id")
+    private StoreRatingSummaryEntity storeRatingSummary;
 
     @Column(nullable = false, unique = true)
     private String name;
@@ -68,13 +75,13 @@ public class StoreEntity extends BaseSoftDeleteEntity {
     @Builder.Default
     private Boolean isDeleted = false;
 
-
-    // owner용 업데이트
-    public void updateAllFields(ReqUpdateStoreDtoV1 request) {
-        this.name = request.getStoreName();
+    // 스토어 수정
+    public void updateStore(ReqUpdateStoreDtoV1 request, CategoryEntity category) {
+        this.name = request.getName();
         this.address = request.getAddress();
         this.phone = request.getPhone();
         this.content = request.getContent();
+        this.category = category;
         this.minOrderPrice = request.getMinOrderPrice();
         this.openTime = request.getOpenTime();
         this.closeTime = request.getCloseTime();
@@ -82,14 +89,7 @@ public class StoreEntity extends BaseSoftDeleteEntity {
         if (request.getStatus() != null) {
             this.status = request.getStatus();
         }
-        // 상태, 숨김
     }
-
-    // manager / master용 업데이트
-//    public void updateOptionalFields(ReqUpdateStoreDtoV1 request) {
-//        this.status = request.getStatus();
-//        this.isHidden = request.getIsHidden();
-//    }
 
     public void deleteByOwnerAndMaster(UUID deletedBy) {
         this.isDeleted = true;
@@ -97,7 +97,11 @@ public class StoreEntity extends BaseSoftDeleteEntity {
         this.status = StoreStatus.SHUTDOWN;
     }
 
-    public void updateStoreRatingId(UUID storeRatingId) {
-        this.storeRatingId = storeRatingId;
+    public void updateStoreRatingSummary(StoreRatingSummaryEntity storeRatingSummary) {
+        this.storeRatingSummary = storeRatingSummary;
+    }
+
+    public void toggleIsHidden() {
+        this.isHidden = !this.isHidden;
     }
 }
