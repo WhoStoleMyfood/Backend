@@ -16,6 +16,7 @@ import com.example.whostolemyfood.order.domain.entity.OrderStatus;
 import com.example.whostolemyfood.order.domain.repository.OrderRepository;
 import com.example.whostolemyfood.payment.infrastructure.PaymentRepository;
 import com.example.whostolemyfood.review.application.service.ReviewRatingBatchService;
+import com.example.whostolemyfood.review.domain.repository.ReviewRepository;
 import com.example.whostolemyfood.store.domain.entity.StoreEntity;
 import com.example.whostolemyfood.store.domain.entity.StoreRatingSummaryEntity;
 import com.example.whostolemyfood.store.domain.entity.StoreStatus;
@@ -34,6 +35,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -78,6 +80,7 @@ public class FullDomainIntegrationTest {
     @Autowired private MenuRepository menuRepository;
     @Autowired private AddressRepository addressRepository;
     @Autowired private OrderRepository orderRepository;
+    @Autowired private ReviewRepository reviewRepository;
     @Autowired private PaymentRepository paymentRepository;
     @Autowired private AiLogRepository aiLogRepository;
     @Autowired private AreaRepository areaRepository;
@@ -85,12 +88,77 @@ public class FullDomainIntegrationTest {
     @Autowired private StoreRatingSummaryRepository storeRatingSummaryRepository;
     @Autowired private ReviewRatingBatchService reviewRatingBatchService; 
     @Autowired private EntityManager entityManager;
+    @Autowired private PasswordEncoder passwordEncoder;
 
     @MockitoBean private GeminiClient geminiClient;
 
     // ---------------------------------------------------------
     // Helper Methods (Test Fixtures)
     // ---------------------------------------------------------
+
+    /**
+     * Repository를 통해 유저를 직접 생성합니다. (Given 최적화용)
+     */
+    private UserEntity createUserFixture(String email, String password, String userName, UserRole role) {
+        return userRepository.save(UserEntity.builder()
+                .email(email)
+                .password(passwordEncoder.encode(password))
+                .name(userName)
+                .role(role)
+                .build());
+    }
+
+    /**
+     * Repository를 통해 가게를 직접 생성합니다.
+     */
+    private StoreEntity createStoreFixture(UserEntity owner, String storeName) {
+        AreaEntity area = areaRepository.save(AreaEntity.builder()
+                .ukName("Area_" + UUID.randomUUID().toString().substring(0, 8))
+                .city("서울").district("종로구")
+                .isActive(true)
+                .build());
+        CategoryEntity category = categoryRepository.save(CategoryEntity.builder()
+                .name("Cat_" + UUID.randomUUID().toString().substring(0, 8)).build());
+        StoreRatingSummaryEntity ratingSummary = storeRatingSummaryRepository.save(StoreRatingSummaryEntity.builder().build());
+
+        return storeRepository.save(StoreEntity.builder()
+                .user(owner).area(area).category(category).storeRatingSummary(ratingSummary)
+                .name(storeName).content("전통 방식으로 튀긴 바삭한 치킨 전문점").address("종로구 100")
+                .phone("02-1234").minOrderPrice(15000).status(StoreStatus.OPEN)
+                .openTime(LocalTime.of(10, 0)).closeTime(LocalTime.of(22, 0)).isHidden(false).build());
+    }
+
+    /**
+     * Repository를 통해 메뉴를 직접 생성합니다.
+     */
+    private MenuEntity createMenuFixture(StoreEntity store, String name, int price) {
+        return menuRepository.save(MenuEntity.builder()
+                .store(store).name(name).price(price).description("설명").isHidden(false).build());
+    }
+
+    /**
+     * Repository를 통해 배송지를 직접 생성합니다.
+     */
+    private AddressEntity createAddressFixture(UserEntity user, String alias, String address) {
+        return addressRepository.save(AddressEntity.builder()
+                .userId(user.getId()).alias(alias).address(address)
+                .detail("상세주소").zipCode("12345").isDefault(false).build());
+    }
+
+    /**
+     * Repository를 통해 주문을 직접 생성합니다.
+     */
+    private OrderEntity createOrderFixture(UserEntity customer, StoreEntity store, AddressEntity address, OrderStatus status, int totalPrice) {
+        return orderRepository.save(OrderEntity.builder()
+                .userId(customer.getId())
+                .storeId(store.getStoreId())
+                .addressId(address.getId())
+                .status(status)
+                .totalPrice(totalPrice)
+                .deliveryFee(3000)
+                .isHidden(false)
+                .build());
+    }
 
     private String signupAndGetToken(String email, String password, String userName, String role) throws Exception {
         Map<String, Object> signupData = Map.of("email", email, "password", password, "userName", userName, "userRole", role);
@@ -107,23 +175,6 @@ public class FullDomainIntegrationTest {
     private UserEntity getUserByEmail(String email) {
         return userRepository.findByUserEmail(email)
                 .orElseThrow(() -> new IllegalStateException("유저를 찾을 수 없습니다: " + email));
-    }
-
-    private StoreEntity setupStore(UserEntity owner, String storeName) {
-        AreaEntity area = areaRepository.save(AreaEntity.builder()
-                .ukName("Area_" + UUID.randomUUID().toString().substring(0, 8))
-                .city("서울").district("종로구")
-                .isActive(true)
-                .build());
-        CategoryEntity category = categoryRepository.save(CategoryEntity.builder()
-                .name("Cat_" + UUID.randomUUID().toString().substring(0, 8)).build());
-        StoreRatingSummaryEntity ratingSummary = storeRatingSummaryRepository.save(StoreRatingSummaryEntity.builder().build());
-        
-        return storeRepository.save(StoreEntity.builder()
-                .user(owner).area(area).category(category).storeRatingSummary(ratingSummary)
-                .name(storeName).content("전통 방식으로 튀긴 바삭한 치킨 전문점").address("종로구 100")
-                .phone("02-1234").minOrderPrice(15000).status(StoreStatus.OPEN)
-                .openTime(LocalTime.of(10, 0)).closeTime(LocalTime.of(22, 0)).isHidden(false).build());
     }
 
     private UUID createMenuViaApi(String ownerToken, UUID storeId, String menuName, int price, String prompt) throws Exception {
@@ -178,7 +229,7 @@ public class FullDomainIntegrationTest {
         String customerToken = signupAndGetToken("cust_flow@test.com", "Cust123!@#", "flowcust", "CUSTOMER");
         
         UserEntity ownerUser = getUserByEmail("owner_flow@test.com");
-        StoreEntity store = setupStore(ownerUser, "종로 바삭치킨_Flow");
+        StoreEntity store = createStoreFixture(ownerUser, "종로 바삭치킨_Flow");
         
         given(geminiClient.generateContent(anyString())).willReturn("바삭한 치킨입니다.");
         UUID menuId = createMenuViaApi(ownerToken, store.getStoreId(), "오리지널 치킨", 20000, "바삭함을 강조해줘");
@@ -243,7 +294,7 @@ public class FullDomainIntegrationTest {
         // Given
         String ownerToken = signupAndGetToken("owner_ai@test.com", "Owner123!@#", "aiowner", "OWNER");
         UserEntity ownerUser = getUserByEmail("owner_ai@test.com");
-        StoreEntity store = setupStore(ownerUser, "AI 치킨");
+        StoreEntity store = createStoreFixture(ownerUser, "AI 치킨");
         
         String testPrompt = "후라이드 치킨의 바삭함을 강조해서 설명해줘";
         String aiResponse = "매일 교체하는 신선한 기름으로 튀겨 극강의 바삭함을 자랑합니다.";
@@ -270,11 +321,10 @@ public class FullDomainIntegrationTest {
     @Test
     @DisplayName("가게 검색: 조건별 필터링 및 사이즈 제한 검증")
     void searchStore_shouldApplyFiltersAndPaging() throws Exception {
-        // Given
+        // [Refactor] Given: 검색 API 검증을 위해 customerToken만 유지, 사장님/가게는 Fixture로 단순화
         String customerToken = signupAndGetToken("cust_srch@test.com", "Cust123!@#", "srchcust", "CUSTOMER");
-        String ownerToken = signupAndGetToken("owner_srch@test.com", "Owner123!@#", "srchowner", "OWNER");
-        UserEntity ownerUser = getUserByEmail("owner_srch@test.com");
-        StoreEntity store = setupStore(ownerUser, "종로 바삭치킨 검색용");
+        UserEntity ownerUser = createUserFixture("owner_srch@test.com", "Owner123!@#", "srchowner", UserRole.OWNER);
+        StoreEntity store = createStoreFixture(ownerUser, "종로 바삭치킨 검색용");
         
         // When & Then: 사이즈 강제 보정 및 검색 결과 포함 검증
         mockMvc.perform(get(STORE_BASE_URL + "/search")
@@ -294,22 +344,29 @@ public class FullDomainIntegrationTest {
     @Test
     @DisplayName("실시간 권한 인가: CUSTOMER 권한을 MANAGER로 강제 변경 시 주문 생성 403 차단 검증")
     void changedCustomerRole_shouldBlockOrderCreationImmediately() throws Exception {
-        // Given
-        String ownerToken = signupAndGetToken("owner_role@test.com", "Owner123!@#", "roleowner", "OWNER");
+        // [Refactor] Given: 사장님은 Fixture로 생성 (토큰 불필요)
+        UserEntity owner = createUserFixture("owner_role@test.com", "Owner123!@#", "roleowner", UserRole.OWNER);
+        
+        // Given: 고객은 토큰 발급 후 엔티티 확보 (보안 컨텍스트와 데이터 정합성 보장)
         String customerToken = signupAndGetToken("cust_role@test.com", "Cust123!@#", "rolecust", "CUSTOMER");
-        
-        UserEntity ownerUser = getUserByEmail("owner_role@test.com");
-        StoreEntity store = setupStore(ownerUser, "권한 차단 가게");
-        UUID menuId = createMenuViaApi(ownerToken, store.getStoreId(), "일반 메뉴", 10000, null);
-        UUID addressId = createAddressViaApi(customerToken, "자택", "서울시 강남구");
-        
-        // Given: 권한 강제 변경 (해킹 시뮬레이션)
         UserEntity customerUser = getUserByEmail("cust_role@test.com");
+
+        // Given: 가게/메뉴/배송지 Fixture 생성
+        StoreEntity store = createStoreFixture(owner, "권한 차단 가게");
+        MenuEntity menu = createMenuFixture(store, "일반 메뉴", 10000);
+        AddressEntity address = createAddressFixture(customerUser, "자택", "서울시 강남구");
+        
+        // Given: 권한 강제 변경 (해킹 시뮬레이션 - DB 상태 직접 조작)
         ReflectionTestUtils.setField(customerUser, "userRole", UserRole.MANAGER);
         userRepository.saveAndFlush(customerUser);
         
-        // When & Then
-        Map<String, Object> req = Map.of("storeId", store.getStoreId(), "addressId", addressId, "orderItems", List.of(Map.of("menuId", menuId, "quantity", 1, "priceAtOrder", 10000)));
+        // When & Then: MANAGER로 변한 고객이 주문 생성 시도 시 403 Forbidden 확인
+        Map<String, Object> req = Map.of(
+                "storeId", store.getStoreId(),
+                "addressId", address.getId(),
+                "orderItems", List.of(Map.of("menuId", menu.getMenuId(), "quantity", 1, "priceAtOrder", 10000))
+        );
+
         mockMvc.perform(post(ORDER_BASE_URL)
                 .header("Authorization", customerToken)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -320,29 +377,20 @@ public class FullDomainIntegrationTest {
     @Test
     @DisplayName("주문 5분 취소 룰: 5분이 경과된 주문 취소 요청 시 400 Bad Request 검증")
     void cancelOrderAfterFiveMinutes_shouldFail() throws Exception {
-        // Given
-        String ownerToken = signupAndGetToken("own_cancel@test.com", "Owner123!@#", "canowner", "OWNER");
+        // [Refactor] Given: 취소 API 검증을 위해 customerToken만 유지, 사장님은 Fixture로 신속 생성
+        UserEntity owner = createUserFixture("own_cancel@test.com", "Owner123!@#", "canowner", UserRole.OWNER);
         String customerToken = signupAndGetToken("cus_cancel@test.com", "Cust123!@#", "cancust", "CUSTOMER");
+        UserEntity customer = getUserByEmail("cus_cancel@test.com");
         
-        UserEntity ownerUser = getUserByEmail("own_cancel@test.com");
-        StoreEntity store = setupStore(ownerUser, "취소 불가 가게");
-        UUID addressId = createAddressViaApi(customerToken, "자택", "서울시 강남구");
-        UserEntity customerUser = getUserByEmail("cus_cancel@test.com");
+        StoreEntity store = createStoreFixture(owner, "취소 불가 가게");
+        AddressEntity address = createAddressFixture(customer, "자택", "서울시 강남구");
         
-        OrderEntity lateOrder = orderRepository.save(OrderEntity.builder()
-                .userId(customerUser.getId())
-                .storeId(store.getStoreId())
-                .addressId(addressId)
-                .status(OrderStatus.PENDING)
-                .deliveryFee(3000)
-                .totalPrice(23000)
-                .build());
-                
-        // Given: 시간 강제 조작 (6분 전으로)
+        // Given: 5분이 경과한 주문 생성 (과거 시간 강제 주입)
+        OrderEntity lateOrder = createOrderFixture(customer, store, address, OrderStatus.PENDING, 23000);
         ReflectionTestUtils.setField(lateOrder, "createdAt", LocalDateTime.now().minusMinutes(6));
         orderRepository.saveAndFlush(lateOrder);
         
-        // When & Then
+        // When: 취소 API 호출 (MockMvc)
         mockMvc.perform(patch(ORDER_BASE_URL + "/" + lateOrder.getOrderId() + "/cancel")
                 .header("Authorization", customerToken))
                 .andExpect(status().isBadRequest());
@@ -351,24 +399,25 @@ public class FullDomainIntegrationTest {
     @Test
     @DisplayName("메뉴 숨김 처리: 숨김 처리 시 DB isHidden 상태 변경 및 고객 조회 시 노출 차단 검증")
     void hideMenu_shouldNotExposeMenuToCustomer() throws Exception {
-        // Given
+        // [Hybrid] Given: 유저 생성 및 토큰 확보
         String ownerToken = signupAndGetToken("own_hmenu@test.com", "Owner123!@#", "hmenuown", "OWNER");
         String customerToken = signupAndGetToken("cus_hmenu@test.com", "Cust123!@#", "hmenucust", "CUSTOMER");
+        UserEntity owner = getUserByEmail("own_hmenu@test.com");
         
-        UserEntity ownerUser = getUserByEmail("own_hmenu@test.com");
-        StoreEntity store = setupStore(ownerUser, "메뉴 숨김 테스트 가게");
-        UUID menuId = createMenuViaApi(ownerToken, store.getStoreId(), "시크릿 메뉴", 15000, null);
+        // [Hybrid] Given: 메뉴 데이터 Fixture 생성 (가게/메뉴 API 연쇄 호출 제거)
+        StoreEntity store = createStoreFixture(owner, "메뉴 숨김 테스트 가게");
+        MenuEntity menu = createMenuFixture(store, "시크릿 메뉴", 15000);
+        UUID menuId = menu.getMenuId();
         
-        // When: 메뉴 숨김 API 호출
+        // When: 메뉴 숨김 API 호출 (MockMvc)
         mockMvc.perform(patch(STORE_BASE_URL + "/" + store.getStoreId() + "/menus/" + menuId + "/hide")
                 .header("Authorization", ownerToken))
                 .andExpect(status().isOk());
                 
-        // Then: DB isHidden 변경 확인
-        MenuEntity hiddenMenu = menuRepository.findById(menuId).orElseThrow();
-        assertThat(hiddenMenu.getIsHidden()).isTrue();
+        // Then: DB 상태 검증
+        assertThat(menuRepository.findById(menuId).orElseThrow().getIsHidden()).isTrue();
         
-        // Then: 고객 권한 메뉴 목록에서 제외 검증
+        // Then: 고객 메뉴 목록 조회 시 제외 검증 (MockMvc)
         mockMvc.perform(get(STORE_BASE_URL + "/" + store.getStoreId() + "/menus")
                 .header("Authorization", customerToken))
                 .andExpect(status().isOk())
@@ -378,51 +427,82 @@ public class FullDomainIntegrationTest {
     @Test
     @DisplayName("가게 숨김 처리: DB isHidden 상태 변경 검증")
     void hideStore_shouldUpdateDbIsHidden() throws Exception {
-        // Given
+        // [Hybrid] Given: 유저/가게 데이터 Fixture 생성 및 토큰 확보
         String ownerToken = signupAndGetToken("own_hstore@test.com", "Owner123!@#", "hstoreown", "OWNER");
         String customerToken = signupAndGetToken("cus_hstore@test.com", "Cust123!@#", "hstorecust", "CUSTOMER");
+        UserEntity owner = getUserByEmail("own_hstore@test.com");
         
-        UserEntity ownerUser = getUserByEmail("own_hstore@test.com");
-        StoreEntity store = setupStore(ownerUser, "숨긴가게 바삭치킨");
+        StoreEntity store = createStoreFixture(owner, "숨긴가게 바삭치킨");
         
         // When: 가게 숨김 처리 API 호출
         mockMvc.perform(patch(STORE_BASE_URL + "/" + store.getStoreId() + "/hide")
                 .header("Authorization", ownerToken))
                 .andExpect(status().isOk());
                 
-        // Then: DB isHidden 변경 확인
-        StoreEntity hiddenStore = storeRepository.findById(store.getStoreId()).orElseThrow();
-        assertThat(hiddenStore.getIsHidden()).isTrue();
+        // Then: DB 상태 확인
+        assertThat(storeRepository.findById(store.getStoreId()).orElseThrow().getIsHidden()).isTrue();
 
-        /*
-        // Then: 검색 결과 검증
+        // Then: 검색 결과 노출 차단 검증 (MockMvc)
         mockMvc.perform(get(STORE_BASE_URL + "/search")
                         .header("Authorization", customerToken)
                         .param("keyword", "바삭")
                         .param("categoryId", store.getCategory().getCategoryId().toString()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content").isEmpty()); // 숨겨진 가게는 결과에 노출되면 안 됨
-        */
+                .andExpect(jsonPath("$.content").isEmpty());
     }
 
     @Test
     @DisplayName("주소 삭제: DELETE 호출 시 Soft Delete 작동 확인 및 Audit 데이터 검증")
     void deleteAddress_shouldSoftDelete() throws Exception {
-        // Given
+        // [Hybrid] Given: 토큰 발급 및 주인공 엔티티 확보
         String customerToken = signupAndGetToken("cus_daddr@test.com", "Cust123!@#", "daddrcust", "CUSTOMER");
-        UserEntity customerUser = getUserByEmail("cus_daddr@test.com");
+        UserEntity customer = getUserByEmail("cus_daddr@test.com");
         
-        UUID addressId = createAddressViaApi(customerToken, "삭제할 집", "인천시 남동구");
+        // [Hybrid] Given: 주소 소유자가 토큰 사용자와 일치하도록 Fixture 생성 (정합성 보장)
+        AddressEntity address = createAddressFixture(customer, "삭제할 집", "인천시 남동구");
+        UUID addressId = address.getId();
         
-        // When
+        // When: 삭제 API 호출 (MockMvc - customerToken 유지)
         mockMvc.perform(delete(ADDRESS_BASE_URL + "/" + addressId)
                 .header("Authorization", customerToken))
                 .andExpect(status().isNoContent());
                 
-        // Then: 논리 삭제 및 Audit 확인
+        // Then: Soft Delete 및 Audit(deletedBy) 검증
         AddressEntity deletedAddress = addressRepository.findById(addressId).orElseThrow();
         assertThat(deletedAddress.getIsDeleted()).isTrue();
         assertThat(deletedAddress.getDeletedAt()).isNotNull();
-        assertThat(deletedAddress.getDeletedBy()).isEqualTo(customerUser.getId());
+        assertThat(deletedAddress.getDeletedBy()).isEqualTo(customer.getId());
+    }
+
+    @Test
+    @DisplayName("리뷰 작성 실패: COMPLETED 상태가 아닌 주문(PENDING)에 리뷰 작성 시도 시 400 에러 및 DB 저장 안됨 확인")
+    void review_shouldFail_whenOrderNotCompleted() throws Exception {
+        // [Refactor] Given: 기초 데이터 Fixture 생성 및 토큰 확보
+        UserEntity owner = createUserFixture("own_revfail@test.com", "Owner123!@#", "revown", UserRole.OWNER);
+        String customerToken = signupAndGetToken("cus_revfail@test.com", "Cust123!@#", "revcus", "CUSTOMER");
+        UserEntity customerUser = getUserByEmail("cus_revfail@test.com");
+
+        StoreEntity store = createStoreFixture(owner, "리뷰 실패 테스트 가게");
+        AddressEntity address = createAddressFixture(customerUser, "우리집", "서울시 강남구");
+
+        // Given: PENDING 상태의 주문 생성
+        OrderEntity pendingOrder = createOrderFixture(customerUser, store, address, OrderStatus.PENDING, 10000);
+        UUID orderId = pendingOrder.getOrderId();
+        
+        long beforeReviewCount = reviewRepository.count();
+
+        // When: PENDING 주문에 대해 리뷰 작성 시도
+        Map<String, Object> revReq = Map.of("rating", 5, "content", "미리 쓰는 리뷰");
+        mockMvc.perform(post(ORDER_BASE_URL + "/" + orderId + "/reviews")
+                .header("Authorization", customerToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(revReq)))
+                // Then: 400 Bad Request 확인
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("R005"));
+
+        // Then: DB에 리뷰가 실제로 저장되지 않았음을 검증
+        assertThat(reviewRepository.count()).isEqualTo(beforeReviewCount);
     }
 }
+
