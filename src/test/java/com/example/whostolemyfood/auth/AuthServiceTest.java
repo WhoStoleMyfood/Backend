@@ -109,13 +109,16 @@ public class AuthServiceTest {
         given(userRepository.findByUserEmail(anyString())).willReturn(Optional.of(가짜_유저));
         given(passwordEncoder.matches(anyString(), anyString())).willReturn(true);
         given(jwtUtil.createToken(any(UUID.class), any(UserRole.class))).willReturn("fake-access-token");
+        // [추가] 리프레시 토큰 생성을 위한 모킹
+        given(jwtUtil.generateRefreshToken(any(UUID.class))).willReturn("fake-refresh-token");
 
-        // 2. 실행
-        ResLoginDtoV1 결과 = authService.login(요청);
+        // 2. 실행 - 리턴 타입을 TokenResult로 변경!
+        com.example.whostolemyfood.user.application.security.TokenResult 결과 = authService.login(요청);
 
         // 3. 검증
         assertThat(결과.getUserId()).isEqualTo(유저_ID);
         assertThat(결과.getAccessToken()).isEqualTo("fake-access-token");
+        assertThat(결과.getRefreshToken()).isEqualTo("fake-refresh-token");
     }
 
     @Test

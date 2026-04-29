@@ -42,17 +42,16 @@ public class UserServiceV1 implements UserService {
     public ResUpdateUserDtoV1 updateUser(UUID id, ReqUpdateUserDtoV1 requestDto) {
         UserEntity user = findActiveUser(id);
 
-        // 비밀번호 변경 로직
-        String encodedPassword = user.getUserPassword();
+        // 1. 비밀번호가 입력된 경우에만 암호화해서 업데이트
         if (requestDto.getPassword() != null && !requestDto.getPassword().isBlank()) {
-            encodedPassword = passwordEncoder.encode(requestDto.getPassword());
+            String encodedPassword = passwordEncoder.encode(requestDto.getPassword());
+            user.updatePassword(encodedPassword);
         }
 
-        // 도메인 모델에 업데이트 위임
+        // 2. 나머지 일반 정보 업데이트
         user.updateUserInfo(requestDto);
         user.markUpdatedBy(id);
 
-        // 서비스 단에서 DTO로 변환하여 반환 (엔티티 유출 방지)
         return new ResUpdateUserDtoV1(
                 user.getUserEmail(),
                 user.getUserName(),

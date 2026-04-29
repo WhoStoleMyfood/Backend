@@ -54,19 +54,24 @@ public class AuthControllerTest {
     public void login_success() throws Exception {
         // 1. 준비 (Given)
         ReqLoginDtoV1 request = new ReqLoginDtoV1("test@email.com", "password123");
-        ResLoginDtoV1 response = new ResLoginDtoV1(TEST_USER_ID,"access-token-xyz");
+        // 서비스는 이제 TokenResult를 줍니다.
+        com.example.whostolemyfood.user.application.security.TokenResult serviceResponse =
+                new com.example.whostolemyfood.user.application.security.TokenResult(TEST_USER_ID, "access-token-xyz", "refresh-token-abc");
 
-        // AuthService가 어떤 이메일/비번을 받든 가짜 응답을 주도록 설정
-        given(authService.login(any())).willReturn(response);
+        given(authService.login(any())).willReturn(serviceResponse);
 
         // 2. 실행 및 검증 (When & Then)
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-        // 수정 후 (실제 응답 필드명인 accessToken으로 변경)
                 .andExpect(jsonPath("$.accessToken").value("access-token-xyz"))
-                .andExpect(jsonPath("$.userId").value(TEST_USER_ID.toString()));
+                .andExpect(jsonPath("$.userId").value(TEST_USER_ID.toString()))
+                // 리프레시 토큰은 바디에 없어야 하므로 존재하지 않는지 확인
+                .andExpect(jsonPath("$.refreshToken").doesNotExist())
+                // 쿠키에 리프레시 토큰이 설정되었는지 확인
+                .andExpect(cookie().exists("refreshToken"))
+                .andExpect(cookie().httpOnly("refreshToken", true));
     }
 
     @Test

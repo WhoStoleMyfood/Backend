@@ -57,15 +57,17 @@ public class UserEntity extends BaseAuditEntity {
         if (dto.getName() != null && !dto.getName().isBlank()) {
             this.userName = dto.getName();
         }
-        if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
-            this.userPassword = dto.getPassword();
-        }
+
         if (dto.getAddress() != null && !dto.getAddress().isBlank()) {
             this.address = dto.getAddress();
         }
     }
 
-    public void updateStatus(UserStatus status) {
-//        this.status = status;
+    public void updatePassword(String encodedPassword) {
+        this.userPassword = encodedPassword;
     }
+
+//    public void updateStatus(UserStatus status) {
+//        this.status = status;
+//    }
 }
