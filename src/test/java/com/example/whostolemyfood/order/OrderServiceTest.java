@@ -214,7 +214,7 @@ public class OrderServiceTest {
         // Given 1: 가게가 CLOSED 상태인 경우
         mockUserCheck(UserRole.CUSTOMER);
         UUID storeId = UUID.randomUUID();
-        StoreEntity closedStore = StoreEntity.builder().status(StoreStatus.CLOSED).isHidden(false).build();
+        StoreEntity closedStore = StoreEntity.builder().status(StoreStatus.CLOSED).build();
         given(storeRepository.findById(storeId)).willReturn(Optional.of(closedStore));
 
         ReqCreateOrderDtoV1 request = ReqCreateOrderDtoV1.builder().storeId(storeId).build();
@@ -227,7 +227,7 @@ public class OrderServiceTest {
         // Given 2: 최소 주문 금액 미달인 경우
         StoreEntity openStore = StoreEntity.builder()
                 .status(StoreStatus.OPEN).openTime(LocalTime.MIN).closeTime(LocalTime.MAX)
-                .minOrderPrice(50000).isHidden(false).build(); // 최소 5만원
+                .minOrderPrice(50000).build(); // 최소 5만원
         given(storeRepository.findById(storeId)).willReturn(Optional.of(openStore));
         given(addressRepository.findByIdAndIsDeletedFalse(any())).willReturn(Optional.of(AddressEntity.builder().userId(userId).build()));
         given(menuRepository.findById(any())).willReturn(Optional.of(MenuEntity.builder().price(10000).build())); // 1만원만 주문

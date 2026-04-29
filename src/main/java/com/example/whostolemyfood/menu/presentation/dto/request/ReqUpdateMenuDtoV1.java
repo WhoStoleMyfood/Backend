@@ -3,24 +3,29 @@ package com.example.whostolemyfood.menu.presentation.dto.request;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
 @Schema(description = "메뉴 수정 요청 객체")
+@NoArgsConstructor
 public class ReqUpdateMenuDtoV1 {
 
     @Schema(description = "메뉴 명", example = "황금올리브치킨")
-    @NotBlank(message = "메뉴 명은 필수입니다")
+    @NotBlank(message = "메뉴 명은 필수 항목입니다")
     private String name;
 
     @Schema(description = "메뉴 가격", example = "25000")
-    @Min(value = 0, message = "메뉴 최소 선정 금액은 0원 이상이여야합니다")
+    @NotNull(message = "메뉴 가격은 필수 항목입니다")
+    @PositiveOrZero(message = "메뉴 가격은 0원 이상이여야 합니다")
     private Integer price;
 
     @Schema(description = "메뉴 설명(직접입력)", example = "올리브유에 튀긴 치킨")
     private String description;
-    @Schema(description = "AI 추천 설명 사용 여부",example = "false")
+    @Schema(description = "AI 추천 설명 사용 여부", example = "false")
     private Boolean aiDescription;
-    @Schema(description = "AI 추천 설명용 프롬프트",example = "")
+    @Schema(description = "AI 추천 설명용 프롬프트")
     private String aiPrompt;
 }

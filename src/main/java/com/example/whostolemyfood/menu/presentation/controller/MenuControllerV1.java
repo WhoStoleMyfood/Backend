@@ -6,6 +6,7 @@ import com.example.whostolemyfood.menu.application.service.MenuServiceV1;
 import com.example.whostolemyfood.menu.presentation.dto.request.ReqCreateMenuDtoV1;
 import com.example.whostolemyfood.menu.presentation.dto.request.ReqUpdateMenuDtoV1;
 import com.example.whostolemyfood.menu.presentation.dto.response.ResCreateMenuDtoV1;
+import com.example.whostolemyfood.menu.presentation.dto.response.ResGetInActiveMenuDtoV1;
 import com.example.whostolemyfood.menu.presentation.dto.response.ResGetMenuDtoV1;
 import com.example.whostolemyfood.user.application.security.AuthUser;
 import io.swagger.v3.oas.annotations.Operation;
@@ -37,9 +38,8 @@ public class MenuControllerV1 {
     @PostMapping
     @PreAuthorize("hasAnyRole('OWNER')")
     public ResponseEntity<ResCreateMenuDtoV1> addMenu(
-            @Valid
             @PathVariable UUID storeId,
-            @RequestBody ReqCreateMenuDtoV1 request,
+            @Valid @RequestBody ReqCreateMenuDtoV1 request,
             @AuthenticationPrincipal AuthUser authUser) {
         ResCreateMenuDtoV1 response = menuServiceV1.addMenu(storeId, request, authUser);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -48,7 +48,6 @@ public class MenuControllerV1 {
     @Operation(summary = "메뉴 조회", description = "[ALL] 특정 매뉴를 조회합니다.")
     @GetMapping("/{menuId}")
     public ResponseEntity<ResGetMenuDtoV1> getMenu(
-            @Valid
             @PathVariable UUID storeId,
             @PathVariable UUID menuId) {
         ResGetMenuDtoV1 response = menuServiceV1.getMenu(storeId, menuId);
@@ -70,10 +69,9 @@ public class MenuControllerV1 {
     @PutMapping("/{menuId}")
     @PreAuthorize("hasAnyRole('OWNER','MANAGER','MASTER')")
     public ResponseEntity<ResGetMenuDtoV1> updateMenu(
-            @Valid
             @PathVariable UUID storeId ,
             @PathVariable UUID menuId,
-            @RequestBody ReqUpdateMenuDtoV1 request,
+            @Valid @RequestBody ReqUpdateMenuDtoV1 request,
             @AuthenticationPrincipal AuthUser authUser) {
         ResGetMenuDtoV1 response = menuServiceV1.updateMenu(storeId, menuId, request, authUser);
         return ResponseEntity.status(HttpStatus.OK).body(response);
@@ -83,7 +81,6 @@ public class MenuControllerV1 {
     @PatchMapping("/{menuId}/hide")
     @PreAuthorize("hasAnyRole('OWNER','MANAGER','MASTER')")
     public ResponseEntity<Void> hideMenu(
-            @Valid
             @PathVariable UUID storeId,
             @PathVariable UUID menuId,
             @AuthenticationPrincipal AuthUser authUser) {
@@ -91,11 +88,23 @@ public class MenuControllerV1 {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
+    @Operation(summary = "숨겨지거나 삭제된 메뉴 조회", description = "[OWNER / MANAGER / MASTER] 숨겨지거나 삭제된 메뉴들을 조회합니다.")
+    @GetMapping("/inactive")
+    @PreAuthorize("hasAnyRole('OWNER','MANAGER','MASTER')")
+    public ResponseEntity<PageResponse<ResGetInActiveMenuDtoV1>> getInactiveMenu(
+            @PathVariable UUID storeId,
+            @AuthenticationPrincipal AuthUser authUser,
+            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        Pageable validatePageable = PageUtil.validatePageSize(pageable);
+
+        Page<ResGetInActiveMenuDtoV1> menus = menuServiceV1.getInActiveMenus(storeId, authUser, validatePageable);
+        return ResponseEntity.status(HttpStatus.OK).body(new PageResponse<>(menus));
+    }
+
     @Operation(summary = "메뉴 삭제", description = "[OWNER / MANAGER / MASTER] 특정 메뉴를 삭제합니다.")
     @DeleteMapping("/{menuId}")
     @PreAuthorize("hasAnyRole('OWNER','MANAGER','MASTER')")
     public void deleteMenu(
-            @Valid
             @PathVariable UUID storeId,
             @PathVariable UUID menuId,
             @AuthenticationPrincipal AuthUser authUser) {

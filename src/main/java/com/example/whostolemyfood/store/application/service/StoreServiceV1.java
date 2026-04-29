@@ -14,6 +14,7 @@ import com.example.whostolemyfood.store.domain.repository.StoreRepository;
 import com.example.whostolemyfood.store.presentation.dto.request.ReqCreateStoreDtoV1;
 import com.example.whostolemyfood.store.presentation.dto.request.ReqUpdateStoreDtoV1;
 import com.example.whostolemyfood.store.presentation.dto.response.ResCreateStoreDtoV1;
+import com.example.whostolemyfood.store.presentation.dto.response.ResGetInActiveStoreDtoV1;
 import com.example.whostolemyfood.store.presentation.dto.response.ResGetStoreDtoV1;
 import com.example.whostolemyfood.store.presentation.dto.response.ResGetStoreListDtoV1;
 import com.example.whostolemyfood.user.application.security.AuthUser;
@@ -58,16 +59,15 @@ public class StoreServiceV1 {
         CategoryEntity category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(()-> new CustomException(ErrorCode.CATEGORY_NOT_FOUND));
 
-        // 기본적으로 스토어 생성시 평점은 0.0
-        StoreRatingSummaryEntity summary = StoreRatingSummaryEntity.builder().build();
-        storeRatingSummaryRepository.save(summary);
-
         AreaEntity area = areaRepository.findByAreaId(request.getAreaId())
                 .orElseThrow(()-> new CustomException(ErrorCode.AREA_NOT_FOUND));
 
         if (!area.getIsActive()) {
             throw new CustomException(ErrorCode.AREA_NOT_ACTIVE);
         }
+        // 기본적으로 스토어 생성시 평점은 0.0
+        StoreRatingSummaryEntity summary = StoreRatingSummaryEntity.builder().build();
+        storeRatingSummaryRepository.save(summary);
 
         StoreEntity store = StoreEntity.builder()
                 .user(owner)
@@ -76,8 +76,8 @@ public class StoreServiceV1 {
                 .phone(request.getPhone())
                 .content(request.getContent())
                 .category(category)
-                .storeRatingSummary(summary)
                 .area(area)
+                .storeRatingSummary(summary)
                 .minOrderPrice(request.getMinOrderPrice())
                 .status(StoreStatus.OPEN)
                 .openTime(request.getOpenTime())
@@ -142,6 +142,23 @@ public class StoreServiceV1 {
         store.toggleIsHidden();
     }
 
+    @Transactional(readOnly = true)
+    public Page<ResGetInActiveStoreDtoV1> getInActiveStores(AuthUser authUser, Pageable pageable) {
+        // 1. 관리자(MASTER, MANAGER)는 시스템 전체의 비활성 가게를 다 봄
+        if (authUser.role() == UserRole.MASTER || authUser.role() == UserRole.MANAGER) {
+            return storeRepository.findAllInactiveStores(pageable)
+                    .map(ResGetInActiveStoreDtoV1::from);
+        }
+
+        // 2. 사장님(OWNER)은 "자기 가게 중에서" 비활성인 것만 봐야 함
+        if (authUser.role() == UserRole.OWNER) {
+            return storeRepository.findInactiveStoresByUserId(authUser.userId(), pageable)
+                    .map(ResGetInActiveStoreDtoV1::from);
+        }
+
+        throw new CustomException(ErrorCode.ACCESS_DENIED);
+    }
+
     // Owner, Manager, Master
     // 스토어 삭제
     @Transactional
@@ -151,7 +168,7 @@ public class StoreServiceV1 {
         // 권한 확인
         validateStoreAccess(store, authUser);
 
-        store.deleteByOwnerAndMaster(storeId);
+        store.deleteByOwnerAndMaster(authUser.userId());
     }
 
     // 권한 확인
