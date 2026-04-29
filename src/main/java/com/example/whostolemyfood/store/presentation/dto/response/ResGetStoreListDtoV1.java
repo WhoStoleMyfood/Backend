@@ -24,17 +24,6 @@ public class ResGetStoreListDtoV1 {
     private LocalTime closeTime;
 
     public static ResGetStoreListDtoV1 from(StoreEntity store) {
-        StoreStatus currentStatus;
-
-        if (store.getStatus() == StoreStatus.SHUTDOWN) {
-            currentStatus = StoreStatus.SHUTDOWN;
-        } else {
-            currentStatus = StoreStatus.calculateStatus(
-                    LocalTime.now(),
-                    store.getOpenTime(),
-                    store.getCloseTime()
-            );
-        }
         return new ResGetStoreListDtoV1(
                 store.getStoreId(),
                 store.getName(),
@@ -42,7 +31,7 @@ public class ResGetStoreListDtoV1 {
                 store.getStoreRatingSummary().getAverageRating(),
                 store.getArea().getUkName(),
                 store.getMinOrderPrice(),
-                currentStatus,
+                store.getCalculatedStatus(),
                 store.getOpenTime(),
                 store.getCloseTime()
         );

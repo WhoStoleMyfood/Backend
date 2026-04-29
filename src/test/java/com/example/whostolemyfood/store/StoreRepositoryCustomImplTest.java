@@ -76,28 +76,24 @@ class StoreRepositoryCustomImplTest {
                 .openTime(LocalTime.of(11, 0))
                 .closeTime(LocalTime.of(22, 0))
                 .minOrderPrice(10000)
-                .isDeleted(false)
                 .build();
         em.persist(store);
 
         em.persist(MenuEntity.builder()
                 .store(store)
                 .price(7000)
-                .isDeleted(false)
                 .name("짜장면")
                 .build());
 
         em.persist(MenuEntity.builder()
                 .store(store)
                 .price(10000)
-                .isDeleted(false)
                 .name("짬뽕")
                 .build());
 
         em.persist(MenuEntity.builder()
                 .store(store)
                 .price(20000)
-                .isDeleted(false)
                 .name("탕수육")
                 .build());
 

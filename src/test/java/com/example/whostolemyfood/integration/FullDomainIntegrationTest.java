@@ -125,7 +125,7 @@ public class FullDomainIntegrationTest {
                 .user(owner).area(area).category(category).storeRatingSummary(ratingSummary)
                 .name(storeName).content("전통 방식으로 튀긴 바삭한 치킨 전문점").address("종로구 100")
                 .phone("02-1234").minOrderPrice(15000).status(StoreStatus.OPEN)
-                .openTime(LocalTime.of(10, 0)).closeTime(LocalTime.of(22, 0)).isHidden(false).build());
+                .openTime(LocalTime.of(10, 0)).closeTime(LocalTime.of(22, 0)).build());
     }
 
     /**
@@ -133,7 +133,7 @@ public class FullDomainIntegrationTest {
      */
     private MenuEntity createMenuFixture(StoreEntity store, String name, int price) {
         return menuRepository.save(MenuEntity.builder()
-                .store(store).name(name).price(price).description("설명").isHidden(false).build());
+                .store(store).name(name).price(price).description("설명").build());
     }
 
     /**
@@ -346,7 +346,7 @@ public class FullDomainIntegrationTest {
     void changedCustomerRole_shouldBlockOrderCreationImmediately() throws Exception {
         // [Refactor] Given: 사장님은 Fixture로 생성 (토큰 불필요)
         UserEntity owner = createUserFixture("owner_role@test.com", "Owner123!@#", "roleowner", UserRole.OWNER);
-        
+
         // Given: 고객은 토큰 발급 후 엔티티 확보 (보안 컨텍스트와 데이터 정합성 보장)
         String customerToken = signupAndGetToken("cust_role@test.com", "Cust123!@#", "rolecust", "CUSTOMER");
         UserEntity customerUser = getUserByEmail("cust_role@test.com");
@@ -355,7 +355,7 @@ public class FullDomainIntegrationTest {
         StoreEntity store = createStoreFixture(owner, "권한 차단 가게");
         MenuEntity menu = createMenuFixture(store, "일반 메뉴", 10000);
         AddressEntity address = createAddressFixture(customerUser, "자택", "서울시 강남구");
-        
+
         // Given: 권한 강제 변경 (해킹 시뮬레이션 - DB 상태 직접 조작)
         ReflectionTestUtils.setField(customerUser, "userRole", UserRole.MANAGER);
         userRepository.saveAndFlush(customerUser);
@@ -381,7 +381,7 @@ public class FullDomainIntegrationTest {
         UserEntity owner = createUserFixture("own_cancel@test.com", "Owner123!@#", "canowner", UserRole.OWNER);
         String customerToken = signupAndGetToken("cus_cancel@test.com", "Cust123!@#", "cancust", "CUSTOMER");
         UserEntity customer = getUserByEmail("cus_cancel@test.com");
-        
+
         StoreEntity store = createStoreFixture(owner, "취소 불가 가게");
         AddressEntity address = createAddressFixture(customer, "자택", "서울시 강남구");
         
@@ -403,7 +403,7 @@ public class FullDomainIntegrationTest {
         String ownerToken = signupAndGetToken("own_hmenu@test.com", "Owner123!@#", "hmenuown", "OWNER");
         String customerToken = signupAndGetToken("cus_hmenu@test.com", "Cust123!@#", "hmenucust", "CUSTOMER");
         UserEntity owner = getUserByEmail("own_hmenu@test.com");
-        
+
         // [Hybrid] Given: 메뉴 데이터 Fixture 생성 (가게/메뉴 API 연쇄 호출 제거)
         StoreEntity store = createStoreFixture(owner, "메뉴 숨김 테스트 가게");
         MenuEntity menu = createMenuFixture(store, "시크릿 메뉴", 15000);
@@ -431,7 +431,7 @@ public class FullDomainIntegrationTest {
         String ownerToken = signupAndGetToken("own_hstore@test.com", "Owner123!@#", "hstoreown", "OWNER");
         String customerToken = signupAndGetToken("cus_hstore@test.com", "Cust123!@#", "hstorecust", "CUSTOMER");
         UserEntity owner = getUserByEmail("own_hstore@test.com");
-        
+
         StoreEntity store = createStoreFixture(owner, "숨긴가게 바삭치킨");
         
         // When: 가게 숨김 처리 API 호출
@@ -488,7 +488,7 @@ public class FullDomainIntegrationTest {
         // Given: PENDING 상태의 주문 생성
         OrderEntity pendingOrder = createOrderFixture(customerUser, store, address, OrderStatus.PENDING, 10000);
         UUID orderId = pendingOrder.getOrderId();
-        
+
         long beforeReviewCount = reviewRepository.count();
 
         // When: PENDING 주문에 대해 리뷰 작성 시도

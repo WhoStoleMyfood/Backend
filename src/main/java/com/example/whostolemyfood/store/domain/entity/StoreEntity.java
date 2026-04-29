@@ -2,7 +2,7 @@ package com.example.whostolemyfood.store.domain.entity;
 
 import com.example.whostolemyfood.area.domain.entity.AreaEntity;
 import com.example.whostolemyfood.category.domain.entity.CategoryEntity;
-import com.example.whostolemyfood.global.entity.BaseSoftDeleteEntity;
+import com.example.whostolemyfood.global.entity.BaseAuditEntity;
 import com.example.whostolemyfood.store.presentation.dto.request.ReqUpdateStoreDtoV1;
 import com.example.whostolemyfood.user.domain.entity.UserEntity;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -17,18 +17,15 @@ import java.util.UUID;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
-@Builder
-@SQLRestriction("is_deleted = false")
-@SQLDelete(sql = "UPDATE p_stores SET is_deleted = true WHERE store_id = ?")
+//@SQLRestriction("is_deleted = false")
+//@SQLDelete(sql = "UPDATE p_stores SET is_deleted = true WHERE store_id = ?")
 @Table(name = "p_stores")
-public class StoreEntity extends BaseSoftDeleteEntity {
+public class StoreEntity extends BaseAuditEntity {
     @Id
     @Column(name = "store_id")
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID storeId;
 
-    // user_id
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private UserEntity user;
@@ -41,12 +38,11 @@ public class StoreEntity extends BaseSoftDeleteEntity {
     @JoinColumn(name = "area_id")
     private AreaEntity area;
 
-    //store_rating_id 이걸로 통일
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "store_rating_id")
     private StoreRatingSummaryEntity storeRatingSummary;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String name;
     @Column(nullable = false)
     private String address;
@@ -59,7 +55,7 @@ public class StoreEntity extends BaseSoftDeleteEntity {
     private Integer minOrderPrice;
 
     @Enumerated(EnumType.STRING)
-    private StoreStatus status = StoreStatus.OPEN;
+    private StoreStatus status;
 
     @JsonFormat(pattern = "HH:mm")
     @Column(name = "open_time", nullable = false)
@@ -69,14 +65,31 @@ public class StoreEntity extends BaseSoftDeleteEntity {
     private LocalTime closeTime;
 
     @Column(name = "is_hidden")
-    @Builder.Default
     private Boolean isHidden = false;
-    @Column(name = "is_deleted")
-    @Builder.Default
-    private Boolean isDeleted = false;
+
+
+    @Builder
+    public StoreEntity(UUID storeId, UserEntity user, CategoryEntity category, AreaEntity area, StoreRatingSummaryEntity storeRatingSummary, String name, String address, String phone, String content, Integer minOrderPrice, StoreStatus status, LocalTime openTime, LocalTime closeTime) {
+        validateMinOrderPrice(minOrderPrice);
+        this.storeId = storeId;
+        this.user = user;
+        this.category = category;
+        this.area = area;
+        this.storeRatingSummary = storeRatingSummary;
+        this.name = name;
+        this.address = address;
+        this.phone = phone;
+        this.content = content;
+        this.minOrderPrice = minOrderPrice;
+        this.status = status;
+        this.openTime = openTime;
+        this.closeTime = closeTime;
+    }
 
     // 스토어 수정
     public void updateStore(ReqUpdateStoreDtoV1 request, CategoryEntity category) {
+        validateMinOrderPrice(request.getMinOrderPrice());
+
         this.name = request.getName();
         this.address = request.getAddress();
         this.phone = request.getPhone();
@@ -91,9 +104,8 @@ public class StoreEntity extends BaseSoftDeleteEntity {
         }
     }
 
-    public void deleteByOwnerAndMaster(UUID deletedBy) {
-        this.isDeleted = true;
-        super.delete(deletedBy);
+    public void deleteByOwnerAndMaster(UUID userId) {
+        super.softDelete(userId);
         this.status = StoreStatus.SHUTDOWN;
     }
 
@@ -103,5 +115,22 @@ public class StoreEntity extends BaseSoftDeleteEntity {
 
     public void toggleIsHidden() {
         this.isHidden = !this.isHidden;
+    }
+
+    private void validateMinOrderPrice(Integer minOrderPrice) {
+        if (minOrderPrice != null && minOrderPrice < 0) {
+            throw new IllegalArgumentException("최소주문 가격은 0이상이여하 한다");
+        }
+    }
+
+    public StoreStatus getCalculatedStatus() {
+        if (this.status == StoreStatus.SHUTDOWN) {
+            return StoreStatus.SHUTDOWN;
+        }
+
+        if (this.isHidden) {
+            return StoreStatus.CLOSED;
+        }
+        return StoreStatus.calculateStatus(LocalTime.now(), this.openTime, this.closeTime);
     }
 }

@@ -79,8 +79,6 @@ public class StoreServiceV1Test {
                 .minOrderPrice(20000)
                 .openTime(LocalTime.of(10,0))
                 .closeTime(LocalTime.of(23,0))
-                .isHidden(false)
-                .isDeleted(false)
                 .build();
 
         ReflectionTestUtils.setField(store, "storeId", storeId);
