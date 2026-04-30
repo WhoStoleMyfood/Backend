@@ -1,19 +1,31 @@
-# 🍗 배달 주문 관리 플랫폼
+# 🍗 배달 주문 관리 플랫폼, "*누가 내 음식을 훔쳤어?*"
+> **🗓️ 개발 기간: 2025.04.16 ~ 2025.04.30 (2주)**
 
-- 광화문 근처에서 운영될 음식점들의 배달 주문 관리, 결제, 그리고 주문 내역 관리 기능을 제공하는 플랫폼 개발.
+- 📌 배달의 민족, 쿠팡이츠와 유사한 배달 주문 관리 플랫폼으로, 음식점의 주문 관리, 결제, 리뷰, 주문 내역 관리 기능을 제공합니다. 또한 가게 운영자의 편의를 위해 선택적으로 AI 기반 메뉴 설명 생성 기능을 제공하여 메뉴 관리의 효율성을 높였습니다.
+
+| **핵심 기능** | **설명** |
+| --- | --- |
+| 🏪 **가게 · 지역 · 카테고리 관리** | 지역 및 카테고리 기반 가게 등록과 운영 관리 |
+| 🍽️ **메뉴 · AI 상품 설명 생성** | 가게별 메뉴 등록, Gemini AI를 활용한 메뉴 상품 설명 자동 생성 및 이력 관리 |
+| ⭐ **리뷰 · 평점** | 완료된 주문에 한해 주문자만 리뷰 작성 가능, 리뷰 수정·삭제 및 삭제 후 재작성 가능, 자정마다 갱신되는 가게별 평균 평점 제공 |
+| 🔐 **인증 · 권한 관리** | JWT 및 Redis 기반 회원가입, 로그인, 로그아웃 기능 구현, 권한별 API 접근 제어 |
+| 👤 **사용자 관리** | 유저 정보 조회 및 수정, 관리자 전용 사용자 목록·상세 조회 기능 제공 |
+| 🛒 **주문 · 배송지** | 5분 이내 주문 취소 제한 로직과 실시간 DB 권한 재검증을 적용한 안전한 주문 처리 |
+| 💳 **결제** | Toss Payments 외부 API 기반 결제 승인 시스템 구축 |
 
 <br>
 
 ## 👥 팀원 역할분담
 
-| **성함** | **역할 (Domain)** | **주요 업무 및 성과** |
-| --- | --- | --- |
-| **유규리 (리더)** | **Review / Review Rating / Area** | 리뷰 및 평점 기능 구현, Area 도메인 구현, 통합 테스트 시나리오 작성 및 Postman 통합 테스트 진행, 아키텍처 설계, 협업구조 설계 |
-| **박주원** | **Order / Address** | 주문 관리 기능 구현, Address 도메인 구현, 통합 테스트 코드 작성, 아키텍처 설계 |
-| **박지은** | **Search / Category** | QueryDSL을 이용한 검색 기능 구현, Category 도메인 구현, API 문서 작성 |
-| **이승민** | **AI / Store / Menu** | AI 연동 가게 및 메뉴 관리 기능 구현, Swagger 및 ERD 작성 |
-| **김영욱** | **Payment / Infra** | 결제 기능 구현,  docker-compose 기반 CI/CD 파이프라인 구축 |
-| **박소윤** | **Auth / User** | Redis 기반 인증 인가 시스템 구축 및 조회 성능 최적화 |
+| **성함** | **GitHub** | **역할 (Domain)** | **주요 업무 및 성과** |
+| --- | --- | --- | --- |
+| **유규리 (리더)** | <a href="https://github.com/yuguri76"><img src="https://img.shields.io/badge/GitHub-yuguri76-181717?style=flat-square&logo=github&logoColor=white"/></a> | Review / Review Rating / Area | 리뷰 및 평점 기능 구현, Area 도메인 구현, 통합 테스트 시나리오 작성 및 Postman 통합 테스트 진행, 아키텍처 설계, 협업구조 설계 |
+| **박주원** | <a href="https://github.com/k-r-1"><img src="https://img.shields.io/badge/GitHub-k--r--1-181717?style=flat-square&logo=github&logoColor=white"/></a> | Order / Address | 주문 관리 기능 구현, Address 도메인 구현, 통합 테스트 코드 작성, 아키텍처 설계 |
+| **박지은** | <a href="https://github.com/Jieunbakk"><img src="https://img.shields.io/badge/GitHub-Jieunbakk-181717?style=flat-square&logo=github&logoColor=white"/></a> | Search / Category | QueryDSL을 이용한 검색 기능 구현, Category 도메인 구현, API 문서 작성 |
+| **이승민** | <a href="https://github.com/Cork-7"><img src="https://img.shields.io/badge/GitHub-Cork--7-181717?style=flat-square&logo=github&logoColor=white"/></a> | AI / Store / Menu | AI 연동 가게 및 메뉴 관리 기능 구현, Swagger 및 ERD 작성 |
+| **김영욱** | <a href="https://github.com/kimyounguk1"><img src="https://img.shields.io/badge/GitHub-kimyounguk1-181717?style=flat-square&logo=github&logoColor=white"/></a> | Payment / Infra | 결제 기능 구현, docker-compose 기반 CI/CD 파이프라인 구축 |
+| **박소윤** | <a href="https://github.com/musoyou12"><img src="https://img.shields.io/badge/GitHub-musoyou12-181717?style=flat-square&logo=github&logoColor=white"/></a> | Auth / User | Redis 기반 인증 인가 시스템 구축 및 조회 성능 최적화 |
+
 
 <br>
 
@@ -131,7 +143,7 @@ chmod +x gradlew
 <summary>🏛️ 통합 테스트 구조 개선</summary>
 
 - **문제(Problem)**: Given 데이터를 모두 **MockMvc(API 호출)**로 생성하면서 검증하려는 기능과 직접적인 관련이 없는 API 호출까지 포함되어 테스트 코드가 길어지고 복잡해지는 문제가 발생
-- **해결(Solution)**: 전체 흐름 검증은 **MockMvc 기반 E2E 테스트로 유지**하고, 기능 단위 테스트는 **Repository Fixture**를 활용해 데이터를 직접 생성하도록 분리
+- **해결(Solution)**: **MockMvc 기반 E2E 테스트**와 **Repository Fixture**를 활용한 단일 시나리오 테스트로 분리
 - **성과(Result)**: 테스트 목적이 명확해지고 가독성이 개선됨. 불필요한 API 호출과 토큰 발급을 줄여 테스트 구조를 단순화.
 
 </details>
@@ -164,7 +176,7 @@ chmod +x gradlew
 - **문제 (Problem)**: 키워드 유무와 관계없이 항상 menu 테이블 LEFT JOIN이 실행되어 불필요한 성능 저하 발생.
 - **원인 (Cause)**: 검색 조건(keyword)과 관계없이 menu JOIN이 고정으로 걸려 있어, 키워드 없는 일반 검색에서도 menu 테이블 전체를 조인함.
 - **해결 (Solution)**: 키워드가 있을 때만 동적으로 menu JOIN이 적용되도록 쿼리 구조 개선.
-- **성과 (Result)**: 소규모 테스트 환경 기준으로 약 80% 응답 시간 단축 확인.
+- **성과 (Result)**: 가게 데이터 1만개, 메뉴 데이터 5만개 테스트 환경에서 119.8ms → 43.1ms 64%의 성능 개선
 
 #### 2. `leftJoin(menu)` 중복 행 발생으로 인한 가게 검색 결과 중복 반환 해결
 
