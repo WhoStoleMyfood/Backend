@@ -8,7 +8,7 @@
 
 | **성함** | **역할 (Domain)** | **주요 업무 및 성과** |
 | --- | --- | --- |
-| **유규리 (리더)** | **Review / Area** | 리뷰 및 평점 기능 구현, Area 도메인 구현, 통합 테스트 시나리오 작성 및 Postman 통합 테스트 진행, 아키텍처 설계 |
+| **유규리 (리더)** | **Review / Review Rating / Area** | 리뷰 및 평점 기능 구현, Area 도메인 구현, 통합 테스트 시나리오 작성 및 Postman 통합 테스트 진행, 아키텍처 설계, 협업구조 설계 |
 | **박주원** | **Order / Address** | 주문 관리 기능 구현, Address 도메인 구현, 통합 테스트 코드 작성, 아키텍처 설계 |
 | **박지은** | **Search / Category** | QueryDSL을 이용한 검색 기능 구현, Category 도메인 구현, API 문서 작성 |
 | **이승민** | **AI / Store / Menu** | AI 연동 가게 및 메뉴 관리 기능 구현, Swagger 및 ERD 작성 |
@@ -45,16 +45,16 @@ DB_USERNAME=myuser
 DB_PASSWORD=mypassword
 
 # Security & Authentication
-JWT_SECRET=your_secret_key_at_least_32_chars
-JWT_ACCESS_MINUTE=30
-JWT_REFRESH_MINUTE=1440
-ADMIN_SIGNUP_TOKEN=your_admin_signup_token
+JWT_SECRET=jwt_secret_key
+JWT_ACCESS_MINUTE=100
+JWT_REFRESH_MINUTE=100
+ADMIN_SIGNUP_TOKEN=admin_signup_token
 
 # External API Integration (Gemini AI)
-AI_API_KEY=your_google_gemini_api_key
-BASE_URL=[https://generativelanguage.googleapis.com/v1](https://generativelanguage.googleapis.com/v1)
+AI_API_KEY=google_gemini_api_key
+BASE_URL=https://generativelanguage.googleapis.com/v1
 MODEL=gemini-2.5-flash
-PAYMENT_KEY=your_mock_payment_key
+PAYMENT_KEY=test_gsk_docs_OaPz8L5KdmQXkzRz3y47BMw6
 ```
 
 #### 3. Run Application
